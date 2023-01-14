@@ -100,38 +100,32 @@ impl Renamer {
             .map(|&c| (c, "".to_string()))
             .collect::<HashMap<_, _>>();
 
-        for c in clients.collect().iter() {
-            let class = c.clone().class.to_lowercase();
-            let fullscreen = c.fullscreen;
+        for client in clients.collect().iter() {
+            let class = client.clone().class.to_lowercase();
+            let fullscreen = client.fullscreen;
             let icon = class_to_icon(&class).to_string();
-            let workspace_id = c.clone().workspace.id;
+            let workspace_id = client.clone().workspace.id;
             let is_dup = !deduper.insert(format!("{}{}", workspace_id.clone(), icon));
 
             self.workspaces
                 .lock()
                 .unwrap()
-                .insert(c.clone().workspace.id);
+                .insert(client.clone().workspace.id);
 
-            workspaces
+            let workspace = workspaces
                 .entry(workspace_id)
-                .and_modify(|w| {
-                    if fullscreen && !self.args.dedup {
-                        *w = format!("{} [{}]", w, icon)
-                    } else if fullscreen && self.args.dedup && is_dup {
-                        *w = w.replace(icon.as_str(), format!("[{}]", icon.as_str()).as_str())
-                    } else if self.args.dedup && is_dup {
-                        *w = w.to_string()
-                    } else {
-                        *w = format!("{} {}", w, icon)
-                    }
-                })
-                .or_insert({
-                    if fullscreen {
-                        format!(" [{}]", icon)
-                    } else {
-                        format!(" {}", icon)
-                    }
-                });
+                .or_insert(format!(" {}", icon));
+
+            if fullscreen && !self.args.dedup {
+                *workspace = format!("{} [{}]", workspace, icon);
+            } else if fullscreen && self.args.dedup && is_dup {
+                *workspace =
+                    workspace.replace(icon.as_str(), format!("[{}]", icon.as_str()).as_str());
+            } else if self.args.dedup && is_dup {
+                *workspace = workspace.to_string();
+            } else {
+                *workspace = format!("{} {}", workspace, icon);
+            }
         }
 
         for (id, apps) in workspaces.clone().into_iter() {
