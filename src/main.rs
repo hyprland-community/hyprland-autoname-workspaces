@@ -125,7 +125,13 @@ impl Renamer {
                         *w = format!("{} {}", w, icon)
                     }
                 })
-                .or_insert(format!(" {}", icon));
+                .or_insert({
+                    if fullscreen {
+                        format!(" [{}]", icon)
+                    } else {
+                        format!(" {}", icon)
+                    }
+                });
         }
 
         for (id, apps) in workspaces.clone().into_iter() {
