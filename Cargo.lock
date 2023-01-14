@@ -156,8 +156,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "hyprland-autoname-workspaces-rs"
-version = "0.1.0"
+name = "hyprland-autoname-workspaces"
+version = "0.2.0"
 dependencies = [
  "clap",
  "hyprland",
