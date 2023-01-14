@@ -4,11 +4,13 @@ use hyprland::data::Clients;
 use hyprland::dispatch::*;
 use hyprland::event_listener::EventListenerMutable as EventListener;
 use hyprland::prelude::*;
-use hyprland::shared::WorkspaceType;
+use hyprland::shared::{HResult, WorkspaceType};
 use lazy_static::lazy_static;
+use signal_hook::consts::{SIGINT, SIGTERM};
+use signal_hook::iterator::Signals;
 use std::collections::{HashMap, HashSet};
-use std::rc::Rc;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
+use std::{process, thread};
 
 lazy_static! {
     static ref ICONS: HashMap<&'static str, &'static str> = {
@@ -60,14 +62,23 @@ struct Args {
     dedup: bool,
 }
 
-fn main() -> hyprland::shared::HResult<()> {
-    // Parse cli
-    let args = Args::parse();
+fn main() -> HResult<()> {
     // Init
-    let r = Rc::new(Renamer::new(args));
-    let _ = &r.renameworkspace();
+    let renamer = Arc::new(Renamer::new(Args::parse()));
+    renamer.renameworkspace();
+
+    // Handle unix signals
+    let mut signals = Signals::new(&[SIGINT, SIGTERM])?;
+    let final_renamer = renamer.clone();
+    thread::spawn(move || {
+        for _ in signals.forever() {
+            final_renamer.reset_workspaces();
+            process::exit(0);
+        }
+    });
+
     // Run on window events
-    r.start_listeners()
+    renamer.start_listeners()
 }
 
 struct Renamer {
@@ -139,7 +150,13 @@ impl Renamer {
         }
     }
 
-    fn start_listeners(self: &Rc<Self>) -> hyprland::shared::HResult<()> {
+    fn reset_workspaces(&self) {
+        for &id in self.workspaces.lock().unwrap().iter() {
+            rename_cmd(id, &"");
+        }
+    }
+
+    fn start_listeners(self: &Arc<Self>) -> HResult<()> {
         let mut event_listener = EventListener::new();
 
         let this = self.clone();

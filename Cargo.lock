@@ -162,6 +162,7 @@ dependencies = [
  "clap",
  "hyprland",
  "lazy_static",
+ "signal-hook",
 ]
 
 [[package]]
@@ -447,6 +448,16 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "signal-hook"
+version = "0.3.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a253b5e89e2698464fc26b545c9edceb338e18a89effeeecfea192c3025be29d"
+dependencies = [
+ "libc",
+ "signal-hook-registry",
 ]
 
 [[package]]
