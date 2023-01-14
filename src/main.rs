@@ -120,7 +120,7 @@ impl Renamer {
                     } else if fullscreen && self.args.dedup && is_dup {
                         *w = w.replace(icon.as_str(), format!("[{}]", icon.as_str()).as_str())
                     } else if self.args.dedup && is_dup {
-                        *w = format!("{}", w)
+                        *w = w.to_string()
                     } else {
                         *w = format!("{} {}", w, icon)
                     }
@@ -167,7 +167,7 @@ fn class_to_icon(class: &str) -> &str {
 }
 
 fn rename_cmd(id: i32, apps: &str) {
-    let text = format!("{}:{}", id.clone(), apps.clone());
-    let content = (!apps.is_empty()).then(|| text.as_str());
+    let text = format!("{}:{}", id.clone(), apps);
+    let content = (!apps.is_empty()).then_some(text.as_str());
     hyprland::dispatch!(RenameWorkspace, id, content).unwrap();
 }
