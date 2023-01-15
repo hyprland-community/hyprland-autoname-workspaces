@@ -5,56 +5,14 @@ use hyprland::dispatch::*;
 use hyprland::event_listener::EventListenerMutable as EventListener;
 use hyprland::prelude::*;
 use hyprland::shared::{HResult, WorkspaceType};
-use lazy_static::lazy_static;
 use signal_hook::consts::{SIGINT, SIGTERM};
 use signal_hook::iterator::Signals;
 use std::collections::{HashMap, HashSet};
+use std::fs;
+use std::fs::File;
+use std::io::Write;
 use std::sync::{Arc, Mutex};
 use std::{process, thread};
-
-lazy_static! {
-    static ref ICONS: HashMap<&'static str, &'static str> = {
-        let mut m = HashMap::new();
-        m.insert("bleachbit", "");
-        m.insert("calibre", "");
-        m.insert("chromium", "");
-        m.insert("code-oss", "");
-        m.insert("discord", "");
-        m.insert("draw.io", "");
-        m.insert("firefox", "");
-        m.insert("gcr-prompter", "");
-        m.insert("kitty", "");
-        m.insert("krita", "");
-        m.insert("libreoffice-calc", "");
-        m.insert("libreoffice-writer", "");
-        m.insert("microsoft teams - preview", "");
-        m.insert("mpv", "");
-        m.insert("neomutt", "");
-        m.insert("org.ksnip.ksnip", "");
-        m.insert("org.pwmt.zathura", "");
-        m.insert("org.qutebrowser.qutebrowser", "");
-        m.insert("personal", "");
-        m.insert("work", "");
-        m.insert("paperwork", "");
-        m.insert("pavucontrol", "");
-        m.insert("peek", "");
-        m.insert("qutepreview", "");
-        m.insert("riot", "");
-        m.insert("scli", "");
-        m.insert("signal", "");
-        m.insert("slack", "");
-        m.insert("spotify", "");
-        m.insert("transmission-gtk", "");
-        m.insert("vimiv", "");
-        m.insert("virt-manager", "");
-        m.insert("wofi", "");
-        m.insert("xplr", "");
-        m.insert("nemo", "");
-        m.insert("nautilus", "");
-        m.insert("DEFAULT", "");
-        m
-    };
-}
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -62,13 +20,46 @@ struct Args {
     dedup: bool,
 }
 
+struct Config {
+    icons: HashMap<String, String>,
+}
+
+impl Config {
+    fn new() -> Config {
+        let xdg_dirs = xdg::BaseDirectories::with_prefix("hyrland-autoname-workspaces").unwrap();
+        let mut cfg_path = xdg_dirs.find_config_file("config.toml");
+        cfg_path = match cfg_path.clone() {
+            None => {
+                let config_path = xdg_dirs
+                    .place_config_file("config.toml")
+                    .expect("cannot create configuration directory");
+                let mut config_file = File::create(config_path.clone()).unwrap();
+                let default_icons = r#"# Add your icons mapping
+DEFAULT = ""
+kitty = "term"
+firefox = "browser"
+            "#;
+                write!(&mut config_file, "{}", default_icons).unwrap();
+                println!("Default config created in {:?}", config_path);
+                xdg_dirs.find_config_file("config.toml")
+            }
+            Some(_) => cfg_path,
+        };
+        let config =
+            fs::read_to_string(cfg_path.unwrap()).expect("Should have been able to read the file");
+        let icons: HashMap<String, String> = toml::from_str(&config).unwrap();
+        Config { icons }
+    }
+}
+
 fn main() -> HResult<()> {
+    let cfg = Config::new();
     // Init
-    let renamer = Arc::new(Renamer::new(Args::parse()));
+    let renamer = Arc::new(Renamer::new(cfg, Args::parse()));
     renamer.renameworkspace();
 
     // Handle unix signals
-    let mut signals = Signals::new(&[SIGINT, SIGTERM])?;
+    let mut signals = Signals::new([SIGINT, SIGTERM])?;
     let final_renamer = renamer.clone();
     thread::spawn(move || {
         for _ in signals.forever() {
@@ -83,13 +74,18 @@ fn main() -> HResult<()> {
 
 struct Renamer {
     workspaces: Mutex<HashSet<i32>>,
+    cfg: Config,
     args: Args,
 }
 
 impl Renamer {
-    fn new(args: Args) -> Self {
+    fn new(cfg: Config, args: Args) -> Self {
         let workspaces = Mutex::new(HashSet::new());
-        Renamer { workspaces, args }
+        Renamer {
+            workspaces,
+            cfg,
+            args,
+        }
     }
 
     fn removeworkspace(&self, wt: WorkspaceType) {
@@ -114,7 +110,7 @@ impl Renamer {
         for client in clients.collect().iter() {
             let class = client.clone().class.to_lowercase();
             let fullscreen = client.fullscreen;
-            let icon = class_to_icon(&class).to_string();
+            let icon = self.class_to_icon(&class).to_string();
             let workspace_id = client.clone().workspace.id;
             let is_dup = !deduper.insert(format!("{}-{}", workspace_id.clone(), icon));
             let should_dedup = self.args.dedup && is_dup;
@@ -142,7 +138,7 @@ impl Renamer {
 
     fn reset_workspaces(&self) {
         for &id in self.workspaces.lock().unwrap().iter() {
-            rename_cmd(id, &"");
+            rename_cmd(id, "");
         }
     }
 
@@ -171,12 +167,14 @@ impl Renamer {
 
         event_listener.start_listener()
     }
-}
 
-fn class_to_icon(class: &str) -> &str {
-    return ICONS
-        .get(&class)
-        .unwrap_or_else(|| ICONS.get("DEFAULT").unwrap());
+    fn class_to_icon(&self, class: &str) -> &str {
+        return self
+            .cfg
+            .icons
+            .get(class)
+            .unwrap_or_else(|| self.cfg.icons.get("DEFAULT").unwrap());
+    }
 }
 
 fn rename_cmd(id: i32, apps: &str) {

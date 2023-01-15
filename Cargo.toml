@@ -9,5 +9,7 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.1.1", features = ["derive"] }
 hyprland = { git = "https://github.com/hyprland-community/hyprland-rs.git" }
-lazy_static = "1.4.0"
 signal-hook = "0.3.14"
+toml = { version = "0.5.10", features = ["indexmap", "preserve_order"] }
+xdg = "2.4.1"
+
