@@ -26,27 +26,21 @@ struct Config {
 
 impl Config {
     fn new() -> Config {
-        let xdg_dirs = xdg::BaseDirectories::with_prefix("hyrland-autoname-workspaces").unwrap();
-        let mut cfg_path = xdg_dirs.find_config_file("config.toml");
-        cfg_path = match cfg_path.clone() {
-            None => {
-                let config_path = xdg_dirs
-                    .place_config_file("config.toml")
-                    .expect("cannot create configuration directory");
-                let mut config_file = File::create(config_path.clone()).unwrap();
-                let default_icons = r#"# Add your icons mapping
+        let xdg_dirs = xdg::BaseDirectories::with_prefix("hyprland-autoname-workspaces").unwrap();
+        let cfg_path = xdg_dirs
+            .place_config_file("config.toml")
+            .expect("Cannot create configuration directory");
+        if !cfg_path.exists() {
+            let mut config_file = File::create(&cfg_path).unwrap();
+            let default_icons = r#"# Add your icons mapping
 DEFAULT = ""
 kitty = "term"
 firefox = "browser"
             "#;
-                write!(&mut config_file, "{}", default_icons).unwrap();
-                println!("Default config created in {:?}", config_path);
-                xdg_dirs.find_config_file("config.toml")
-            }
-            Some(_) => cfg_path,
-        };
-        let config =
-            fs::read_to_string(cfg_path.unwrap()).expect("Should have been able to read the file");
+            write!(&mut config_file, "{}", default_icons).unwrap();
+            println!("Default config created in {:?}", cfg_path);
+        }
+        let config = fs::read_to_string(cfg_path).expect("Should have been able to read the file");
         let icons: HashMap<String, String> = toml::from_str(&config).unwrap();
         Config { icons }
     }
