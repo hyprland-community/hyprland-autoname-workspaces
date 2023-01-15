@@ -117,6 +117,7 @@ impl Renamer {
             let icon = class_to_icon(&class).to_string();
             let workspace_id = client.clone().workspace.id;
             let is_dup = !deduper.insert(format!("{}-{}", workspace_id.clone(), icon));
+            let should_dedup = self.args.dedup && is_dup;
 
             self.workspaces
                 .lock()
@@ -125,14 +126,11 @@ impl Renamer {
 
             let workspace = workspaces.entry(workspace_id).or_insert("".to_string());
 
-            if fullscreen && !self.args.dedup {
+            if fullscreen && should_dedup {
+                *workspace = workspace.replace(&icon, &format!("[{}]", &icon));
+            } else if fullscreen && !should_dedup {
                 *workspace = format!("{} [{}]", workspace, icon);
-            } else if fullscreen && self.args.dedup && is_dup {
-                *workspace =
-                    workspace.replace(icon.as_str(), format!("[{}]", icon.as_str()).as_str());
-            } else if self.args.dedup && is_dup {
-                *workspace = workspace.to_string();
-            } else {
+            } else if !should_dedup {
                 *workspace = format!("{} {}", workspace, icon);
             }
         }
