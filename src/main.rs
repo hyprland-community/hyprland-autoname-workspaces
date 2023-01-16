@@ -33,9 +33,11 @@ impl Config {
         if !cfg_path.exists() {
             let mut config_file = File::create(&cfg_path).unwrap();
             let default_icons = r#"# Add your icons mapping
-DEFAULT = ""
-kitty = "term"
-firefox = "browser"
+# Take care to lowercase app name
+# and use double quote the key and the value
+"DEFAULT" = ""
+"kitty" = "term"
+"firefox" = "browser"
             "#;
             write!(&mut config_file, "{}", default_icons).unwrap();
             println!("Default config created in {:?}", cfg_path);
