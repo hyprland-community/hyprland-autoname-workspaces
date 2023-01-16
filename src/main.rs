@@ -33,7 +33,6 @@ impl Config {
         if !cfg_path.exists() {
             let mut config_file = File::create(&cfg_path).unwrap();
             let default_icons = r#"# Add your icons mapping
-# note: Replace "." by "-" in class name
 DEFAULT = ""
 kitty = "term"
 firefox = "browser"
@@ -103,8 +102,8 @@ impl Renamer {
             .collect::<HashMap<_, _>>();
 
         for client in clients.collect().iter() {
+            let class = client.clone().class.to_lowercase();
             let fullscreen = client.fullscreen;
-            let class = &client.class;
             let icon = self.class_to_icon(&class).to_string();
             let workspace_id = client.clone().workspace.id;
             let is_dup = !deduper.insert(format!("{}-{}", workspace_id.clone(), icon));
@@ -164,11 +163,10 @@ impl Renamer {
     }
 
     fn class_to_icon(&self, class: &str) -> &str {
-        let key = &class.to_lowercase().replace(".", "-").replace(" ", "-");
         return self
             .cfg
             .icons
-            .get(key)
+            .get(class)
             .unwrap_or_else(|| self.cfg.icons.get("DEFAULT").unwrap());
     }
 }
