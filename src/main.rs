@@ -1,3 +1,4 @@
+use anyhow::Result;
 use clap::Parser;
 use core::str;
 use hyprland::data::Clients;
@@ -8,8 +9,10 @@ use hyprland::shared::{HResult, WorkspaceType};
 use signal_hook::consts::{SIGINT, SIGTERM};
 use signal_hook::iterator::Signals;
 use std::collections::{HashMap, HashSet};
+use std::error::Error;
 use std::fs;
 use std::fs::File;
+use std::io::ErrorKind;
 use std::io::Write;
 use std::sync::{Arc, Mutex};
 use std::{process, thread};
@@ -48,7 +51,7 @@ impl Config {
     }
 }
 
-fn main() -> HResult<()> {
+fn main() -> Result<(), Box<dyn Error>> {
     let cfg = Config::new();
     // Init
     let renamer = Arc::new(Renamer::new(cfg, Args::parse()));
@@ -65,7 +68,9 @@ fn main() -> HResult<()> {
     });
 
     // Run on window events
-    renamer.start_listeners()
+    renamer.start_listeners()?;
+
+    Ok(())
 }
 
 struct Renamer {
@@ -95,16 +100,18 @@ impl Renamer {
         };
     }
 
-    fn renameworkspace(&self) {
+    fn renameworkspace(&self) -> Result<(), Box<dyn Error>> {
         let clients = Clients::get().unwrap();
         let mut deduper: HashSet<String> = HashSet::new();
-        let mut workspaces = self
-            .workspaces
-            .lock()
-            .unwrap()
-            .iter()
-            .map(|&c| (c, "".to_string()))
-            .collect::<HashMap<_, _>>();
+        let mut workspaces: Option<HashMap<i32, String>> = match self.workspaces.lock() {
+            Ok(value) => Some(
+                value
+                    .iter()
+                    .map(|&c| (c, "".to_string()))
+                    .collect::<HashMap<_, _>>(),
+            ),
+            Err(err) => None,
+        };
 
         for client in clients.into_iter() {
             let class = client.clone().class.to_lowercase();
@@ -119,7 +126,10 @@ impl Renamer {
                 .unwrap()
                 .insert(client.clone().workspace.id);
 
-            let workspace = workspaces.entry(workspace_id).or_insert("".to_string());
+            let workspace = workspaces
+                .expect("no workspace")
+                .entry(workspace_id)
+                .or_insert("".to_string());
 
             if fullscreen && should_dedup {
                 *workspace = workspace.replace(&icon, &format!("[{}]", &icon));
@@ -130,54 +140,62 @@ impl Renamer {
             }
         }
 
-        for (id, apps) in workspaces.clone().into_iter() {
-            rename_cmd(id, &apps);
+        workspaces?
+            .clone()
+            .into_iter()
+            .map(|(id, apps)| rename_cmd(id, &apps.clone()));
+
+        Ok(())
+    }
+
+    fn reset_workspaces(&self) -> Result<(), Box<dyn Error>> {
+        match self.workspaces.lock() {
+            Ok(val) => val.iter().map(|&id| rename_cmd(id, "")).collect(),
+            Err(err) => Err(err.into()),
+            _ => Ok(()),
         }
     }
 
-    fn reset_workspaces(&self) {
-        for &id in self.workspaces.lock().unwrap().iter() {
-            rename_cmd(id, "");
-        }
-    }
-
-    fn start_listeners(self: &Arc<Self>) -> HResult<()> {
+    fn start_listeners(self: &Arc<Self>) -> anyhow::Result<()> {
         let mut event_listener = EventListener::new();
 
         let this = self.clone();
-        event_listener.add_window_open_handler(move |_, _| this.renameworkspace());
+        event_listener.add_window_open_handler(move |_, _| this.renameworkspace()?);
         let this = self.clone();
-        event_listener.add_window_moved_handler(move |_, _| this.renameworkspace());
+        event_listener.add_window_moved_handler(move |_, _| this.renameworkspace()?);
         let this = self.clone();
-        event_listener.add_window_close_handler(move |_, _| this.renameworkspace());
+        event_listener.add_window_close_handler(move |_, _| this.renameworkspace()?);
         let this = self.clone();
-        event_listener.add_workspace_added_handler(move |_, _| this.renameworkspace());
+        event_listener.add_workspace_added_handler(move |_, _| this.renameworkspace()?);
         let this = self.clone();
-        event_listener.add_workspace_moved_handler(move |_, _| this.renameworkspace());
+        event_listener.add_workspace_moved_handler(move |_, _| this.renameworkspace()?);
         let this = self.clone();
-        event_listener.add_workspace_change_handler(move |_, _| this.renameworkspace());
+        event_listener.add_workspace_change_handler(move |_, _| this.renameworkspace()?);
         let this = self.clone();
-        event_listener.add_fullscreen_state_change_handler(move |_, _| this.renameworkspace());
+        event_listener.add_fullscreen_state_change_handler(move |_, _| this.renameworkspace()?);
         let this = self.clone();
         event_listener.add_workspace_destroy_handler(move |wt, _| {
             this.renameworkspace();
             this.removeworkspace(wt);
         });
 
-        event_listener.start_listener()
+        event_listener.start_listener()?
     }
 
     fn class_to_icon(&self, class: &str) -> &str {
-        return self
-            .cfg
-            .icons
-            .get(class)
-            .unwrap_or_else(|| self.cfg.icons.get("DEFAULT").unwrap());
+        self.cfg.icons.get(class).unwrap_or_else(|| {
+            self.cfg
+                .icons
+                .get("DEFAULT")
+                .unwrap_or_else(|| &"no default icon".to_owned())
+        })
     }
 }
 
-fn rename_cmd(id: i32, apps: &str) {
+fn rename_cmd(id: i32, apps: &str) -> Result<(), Box<dyn Error>> {
     let text = format!("{}:{}", id.clone(), apps);
     let content = (!apps.is_empty()).then_some(text.as_str());
-    hyprland::dispatch!(RenameWorkspace, id, content).unwrap();
+    hyprland::dispatch!(RenameWorkspace, id, content)?;
+
+    Ok(())
 }
