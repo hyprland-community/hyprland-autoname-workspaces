@@ -86,9 +86,12 @@ impl Renamer {
 
     fn removeworkspace(&self, wt: WorkspaceType) {
         match wt {
-            WorkspaceType::Unnamed(x) => self.workspaces.lock().unwrap().remove(&x),
+            WorkspaceType::Regular(x) => self
+                .workspaces
+                .lock()
+                .unwrap()
+                .remove(&x.parse::<i32>().unwrap()),
             WorkspaceType::Special(_) => false,
-            WorkspaceType::Named(_) => false,
         };
     }
 
@@ -103,7 +106,7 @@ impl Renamer {
             .map(|&c| (c, "".to_string()))
             .collect::<HashMap<_, _>>();
 
-        for client in clients.collect().iter() {
+        for client in clients.into_iter() {
             let class = client.clone().class.to_lowercase();
             let fullscreen = client.fullscreen;
             let icon = self.class_to_icon(&class).to_string();
