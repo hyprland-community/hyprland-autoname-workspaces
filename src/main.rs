@@ -41,8 +41,8 @@ impl Config {
 "kitty" = "term"
 "firefox" = "browser"
             "#;
-            write!(&mut config_file, "{}", default_icons).expect("Can't write default config file");
-            println!("Default config created in {:?}", cfg_path);
+            write!(&mut config_file, "{default_icons}").expect("Can't write default config file");
+            println!("Default config created in {cfg_path:?}");
         }
         let config = fs::read_to_string(cfg_path).expect("Should have been able to read the file");
         let icons: HashMap<String, String> =
@@ -108,7 +108,7 @@ impl Renamer {
             .map(|&c| (c, "".to_string()))
             .collect::<HashMap<_, _>>();
 
-        for client in clients.into_iter() {
+        for client in clients {
             let class = client.clone().class.to_lowercase();
             let fullscreen = client.fullscreen;
             let icon = self.class_to_icon(&class);
@@ -123,9 +123,9 @@ impl Renamer {
             if fullscreen && should_dedup {
                 *workspace = workspace.replace(&icon, &format!("[{}]", &icon));
             } else if fullscreen && !should_dedup {
-                *workspace = format!("{} [{}]", workspace, icon);
+                *workspace = format!("{workspace} [{icon}]");
             } else if !should_dedup {
-                *workspace = format!("{} {}", workspace, icon);
+                *workspace = format!("{workspace} {icon}");
             }
         }
 
@@ -177,12 +177,7 @@ impl Renamer {
         self.cfg
             .icons
             .get(class)
-            .unwrap_or_else(|| {
-                self.cfg
-                    .icons
-                    .get("DEFAULT")
-                    .unwrap_or_else(|| &default_value)
-            })
+            .unwrap_or(self.cfg.icons.get("DEFAULT").unwrap_or(&default_value))
             .into()
     }
 }
