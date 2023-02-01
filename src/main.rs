@@ -35,8 +35,8 @@ impl Config {
         if !cfg_path.exists() {
             let mut config_file = File::create(&cfg_path).expect("Can't create config dir");
             let default_icons = r#"# Add your icons mapping
-# Take care to lowercase app name
-# and use double quote the key and the value
+# use double quote the key and the value
+# take class name from 'hyprctl clients'
 "DEFAULT" = ""
 "kitty" = "term"
 "firefox" = "browser"
@@ -51,26 +51,31 @@ impl Config {
     }
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() {
     let cfg = Config::new();
     // Init
     let renamer = Arc::new(Renamer::new(cfg, Args::parse()));
-    _ = renamer.renameworkspace();
+    renamer
+        .renameworkspace()
+        .expect("App can't rename workspaces on start");
 
     // Handle unix signals
-    let mut signals = Signals::new([SIGINT, SIGTERM])?;
+    let mut signals = Signals::new([SIGINT, SIGTERM]).expect("Can't listen on SIGINT or SIGTERM");
     let final_renamer = renamer.clone();
     thread::spawn(move || {
         for _ in signals.forever() {
-            _ = final_renamer.reset_workspaces();
+            match final_renamer.reset_workspaces() {
+                Err(_) => println!("Workspaces name can't be cleared"),
+                Ok(_) => println!("Workspaces name cleared, bye"),
+            };
             process::exit(0);
         }
     });
 
     // Run on window events
-    renamer.start_listeners()?;
-
-    Ok(())
+    renamer
+        .start_listeners()
+        .expect("Can't listen Hyprland events, sorry");
 }
 
 struct Renamer {
@@ -109,14 +114,14 @@ impl Renamer {
             .collect::<HashMap<_, _>>();
 
         for client in clients {
-            let class = client.clone().class.to_lowercase();
+            let class = client.class;
             let fullscreen = client.fullscreen;
             let icon = self.class_to_icon(&class);
-            let workspace_id = client.clone().workspace.id;
-            let is_dup = !deduper.insert(format!("{}-{}", workspace_id.clone(), icon));
+            let workspace_id = client.workspace.id;
+            let is_dup = !deduper.insert(format!("{workspace_id}-{icon}"));
             let should_dedup = self.args.dedup && is_dup;
 
-            self.workspaces.lock()?.insert(client.clone().workspace.id);
+            self.workspaces.lock()?.insert(client.workspace.id);
 
             let workspace = workspaces.entry(workspace_id).or_insert("".to_string());
 
@@ -130,9 +135,8 @@ impl Renamer {
         }
 
         workspaces
-            .clone()
             .iter()
-            .try_for_each(|(&id, apps)| rename_cmd(id, &apps.clone()))?;
+            .try_for_each(|(&id, apps)| rename_cmd(id, &apps))?;
 
         Ok(())
     }
@@ -183,7 +187,7 @@ impl Renamer {
 }
 
 fn rename_cmd(id: i32, apps: &str) -> Result<(), Box<dyn Error>> {
-    let text = format!("{}:{}", id.clone(), apps);
+    let text = format!("{id}:{apps}");
     let content = (!apps.is_empty()).then_some(text.as_str());
     hyprland::dispatch!(RenameWorkspace, id, content)?;
 
