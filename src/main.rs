@@ -1,4 +1,3 @@
-use anyhow::Result;
 use clap::Parser;
 use core::str;
 use hyprland::data::Clients;
@@ -6,6 +5,7 @@ use hyprland::dispatch::*;
 use hyprland::event_listener::EventListenerMutable as EventListener;
 use hyprland::prelude::*;
 use hyprland::shared::WorkspaceType;
+use inotify::{Inotify, WatchMask};
 use signal_hook::consts::{SIGINT, SIGTERM};
 use signal_hook::iterator::Signals;
 use std::collections::{HashMap, HashSet};
@@ -13,10 +13,11 @@ use std::error::Error;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use std::{process, thread};
 
-#[derive(Parser, Debug)]
+#[derive(Parser)]
 struct Args {
     #[arg(short, long)]
     dedup: bool,
@@ -24,16 +25,16 @@ struct Args {
 
 struct Config {
     icons: HashMap<String, String>,
+    cfg_path: PathBuf,
 }
 
 impl Config {
-    fn new() -> Config {
-        let xdg_dirs = xdg::BaseDirectories::with_prefix("hyprland-autoname-workspaces").unwrap();
-        let cfg_path = xdg_dirs
-            .place_config_file("config.toml")
-            .expect("Cannot create configuration directory");
+    fn new() -> Result<Config, Box<dyn Error>> {
+        let mut config_file: File;
+        let xdg_dirs = xdg::BaseDirectories::with_prefix("hyprland-autoname-workspaces")?;
+        let cfg_path = xdg_dirs.place_config_file("config.toml")?;
         if !cfg_path.exists() {
-            let mut config_file = File::create(&cfg_path).expect("Can't create config dir");
+            config_file = File::create(&cfg_path)?;
             let default_icons = r#"# Add your icons mapping
 # use double quote the key and the value
 # take class name from 'hyprctl clients'
@@ -41,18 +42,19 @@ impl Config {
 "kitty" = "term"
 "firefox" = "browser"
             "#;
-            write!(&mut config_file, "{default_icons}").expect("Can't write default config file");
+            write!(&mut config_file, "{default_icons}")?;
             println!("Default config created in {cfg_path:?}");
         }
-        let config = fs::read_to_string(cfg_path).expect("Should have been able to read the file");
+        let config = fs::read_to_string(cfg_path.clone())?;
         let icons: HashMap<String, String> =
-            toml::from_str(&config).expect("Can't read config file");
-        Config { icons }
+            toml::from_str(&config).map_err(|e| format!("Unable to parse: {e:?}"))?;
+        Ok(Config { cfg_path, icons })
     }
 }
 
 fn main() {
-    let cfg = Config::new();
+    let cfg = Config::new().expect("Unable to read config");
+
     // Init
     let renamer = Arc::new(Renamer::new(cfg, Args::parse()));
     renamer
@@ -72,35 +74,31 @@ fn main() {
         }
     });
 
-    // Run on window events
+    let config_renamer = renamer.clone();
+    thread::spawn(move || {
+        config_renamer
+            .watch_config_changes()
+            .expect("Unable to watch for config changes")
+    });
+
     renamer
         .start_listeners()
-        .expect("Can't listen Hyprland events, sorry");
+        .expect("Can't listen Hyprland events on reload, sorry");
 }
 
 struct Renamer {
     workspaces: Mutex<HashSet<i32>>,
-    cfg: Config,
+    cfg: Mutex<Config>,
     args: Args,
 }
 
 impl Renamer {
     fn new(cfg: Config, args: Args) -> Self {
-        let workspaces = Mutex::new(HashSet::new());
         Renamer {
-            workspaces,
-            cfg,
+            workspaces: Mutex::new(HashSet::new()),
+            cfg: Mutex::new(cfg),
             args,
         }
-    }
-
-    fn removeworkspace(&self, wt: WorkspaceType) -> Result<(), Box<dyn Error + '_>> {
-        match wt {
-            WorkspaceType::Regular(x) => self.workspaces.lock()?.remove(&x.parse::<i32>()?),
-            WorkspaceType::Special(_) => false,
-        };
-
-        Ok(())
     }
 
     fn renameworkspace(&self) -> Result<(), Box<dyn Error + '_>> {
@@ -115,18 +113,20 @@ impl Renamer {
 
         for client in clients {
             let class = client.class;
-            let fullscreen = client.fullscreen;
-            let icon = self.class_to_icon(&class);
             let workspace_id = client.workspace.id;
+            let icon = self.class_to_icon(&class);
+            let fullscreen = client.fullscreen;
             let is_dup = !deduper.insert(format!("{workspace_id}-{icon}"));
             let should_dedup = self.args.dedup && is_dup;
 
             self.workspaces.lock()?.insert(client.workspace.id);
 
-            let workspace = workspaces.entry(workspace_id).or_insert("".to_string());
+            let workspace = workspaces
+                .entry(workspace_id)
+                .or_insert_with(|| "".to_string());
 
             if fullscreen && should_dedup {
-                *workspace = workspace.replace(&icon, &format!("[{}]", &icon));
+                *workspace = workspace.replace(&icon, &format!("[{icon}]"));
             } else if fullscreen && !should_dedup {
                 *workspace = format!("{workspace} [{icon}]");
             } else if !should_dedup {
@@ -136,7 +136,7 @@ impl Renamer {
 
         workspaces
             .iter()
-            .try_for_each(|(&id, apps)| rename_cmd(id, &apps))?;
+            .try_for_each(|(&id, apps)| rename_cmd(id, apps))?;
 
         Ok(())
     }
@@ -176,13 +176,48 @@ impl Renamer {
         Ok(())
     }
 
+    fn watch_config_changes(&self) -> Result<(), Box<dyn Error + '_>> {
+        // Watch for modify and close events.
+        let mut inotify = Inotify::init()?;
+
+        inotify.add_watch(&self.cfg.lock()?.cfg_path, WatchMask::MODIFY)?;
+        let mut buffer = [0; 1024];
+
+        loop {
+            let events = inotify.read_events_blocking(&mut buffer)?;
+            for _ in events {
+                println!("Reloading config !");
+                // Clojure to force quick release of lock
+                {
+                    match Config::new() {
+                        Ok(config) => self.cfg.lock()?.icons = config.icons,
+                        Err(err) => println!("Unable to reload config: {err:?}"),
+                    }
+                }
+
+                // Handle event
+                // Run on window events
+                _ = self.renameworkspace();
+            }
+        }
+    }
+
     fn class_to_icon(&self, class: &str) -> String {
         let default_value = String::from("no default icon");
-        self.cfg
-            .icons
+        let cfg = self.cfg.lock().expect("Unable to obtain lock for config");
+        cfg.icons
             .get(class)
-            .unwrap_or(self.cfg.icons.get("DEFAULT").unwrap_or(&default_value))
+            .unwrap_or_else(|| cfg.icons.get("DEFAULT").unwrap_or(&default_value))
             .into()
+    }
+
+    fn removeworkspace(&self, wt: WorkspaceType) -> Result<(), Box<dyn Error + '_>> {
+        match wt {
+            WorkspaceType::Regular(x) => self.workspaces.lock()?.remove(&x.parse::<i32>()?),
+            WorkspaceType::Special(_) => false,
+        };
+
+        Ok(())
     }
 }
 
