@@ -3,8 +3,13 @@ name = "hyprland-autoname-workspaces"
 authors = ["Cyril Levis", "Maxim Baz"]
 version = "0.2.10"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+categories = ["desktop-application"]
+keywords = ["linux", "desktop-application", "hyprland","waybar","wayland"]
+description = "This app automatically rename workspaces with icons of started applications."
+readme = "README.md"
+license = "ISC"
+homepage = "https://github.com/cyrinux/hyprland-autoname-workspaces"
+repository = "https://github.com/cyrinux/hyprland-autoname-workspaces"
 
 [dependencies]
 clap = { version = "4.1.1", features = ["derive"] }
