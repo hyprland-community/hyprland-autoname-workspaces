@@ -6,7 +6,13 @@ This app automatically rename workspaces with icons of started applications.
 
 # Install
 
-Available as AUR package under the name `hyprland-autoname-workspaces-git`.
+## AUR
+
+Available as AUR package under the program name `hyprland-autoname-workspaces-git`.
+
+## Cargo
+
+cargo install --locked hyprland-autoname-workspaces
 
 # Usage
 
