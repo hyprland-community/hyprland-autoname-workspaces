@@ -1,5 +1,4 @@
 use clap::Parser;
-use core::str;
 use hyprland::data::Clients;
 use hyprland::dispatch::*;
 use hyprland::event_listener::EventListenerMutable as EventListener;
@@ -177,28 +176,26 @@ impl Renamer {
     }
 
     fn watch_config_changes(&self) -> Result<(), Box<dyn Error + '_>> {
-        // Watch for modify and close events.
-        let mut inotify = Inotify::init()?;
-
-        inotify.add_watch(&self.cfg.lock()?.cfg_path, WatchMask::MODIFY)?;
-        let mut buffer = [0; 1024];
-
         loop {
-            let events = inotify.read_events_blocking(&mut buffer)?;
-            for _ in events {
-                println!("Reloading config !");
-                // Clojure to force quick release of lock
-                {
-                    match Config::new() {
-                        Ok(config) => self.cfg.lock()?.icons = config.icons,
-                        Err(err) => println!("Unable to reload config: {err:?}"),
-                    }
-                }
+            // Watch for modify events.
+            let mut notify = Inotify::init()?;
 
-                // Handle event
-                // Run on window events
-                _ = self.renameworkspace();
+            notify.add_watch(&self.cfg.lock()?.cfg_path, WatchMask::MODIFY)?;
+            let mut buffer = [0; 1024];
+            notify.read_events_blocking(&mut buffer)?.last();
+
+            println!("Reloading config !");
+            // Clojure to force quick release of lock
+            {
+                match Config::new() {
+                    Ok(config) => self.cfg.lock()?.icons = config.icons,
+                    Err(err) => println!("Unable to reload config: {err:?}"),
+                }
             }
+
+            // Handle event
+            // Run on window events
+            _ = self.renameworkspace();
         }
     }
 
