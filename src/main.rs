@@ -18,6 +18,7 @@ use std::{process, thread};
 
 #[derive(Parser)]
 struct Args {
+    /// Deduplicate icons
     #[arg(short, long)]
     dedup: bool,
 }
