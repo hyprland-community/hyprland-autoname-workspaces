@@ -21,9 +21,6 @@ struct Args {
     /// Deduplicate icons
     #[arg(short, long)]
     dedup: bool,
-    /// Case insensitive
-    #[arg(short, long)]
-    icase: bool,
 }
 
 struct Config {
@@ -32,7 +29,7 @@ struct Config {
 }
 
 impl Config {
-    fn new(args: &Args) -> Result<Config, Box<dyn Error>> {
+    fn new() -> Result<Config, Box<dyn Error>> {
         let mut config_file: File;
         let xdg_dirs = xdg::BaseDirectories::with_prefix("hyprland-autoname-workspaces")?;
         let cfg_path = xdg_dirs.place_config_file("config.toml")?;
@@ -49,24 +46,22 @@ impl Config {
             println!("Default config created in {cfg_path:?}");
         }
         let config = fs::read_to_string(cfg_path.clone())?;
-        let mut icons: HashMap<String, String> =
+        let icons: HashMap<String, String> =
             toml::from_str(&config).map_err(|e| format!("Unable to parse: {e:?}"))?;
-        if args.icase {
-            icons = icons
-                .iter()
-                .map(|(k, v)| (k.to_uppercase(), v.clone()))
-                .collect();
-        }
+        let icons_uppercase = icons
+            .iter()
+            .map(|(k, v)| (k.to_uppercase(), v.clone()))
+            .collect::<HashMap<_, _>>();
+        let icons = icons.into_iter().chain(icons_uppercase).collect();
         Ok(Config { cfg_path, icons })
     }
 }
 
 fn main() {
-    let args = Args::parse();
-    let cfg = Config::new(&args).expect("Unable to read config");
+    let cfg = Config::new().expect("Unable to read config");
 
     // Init
-    let renamer = Arc::new(Renamer::new(cfg, args));
+    let renamer = Arc::new(Renamer::new(cfg, Args::parse()));
     renamer
         .renameworkspace()
         .expect("App can't rename workspaces on start");
@@ -201,7 +196,7 @@ impl Renamer {
             println!("Reloading config !");
             // Clojure to force quick release of lock
             {
-                match Config::new(&self.args) {
+                match Config::new() {
                     Ok(config) => self.cfg.lock()?.icons = config.icons,
                     Err(err) => println!("Unable to reload config: {err:?}"),
                 }
@@ -216,13 +211,9 @@ impl Renamer {
     fn class_to_icon(&self, class: &str) -> String {
         let default_value = String::from("no default icon");
         let cfg = self.cfg.lock().expect("Unable to obtain lock for config");
-        let class_string = if self.args.icase {
-            class.to_uppercase()
-        } else {
-            class.to_string()
-        };
         cfg.icons
-            .get(&class_string)
+            .get(class)
+            .or_else(|| cfg.icons.get(class.to_uppercase().as_str()))
             .unwrap_or_else(|| cfg.icons.get("DEFAULT").unwrap_or(&default_value))
             .into()
     }
