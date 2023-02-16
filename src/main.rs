@@ -123,6 +123,9 @@ impl Renamer {
 
         for client in clients {
             let class = client.class;
+            if class.is_empty() {
+                continue;
+            }
             let workspace_id = client.workspace.id;
             let icon = self.class_to_icon(&class);
             let fullscreen = client.fullscreen;
