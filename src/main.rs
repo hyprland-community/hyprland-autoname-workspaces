@@ -29,7 +29,7 @@ struct Config {
 }
 
 impl Config {
-    fn new(_args: &Args) -> Result<Config, Box<dyn Error>> {
+    fn new() -> Result<Config, Box<dyn Error>> {
         let mut config_file: File;
         let xdg_dirs = xdg::BaseDirectories::with_prefix("hyprland-autoname-workspaces")?;
         let cfg_path = xdg_dirs.place_config_file("config.toml")?;
@@ -58,11 +58,10 @@ impl Config {
 }
 
 fn main() {
-    let args = Args::parse();
-    let cfg = Config::new(&args).expect("Unable to read config");
+    let cfg = Config::new().expect("Unable to read config");
 
     // Init
-    let renamer = Arc::new(Renamer::new(cfg, args));
+    let renamer = Arc::new(Renamer::new(cfg, Args::parse()));
     renamer
         .renameworkspace()
         .expect("App can't rename workspaces on start");
@@ -197,7 +196,7 @@ impl Renamer {
             println!("Reloading config !");
             // Clojure to force quick release of lock
             {
-                match Config::new(&self.args) {
+                match Config::new() {
                     Ok(config) => self.cfg.lock()?.icons = config.icons,
                     Err(err) => println!("Unable to reload config: {err:?}"),
                 }
