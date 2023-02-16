@@ -209,7 +209,7 @@ dependencies = [
 
 [[package]]
 name = "hyprland-autoname-workspaces"
-version = "0.2.12"
+version = "0.2.13"
 dependencies = [
  "clap",
  "hyprland",
