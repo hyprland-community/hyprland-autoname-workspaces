@@ -12,7 +12,9 @@ Available as AUR package under the program name `hyprland-autoname-workspaces-gi
 
 ## Cargo
 
+```bash
 cargo install --locked hyprland-autoname-workspaces
+```
 
 # Usage
 
