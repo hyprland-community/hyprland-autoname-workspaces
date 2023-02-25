@@ -1,4 +1,4 @@
-# hyprland-autoname-workspaces
+# 🪟 hyprland-autoname-workspaces 
 
 This is a toy for Hyprland.
 
