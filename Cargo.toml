@@ -13,7 +13,7 @@ repository = "https://github.com/cyrinux/hyprland-autoname-workspaces"
 
 [dependencies]
 clap = { version = "4.1.1", features = ["derive"] }
-hyprland = "0.3.0"
+hyprland = { git = "https://github.com/hyprland-community/hyprland-rs" }
 signal-hook = "0.3.14"
 toml = { version = "0.5.10", features = ["indexmap", "preserve_order"] }
 xdg = "2.4.1"
