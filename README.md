@@ -2,7 +2,7 @@
 
 This is a toy for Hyprland.
 
-This app automatically rename workspaces with icons of started applications - tested with waybar.
+This app automatically rename workspaces with icons of started applications - tested with *waybar*.
 
 # Install
 
