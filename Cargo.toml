@@ -1,7 +1,7 @@
 [package]
 name = "hyprland-autoname-workspaces"
 authors = ["Cyril Levis", "Maxim Baz"]
-version = "0.2.14"
+version = "0.2.15"
 edition = "2021"
 categories = ["gui"]
 keywords = ["linux", "desktop-application", "hyprland","waybar","wayland"]
@@ -18,3 +18,4 @@ signal-hook = "0.3.14"
 toml = { version = "0.5.10", features = ["indexmap", "preserve_order"] }
 xdg = "2.4.1"
 inotify = "0.10.0"
+rustc-hash = "1.1.0"

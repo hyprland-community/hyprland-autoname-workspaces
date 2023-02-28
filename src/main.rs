@@ -5,9 +5,9 @@ use hyprland::event_listener::EventListenerMutable as EventListener;
 use hyprland::prelude::*;
 use hyprland::shared::WorkspaceType;
 use inotify::{Inotify, WatchMask};
+use rustc_hash::{FxHashMap, FxHashSet};
 use signal_hook::consts::{SIGINT, SIGTERM};
 use signal_hook::iterator::Signals;
-use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::fs;
 use std::fs::File;
@@ -24,7 +24,7 @@ struct Args {
 }
 
 struct Config {
-    icons: HashMap<String, String>,
+    icons: FxHashMap<String, String>,
     cfg_path: PathBuf,
 }
 
@@ -46,12 +46,12 @@ impl Config {
             println!("Default config created in {cfg_path:?}");
         }
         let config = fs::read_to_string(cfg_path.clone())?;
-        let icons: HashMap<String, String> =
+        let icons: FxHashMap<String, String> =
             toml::from_str(&config).map_err(|e| format!("Unable to parse: {e:?}"))?;
         let icons_uppercase = icons
             .iter()
             .map(|(k, v)| (k.to_uppercase(), v.clone()))
-            .collect::<HashMap<_, _>>();
+            .collect::<FxHashMap<_, _>>();
         let icons = icons.into_iter().chain(icons_uppercase).collect();
         Ok(Config { cfg_path, icons })
     }
@@ -92,7 +92,7 @@ fn main() {
 }
 
 struct Renamer {
-    workspaces: Mutex<HashSet<i32>>,
+    workspaces: Mutex<FxHashSet<i32>>,
     cfg: Mutex<Config>,
     args: Args,
 }
@@ -100,7 +100,7 @@ struct Renamer {
 impl Renamer {
     fn new(cfg: Config, args: Args) -> Self {
         Renamer {
-            workspaces: Mutex::new(HashSet::new()),
+            workspaces: Mutex::new(FxHashSet::default()),
             cfg: Mutex::new(cfg),
             args,
         }
@@ -108,13 +108,13 @@ impl Renamer {
 
     fn renameworkspace(&self) -> Result<(), Box<dyn Error + '_>> {
         let clients = Clients::get().unwrap();
-        let mut deduper: HashSet<String> = HashSet::new();
+        let mut deduper: FxHashSet<String> = FxHashSet::default();
         let mut workspaces = self
             .workspaces
             .lock()?
             .iter()
             .map(|&c| (c, "".to_string()))
-            .collect::<HashMap<_, _>>();
+            .collect::<FxHashMap<_, _>>();
 
         for client in clients {
             let class = client.class;
