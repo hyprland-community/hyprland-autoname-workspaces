@@ -312,12 +312,13 @@ dependencies = [
 
 [[package]]
 name = "hyprland-autoname-workspaces"
-version = "0.2.14"
+version = "0.3.0"
 dependencies = [
  "clap",
  "hyprland",
  "inotify",
  "rustc-hash",
+ "serde",
  "signal-hook",
  "toml",
  "xdg",
