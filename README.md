@@ -19,19 +19,19 @@ Available as AUR package under the program name `hyprland-autoname-workspaces-gi
 ### Cargo
 
 ```bash
-cargo install --locked hyprland-autoname-workspaces
+$ cargo install --locked hyprland-autoname-workspaces
 ```
 
 ## Usage
 
 ```bash
-$ ./hyprland-autoname-workspaces
+$ hyprland-autoname-workspaces
 ```
 
 or to dedup icon
 
 ```bash
-$ ./hyprland-autoname-workspaces --dedup
+$ hyprland-autoname-workspaces --dedup
 ```
 
 ## Configuration
