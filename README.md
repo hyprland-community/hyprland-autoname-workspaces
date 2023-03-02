@@ -36,7 +36,10 @@ $ hyprland-autoname-workspaces --dedup
 
 ## Configuration
 
-Edit the mapping of applications class -> icon in the config file `~/.config/hyprland-autoname-workspaces/config.toml`.
+In the config file `~/.config/hyprland-autoname-workspaces/config.toml`.
+Edit the mapping of applications with `class = "icon"` in the `[icons]` part.
+You can also exclude applications in the `[exclude]` with `class = ""` part.
+
 No need to restart the applications then, there is an autoreload.
 
 _Hint_: You can use glyphsearch and copy the unicode icon of your font for example https://glyphsearch.com/?query=book&copy=unicode
