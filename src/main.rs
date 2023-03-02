@@ -142,6 +142,7 @@ impl Renamer {
         }
     }
 
+    #[inline(always)]
     fn renameworkspace(&self) -> Result<(), Box<dyn Error + '_>> {
         let clients = Clients::get().unwrap();
         let mut deduper: FxHashSet<String> = FxHashSet::default();
@@ -206,20 +207,18 @@ impl Renamer {
     fn start_listeners(self: &Arc<Self>) -> Result<(), Box<dyn Error>> {
         let mut event_listener = EventListener::new();
 
-        let this = self.clone();
-        event_listener.add_window_open_handler(move |_, _| _ = this.renameworkspace());
-        let this = self.clone();
-        event_listener.add_window_moved_handler(move |_, _| _ = this.renameworkspace());
-        let this = self.clone();
-        event_listener.add_window_close_handler(move |_, _| _ = this.renameworkspace());
-        let this = self.clone();
-        event_listener.add_workspace_added_handler(move |_, _| _ = this.renameworkspace());
-        let this = self.clone();
-        event_listener.add_workspace_moved_handler(move |_, _| _ = this.renameworkspace());
-        let this = self.clone();
-        event_listener.add_workspace_change_handler(move |_, _| _ = this.renameworkspace());
-        let this = self.clone();
-        event_listener.add_fullscreen_state_change_handler(move |_, _| _ = this.renameworkspace());
+        rename_workspace_if!(
+            self,
+            event_listener,
+            add_window_open_handler,
+            add_window_close_handler,
+            add_window_moved_handler,
+            add_workspace_added_handler,
+            add_workspace_moved_handler,
+            add_workspace_change_handler,
+            add_fullscreen_state_change_handler
+        );
+
         let this = self.clone();
         event_listener.add_workspace_destroy_handler(move |wt, _| {
             _ = this.renameworkspace();
@@ -231,6 +230,7 @@ impl Renamer {
         Ok(())
     }
 
+    #[inline(always)]
     fn watch_config_changes(&self) -> Result<(), Box<dyn Error + '_>> {
         loop {
             // Watch for modify events.
@@ -255,6 +255,7 @@ impl Renamer {
         }
     }
 
+    #[inline(always)]
     fn class_to_icon(&self, class: &str) -> String {
         let default_value = String::from("no default icon");
         let cfg = &self.cfg.lock().expect("Unable to obtain lock for config");
@@ -266,6 +267,7 @@ impl Renamer {
             .into()
     }
 
+    #[inline(always)]
     fn removeworkspace(&self, wt: WorkspaceType) -> Result<(), Box<dyn Error + '_>> {
         match wt {
             WorkspaceType::Regular(x) => self.workspaces.lock()?.remove(&x.parse::<i32>()?),
@@ -276,10 +278,21 @@ impl Renamer {
     }
 }
 
+#[inline(always)]
 fn rename_cmd(id: i32, apps: &str) -> Result<(), Box<dyn Error>> {
     let text = format!("{id}:{apps}");
     let content = (!apps.is_empty()).then_some(text.as_str());
     hyprland::dispatch!(RenameWorkspace, id, content)?;
 
     Ok(())
+}
+
+#[macro_export]
+macro_rules! rename_workspace_if{
+    ( $self: ident, $ev: ident, $( $x:ident ), * ) => {
+        $(
+        let this = $self.clone();
+        $ev.$x(move |_, _| _ = this.renameworkspace());
+        )*
+    };
 }
