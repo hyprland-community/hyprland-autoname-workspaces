@@ -6,6 +6,7 @@ use hyprland::prelude::*;
 use hyprland::shared::WorkspaceType;
 use inotify::{Inotify, WatchMask};
 use rustc_hash::{FxHashMap, FxHashSet};
+use serde::Deserialize;
 use signal_hook::consts::{SIGINT, SIGTERM};
 use signal_hook::iterator::Signals;
 use std::error::Error;
@@ -24,8 +25,15 @@ struct Args {
 }
 
 struct Config {
-    icons: FxHashMap<String, String>,
+    config: ConfigFile,
     cfg_path: PathBuf,
+}
+
+#[derive(Deserialize)]
+struct ConfigFile {
+    icons: FxHashMap<String, String>,
+    #[serde(default)]
+    exclude: FxHashMap<String, String>,
 }
 
 impl Config {
@@ -35,25 +43,53 @@ impl Config {
         let cfg_path = xdg_dirs.place_config_file("config.toml")?;
         if !cfg_path.exists() {
             config_file = File::create(&cfg_path)?;
-            let default_icons = r#"# Add your icons mapping
+            let default_config = r#"[icons]
+# Add your icons mapping
 # use double quote the key and the value
 # take class name from 'hyprctl clients'
 "DEFAULT" = ""
 "kitty" = "term"
 "firefox" = "browser"
-            "#;
-            write!(&mut config_file, "{default_icons}")?;
+
+# Add your applications that need to be exclude
+# You can put what you want as value, "" make the job.
+[exclude]
+fcitx5 = ""
+fcitx = ""
+"#;
+            write!(&mut config_file, "{default_config}")?;
             println!("Default config created in {cfg_path:?}");
         }
-        let config = fs::read_to_string(cfg_path.clone())?;
-        let icons: FxHashMap<String, String> =
-            toml::from_str(&config).map_err(|e| format!("Unable to parse: {e:?}"))?;
-        let icons_uppercase = icons
+        let mut config_string = fs::read_to_string(cfg_path.clone())?;
+
+        // config file migration if needed
+        // can be remove "later" ...
+        if !config_string.contains("[icons]") {
+            config_string = "[icons]\n".to_owned() + &config_string;
+            fs::write(&cfg_path, &config_string)
+                .map_err(|e| format!("Cannot migrate config file: {e:?}"))?;
+            println!("Config file migrated from v1 to v2");
+        }
+
+        let config: ConfigFile =
+            toml::from_str(&config_string).map_err(|e| format!("Unable to parse: {e:?}"))?;
+
+        let icons = config
+            .icons
             .iter()
             .map(|(k, v)| (k.to_uppercase(), v.clone()))
             .collect::<FxHashMap<_, _>>();
-        let icons = icons.into_iter().chain(icons_uppercase).collect();
-        Ok(Config { cfg_path, icons })
+
+        let exclude = config
+            .exclude
+            .iter()
+            .map(|(k, v)| (k.to_uppercase(), v.clone()))
+            .collect::<FxHashMap<_, _>>();
+
+        Ok(Config {
+            config: ConfigFile { icons, exclude },
+            cfg_path,
+        })
     }
 }
 
@@ -118,24 +154,35 @@ impl Renamer {
 
         for client in clients {
             let class = client.class;
+
             if class.is_empty() {
                 continue;
             }
+
+            if self
+                .cfg
+                .lock()?
+                .config
+                .exclude
+                .contains_key(&class.to_uppercase())
+            {
+                continue;
+            }
+
             let workspace_id = client.workspace.id;
             let icon = self.class_to_icon(&class);
-            let fullscreen = client.fullscreen;
             let is_dup = !deduper.insert(format!("{workspace_id}-{icon}"));
             let should_dedup = self.args.dedup && is_dup;
 
-            self.workspaces.lock()?.insert(client.workspace.id);
+            self.workspaces.lock()?.insert(workspace_id);
 
             let workspace = workspaces
                 .entry(workspace_id)
                 .or_insert_with(|| "".to_string());
 
-            if fullscreen && should_dedup {
+            if client.fullscreen && should_dedup {
                 *workspace = workspace.replace(&icon, &format!("[{icon}]"));
-            } else if fullscreen && !should_dedup {
+            } else if client.fullscreen && !should_dedup {
                 *workspace = format!("{workspace} [{icon}]");
             } else if !should_dedup {
                 *workspace = format!("{workspace} {icon}");
@@ -197,7 +244,7 @@ impl Renamer {
             // Clojure to force quick release of lock
             {
                 match Config::new() {
-                    Ok(config) => self.cfg.lock()?.icons = config.icons,
+                    Ok(config) => self.cfg.lock()?.config = config.config,
                     Err(err) => println!("Unable to reload config: {err:?}"),
                 }
             }
@@ -210,11 +257,12 @@ impl Renamer {
 
     fn class_to_icon(&self, class: &str) -> String {
         let default_value = String::from("no default icon");
-        let cfg = self.cfg.lock().expect("Unable to obtain lock for config");
-        cfg.icons
+        let cfg = &self.cfg.lock().expect("Unable to obtain lock for config");
+        cfg.config
+            .icons
             .get(class)
-            .or_else(|| cfg.icons.get(class.to_uppercase().as_str()))
-            .unwrap_or_else(|| cfg.icons.get("DEFAULT").unwrap_or(&default_value))
+            .or_else(|| cfg.config.icons.get(class.to_uppercase().as_str()))
+            .unwrap_or_else(|| cfg.config.icons.get("DEFAULT").unwrap_or(&default_value))
             .into()
     }
 
