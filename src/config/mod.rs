@@ -5,6 +5,8 @@ use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
+#[macro_use]
+mod macros;
 
 pub struct Config {
     pub config: ConfigFile,
@@ -56,17 +58,7 @@ fcitx = ""
         let config: ConfigFile =
             toml::from_str(&config_string).map_err(|e| format!("Unable to parse: {e:?}"))?;
 
-        let icons = config
-            .icons
-            .iter()
-            .map(|(k, v)| (k.to_uppercase(), v.clone()))
-            .collect::<FxHashMap<_, _>>();
-
-        let exclude = config
-            .exclude
-            .iter()
-            .map(|(k, v)| (k.to_uppercase(), v.clone()))
-            .collect::<FxHashMap<_, _>>();
+        uppercase_keys_of!(config, icons, exclude);
 
         Ok(Config {
             config: ConfigFile { icons, exclude },
