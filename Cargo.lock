@@ -291,7 +291,7 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 [[package]]
 name = "hyprland"
 version = "0.3.1"
-source = "git+https://github.com/cyrinux/hyprland-rs?branch=fix/read-all-socket-data#cf3fba5e98ebaa4d7bbdc808c947098b2168ff2a"
+source = "git+https://github.com/hyprland-community/hyprland-rs.git#e76375074ead3db5bfe4e2664c9a89c303391156"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -327,7 +327,7 @@ dependencies = [
 [[package]]
 name = "hyprland-macros"
 version = "0.1.0"
-source = "git+https://github.com/cyrinux/hyprland-rs?branch=fix/read-all-socket-data#cf3fba5e98ebaa4d7bbdc808c947098b2168ff2a"
+source = "git+https://github.com/hyprland-community/hyprland-rs.git#e76375074ead3db5bfe4e2664c9a89c303391156"
 dependencies = [
  "quote",
  "syn",
