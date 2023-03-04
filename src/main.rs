@@ -1,9 +1,11 @@
 mod config;
 mod params;
 mod renamer;
+
 use crate::config::Config;
 use crate::params::Args;
 use crate::renamer::*;
+
 use clap::Parser;
 use signal_hook::consts::{SIGINT, SIGTERM};
 use signal_hook::iterator::Signals;

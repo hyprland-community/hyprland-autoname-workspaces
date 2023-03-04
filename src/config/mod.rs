@@ -74,25 +74,26 @@ fcitx = ""
     Ok(default_config.trim())
 }
 
-fn to_uppercase(data: FxHashMap<String, String>) -> FxHashMap<String, String> {
+pub fn to_uppercase(data: FxHashMap<String, String>) -> FxHashMap<String, String> {
     data.into_iter()
         .map(|(k, v)| (k.to_uppercase(), v))
         .collect()
 }
 
-fn migrate_config(
+pub fn migrate_config(
     config_string: &str,
     cfg_path: &PathBuf,
 ) -> Result<String, Box<dyn Error + 'static>> {
     // config file migration if needed
     // can be remove "later" ...
     if !config_string.contains("[icons]") {
-        let new_config_string = "[icons]\n".to_owned() + &config_string;
+        let new_config_string = "[icons]\n".to_owned() + config_string;
+        let new_config_string_trimmed = new_config_string.trim();
 
-        fs::write(&cfg_path, &new_config_string)
+        fs::write(cfg_path, new_config_string_trimmed)
             .map_err(|e| format!("Cannot migrate config file: {e:?}"))?;
         println!("Config file migrated from v1 to v2");
-        return Ok(new_config_string);
+        return Ok(new_config_string_trimmed.into());
     }
 
     Ok(config_string.trim().to_owned())
@@ -103,19 +104,19 @@ mod tests {
     use super::*;
 
     #[test]
-    fn to_uppercase() {
+    fn test_to_uppercase() {
         let mut icons: FxHashMap<String, String> = FxHashMap::default();
         icons.insert("kitty".to_owned(), "kittyicon".to_owned());
-        icons = super::to_uppercase(icons);
+        icons = to_uppercase(icons);
         assert_eq!(icons.get("kitty"), None);
         assert_eq!(icons.get("KITTY").unwrap(), "kittyicon");
     }
 
     #[test]
-    fn create_config_workflow() {
+    fn test_create_config_workflow() {
         let cfg_path = &PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
-        let config_string = super::create_default_config(&cfg_path).unwrap();
-        let config = super::read_config_file(&cfg_path);
+        let config_string = create_default_config(&cfg_path).unwrap();
+        let config = read_config_file(&cfg_path);
         assert_eq!(config.unwrap().icons.get("kitty").unwrap(), "term");
         let config_string_legacy = r#"
 # Add your icons mapping
@@ -131,8 +132,11 @@ mod tests {
 fcitx5 = ""
 fcitx = ""
 "#;
-        let config_string_migrated = migrate_config(&config_string_legacy, cfg_path).unwrap();
+        let config_string_migrated = migrate_config(&config_string_legacy, &cfg_path).unwrap();
         assert_eq!(config_string_migrated.contains("[icons]\n"), true);
         assert_ne!(config_string, config_string_migrated);
+        let config_string_migrated_two =
+            migrate_config(&config_string_migrated, &cfg_path).unwrap();
+        assert_eq!(config_string_migrated, config_string_migrated_two);
     }
 }
