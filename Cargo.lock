@@ -291,7 +291,7 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 [[package]]
 name = "hyprland"
 version = "0.3.1"
-source = "git+https://github.com/cyrinux/hyprland-rs.git?branch=chore/read-all-socket-data#77e850e72612a79a8c64808273b237d669e92aed"
+source = "git+https://github.com/hyprland-community/hyprland-rs#3aa7e425d5315a7eab3fcca7850978c66f82c2df"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -312,7 +312,7 @@ dependencies = [
 
 [[package]]
 name = "hyprland-autoname-workspaces"
-version = "0.3.3"
+version = "0.3.4"
 dependencies = [
  "clap",
  "hyprland",
@@ -327,7 +327,7 @@ dependencies = [
 [[package]]
 name = "hyprland-macros"
 version = "0.1.0"
-source = "git+https://github.com/cyrinux/hyprland-rs.git?branch=chore/read-all-socket-data#77e850e72612a79a8c64808273b237d669e92aed"
+source = "git+https://github.com/hyprland-community/hyprland-rs#3aa7e425d5315a7eab3fcca7850978c66f82c2df"
 dependencies = [
  "quote",
  "syn",
