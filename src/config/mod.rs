@@ -31,8 +31,8 @@ impl Config {
 
         Ok(Config {
             config: ConfigFile {
-                icons: to_uppercase(config.icons),
-                exclude: to_uppercase(config.exclude),
+                icons: to_uppercase(config.icons, false),
+                exclude: to_uppercase(config.exclude, true),
             },
             cfg_path,
         })
@@ -61,10 +61,12 @@ fn create_default_config(cfg_path: &PathBuf) -> Result<&'static str, Box<dyn Err
 "firefox" = "browser"
 
 # Add your applications that need to be exclude
-# You can put what you want as value, "" make the job.
+# The key is the class, the value is the title.
+# You can put an empty title to exclude based on
+# class name only, "" make the job.
 [exclude]
-fcitx5 = ""
 fcitx = ""
+Steam = "Friends List"
 "#;
 
     let mut config_file = File::create(cfg_path)?;
@@ -74,9 +76,9 @@ fcitx = ""
     Ok(default_config.trim())
 }
 
-pub fn to_uppercase(data: FxHashMap<String, String>) -> FxHashMap<String, String> {
+pub fn to_uppercase(data: FxHashMap<String, String>, values: bool) -> FxHashMap<String, String> {
     data.into_iter()
-        .map(|(k, v)| (k.to_uppercase(), v))
+        .map(|(k, v)| (k.to_uppercase(), if values { v.to_uppercase() } else { v }))
         .collect()
 }
 
@@ -107,9 +109,15 @@ mod tests {
     fn test_to_uppercase() {
         let mut icons: FxHashMap<String, String> = FxHashMap::default();
         icons.insert("kitty".to_owned(), "kittyicon".to_owned());
-        icons = to_uppercase(icons);
+        icons = to_uppercase(icons, false);
         assert_eq!(icons.get("kitty"), None);
         assert_eq!(icons.get("KITTY").unwrap(), "kittyicon");
+
+        let mut exclude: FxHashMap<String, String> = FxHashMap::default();
+        exclude.insert("Steam".to_owned(), "Friends list".to_owned());
+        exclude = to_uppercase(exclude, true);
+        assert_eq!(exclude.get("Steam"), None);
+        assert_eq!(exclude.get("STEAM").unwrap(), "FRIENDS LIST");
     }
 
     #[test]
@@ -127,10 +135,12 @@ mod tests {
 "firefox" = "browser"
 
 # Add your applications that need to be exclude
-# You can put what you want as value, "" make the job.
+# The key is the class, the value is the title.
+# You can put an empty title to exclude based on
+# class name only, "" make the job.
 [exclude]
-fcitx5 = ""
 fcitx = ""
+Steam = "Friends List"
 "#;
         let config_string_migrated = migrate_config(&config_string_legacy, &cfg_path).unwrap();
         assert_eq!(config_string_migrated.contains("[icons]\n"), true);

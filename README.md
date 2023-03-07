@@ -15,6 +15,7 @@ This app automatically rename workspaces with icons of started applications - te
 ### AUR
 
 Available as AUR package under the program name `hyprland-autoname-workspaces-git`.
+You can then use the service `systemctl enable --now hyprland-autoname-workspaces.service`.
 
 ### Cargo
 
@@ -38,7 +39,19 @@ $ hyprland-autoname-workspaces --dedup
 
 In the config file `~/.config/hyprland-autoname-workspaces/config.toml`.
 Edit the mapping of applications with `class = "icon"` in the `[icons]` part.
-You can also exclude applications in the `[exclude]` with `class = ""` part.
+You can also exclude applications in the `[exclude]` with `class = title`.
+
+In the `exclude` part, the key is the window `class`, and the value the `title`.
+You can use `""` or `"*"` as value to match only on the window class name.
+
+Example:
+
+```
+...
+[exclude]
+fcitx = ""
+Steam = "Friends list"
+```
 
 No need to restart the applications then, there is an autoreload.
 
