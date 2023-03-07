@@ -6,4 +6,7 @@ pub struct Args {
     /// Deduplicate icons
     #[arg(short, long)]
     pub dedup: bool,
+    /// Verbose
+    #[arg(short, long)]
+    pub verbose: bool,
 }

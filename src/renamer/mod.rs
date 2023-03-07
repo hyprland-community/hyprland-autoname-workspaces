@@ -60,6 +60,12 @@ impl Renamer {
             let is_dup = !deduper.insert(format!("{workspace_id}-{icon}"));
             let should_dedup = self.args.dedup && is_dup;
 
+            if self.args.verbose && should_dedup {
+                println!("- window '{class}' is duplicate")
+            } else if self.args.verbose {
+                println!("- window '{class}' got this this icon '{icon}'")
+            };
+
             self.workspaces.lock()?.insert(workspace_id);
 
             let workspace = workspaces
@@ -148,7 +154,10 @@ impl Renamer {
             .icons
             .get(class)
             .or_else(|| cfg.config.icons.get(class.to_uppercase().as_str()))
-            .unwrap_or_else(|| cfg.config.icons.get("DEFAULT").unwrap_or(&default_value))
+            .unwrap_or_else(|| {
+                println!("- window '{class}' need a icon");
+                cfg.config.icons.get("DEFAULT").unwrap_or(&default_value)
+            })
             .into()
     }
 
