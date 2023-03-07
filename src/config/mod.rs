@@ -61,10 +61,12 @@ fn create_default_config(cfg_path: &PathBuf) -> Result<&'static str, Box<dyn Err
 "firefox" = "browser"
 
 # Add your applications that need to be exclude
-# You can put what you want as value, "" make the job.
+# The key is the class, the value is the title.
+# You can put an empty title to exclude based on
+# class name only, "" make the job.
 [exclude]
-fcitx5 = ""
 fcitx = ""
+Steam = "Friends List"
 "#;
 
     let mut config_file = File::create(cfg_path)?;
@@ -76,7 +78,7 @@ fcitx = ""
 
 pub fn to_uppercase(data: FxHashMap<String, String>) -> FxHashMap<String, String> {
     data.into_iter()
-        .map(|(k, v)| (k.to_uppercase(), v))
+        .map(|(k, v)| (k.to_uppercase(), v.to_uppercase()))
         .collect()
 }
 
@@ -127,10 +129,12 @@ mod tests {
 "firefox" = "browser"
 
 # Add your applications that need to be exclude
-# You can put what you want as value, "" make the job.
+# The key is the class, the value is the title.
+# You can put an empty title to exclude based on
+# class name only, "" make the job.
 [exclude]
-fcitx5 = ""
 fcitx = ""
+Steam = "Friends List"
 "#;
         let config_string_migrated = migrate_config(&config_string_legacy, &cfg_path).unwrap();
         assert_eq!(config_string_migrated.contains("[icons]\n"), true);

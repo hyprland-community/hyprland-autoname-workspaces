@@ -40,18 +40,18 @@ impl Renamer {
 
         for client in clients {
             let class = client.class;
-
             if class.is_empty() {
                 continue;
             }
 
-            if self
-                .cfg
-                .lock()?
-                .config
-                .exclude
-                .contains_key(&class.to_uppercase())
-            {
+            let title = client.title;
+            if self.cfg.lock()?.config.exclude.iter().any(|(c, t)| {
+                c == &class.to_uppercase()
+                    && [title.to_uppercase(), "".to_string(), "*".to_string()].contains(t)
+            }) {
+                if self.args.verbose {
+                    println!("- window: class '{class}' with title '{title}' is exclude")
+                }
                 continue;
             }
 
@@ -61,9 +61,9 @@ impl Renamer {
             let should_dedup = self.args.dedup && is_dup;
 
             if self.args.verbose && should_dedup {
-                println!("- window '{class}' is duplicate")
+                println!("- window: class '{class}' is duplicate")
             } else if self.args.verbose {
-                println!("- window '{class}' got this this icon '{icon}'")
+                println!("- window: class '{class}', title '{title}', got this icon '{icon}'")
             };
 
             self.workspaces.lock()?.insert(workspace_id);
@@ -104,6 +104,7 @@ impl Renamer {
             add_window_open_handler,
             add_window_close_handler,
             add_window_moved_handler,
+            add_active_window_change_handler,
             add_workspace_added_handler,
             add_workspace_moved_handler,
             add_workspace_change_handler,
@@ -155,7 +156,7 @@ impl Renamer {
             .get(class)
             .or_else(|| cfg.config.icons.get(class.to_uppercase().as_str()))
             .unwrap_or_else(|| {
-                println!("- window '{class}' need a icon");
+                println!("- window: class '{class}' need a shiny icon");
                 cfg.config.icons.get("DEFAULT").unwrap_or(&default_value)
             })
             .into()
