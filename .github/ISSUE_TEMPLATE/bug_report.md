@@ -23,6 +23,8 @@ A clear and concise description of what you expected to happen.
 **Linux Distro (please complete the following information):**
  - [e.g. Arch]
 
+**Program version?
+ - Run `hyprland-autoname-workspaces --version`
 
 **Additional context**
 Add any other context about the problem here.
