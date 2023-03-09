@@ -65,8 +65,9 @@ fn create_default_config(cfg_path: &PathBuf) -> Result<&'static str, Box<dyn Err
 # You can put an empty title to exclude based on
 # class name only, "" make the job.
 [exclude]
-fcitx = ""
+fcitx = "*"
 Steam = "Friends List"
+TestApp = ""
 "#;
 
     let mut config_file = File::create(cfg_path)?;
