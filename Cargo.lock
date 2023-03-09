@@ -291,7 +291,7 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 [[package]]
 name = "hyprland"
 version = "0.3.1"
-source = "git+https://github.com/hyprland-community/hyprland-rs#3aa7e425d5315a7eab3fcca7850978c66f82c2df"
+source = "git+https://github.com/cyrinux/hyprland-rs?branch=fix/grouped-and-monitor#ec1c501a5ab0e0671179296683fb93bfebaccb61"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -327,7 +327,7 @@ dependencies = [
 [[package]]
 name = "hyprland-macros"
 version = "0.1.0"
-source = "git+https://github.com/hyprland-community/hyprland-rs#3aa7e425d5315a7eab3fcca7850978c66f82c2df"
+source = "git+https://github.com/cyrinux/hyprland-rs?branch=fix/grouped-and-monitor#ec1c501a5ab0e0671179296683fb93bfebaccb61"
 dependencies = [
  "quote",
  "syn",
@@ -654,18 +654,18 @@ checksum = "58bc9567378fc7690d6b2addae4e60ac2eeea07becb2c64b9f218b53865cba2a"
 
 [[package]]
 name = "serde"
-version = "1.0.153"
+version = "1.0.154"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a382c72b4ba118526e187430bb4963cd6d55051ebf13d9b25574d379cc98d20"
+checksum = "8cdd151213925e7f1ab45a9bbfb129316bd00799784b174b7cc7bcd16961c49e"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.153"
+version = "1.0.154"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ef476a5790f0f6decbc66726b6e5d63680ed518283e64c7df415989d880954f"
+checksum = "4fc80d722935453bcafdc2c9a73cd6fac4dc1938f0346035d84bf99fa9e33217"
 dependencies = [
  "proc-macro2",
  "quote",
