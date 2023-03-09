@@ -291,7 +291,7 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 [[package]]
 name = "hyprland"
 version = "0.3.1"
-source = "git+https://github.com/cyrinux/hyprland-rs?branch=fix/grouped-and-monitor#ec1c501a5ab0e0671179296683fb93bfebaccb61"
+source = "git+https://github.com/hyprland-community/hyprland-rs#7f7e71fdd7515bb08e4c9276a6c6cc279f164e30"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -312,7 +312,7 @@ dependencies = [
 
 [[package]]
 name = "hyprland-autoname-workspaces"
-version = "0.3.6"
+version = "0.3.7"
 dependencies = [
  "clap",
  "hyprland",
@@ -327,7 +327,7 @@ dependencies = [
 [[package]]
 name = "hyprland-macros"
 version = "0.1.0"
-source = "git+https://github.com/cyrinux/hyprland-rs?branch=fix/grouped-and-monitor#ec1c501a5ab0e0671179296683fb93bfebaccb61"
+source = "git+https://github.com/hyprland-community/hyprland-rs#7f7e71fdd7515bb08e4c9276a6c6cc279f164e30"
 dependencies = [
  "quote",
  "syn",
