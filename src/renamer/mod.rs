@@ -11,6 +11,9 @@ use std::error::Error;
 use std::sync::{Arc, Mutex};
 #[macro_use]
 mod macros;
+mod icons;
+
+use icons::ICONS;
 
 pub struct Renamer {
     workspaces: Mutex<FxHashSet<i32>>,
@@ -55,7 +58,7 @@ impl Renamer {
             }
 
             let workspace_id = client.workspace.id;
-            let icon = self.class_to_icon(&class);
+            let icon = self.class_to_icon(&class, &title);
             let is_dup = !deduper.insert(format!("{workspace_id}-{icon}"));
             let should_dedup = self.args.dedup && is_dup;
 
@@ -82,7 +85,7 @@ impl Renamer {
 
         workspaces
             .iter()
-            .try_for_each(|(&id, apps)| rename_cmd(id, apps))?;
+            .try_for_each(|(&id, apps)| rename_cmd(id, &format!("{apps} ")))?;
 
         Ok(())
     }
@@ -147,20 +150,37 @@ impl Renamer {
     }
 
     #[inline(always)]
-    fn class_to_icon(&self, class: &str) -> String {
-        let default_value = String::from("no default icon");
+    fn class_to_icon(&self, class: &str, title: &str) -> String {
+        let default_value = String::from("");
         let cfg = &self.cfg.lock().expect("Unable to obtain lock for config");
         cfg.config
             .icons
             .get(class)
             .or_else(|| cfg.config.icons.get(class.to_uppercase().as_str()))
+            .map(|s| s.to_string())
             .unwrap_or_else(|| {
                 if self.args.verbose {
                     println!("- window: class '{class}' need a shiny icon");
                 }
-                cfg.config.icons.get("DEFAULT").unwrap_or(&default_value)
+                let icon: String = match Renamer::contains(class) {
+                    Some(ic) => ic,
+                    None => match Renamer::contains(title) {
+                        Some(icc) => icc,
+                        None => default_value,
+                    },
+                };
+                icon
             })
-            .into()
+    }
+
+    fn contains(text: &str) -> Option<String> {
+        ICONS.iter().find_map(|(key, val)| {
+            if text.to_lowercase().contains(key) {
+                Some(val.to_string())
+            } else {
+                None
+            }
+        })
     }
 
     #[inline(always)]
