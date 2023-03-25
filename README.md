@@ -15,7 +15,7 @@ This app automatically rename workspaces with icons of started applications - te
 ### AUR
 
 Available as AUR package under the program name `hyprland-autoname-workspaces-git`.
-You can then use the service `systemctl enable --now hyprland-autoname-workspaces.service`.
+You can then use the service `systemctl --user enable --now hyprland-autoname-workspaces.service`.
 
 ### Cargo
 
