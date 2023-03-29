@@ -57,4 +57,4 @@ No need to restart the applications then, there is an autoreload.
 
 _Hint_: You can use glyphsearch and copy the unicode icon of your font for example https://glyphsearch.com/?query=book&copy=unicode
 
-_Hint_: You can find hyprland class names for currently running apps using: `hyprctl clients  | grep -i class`
+_Hint_: You can find hyprland class names for currently running apps using: `hyprctl clients  | grep -i class`, or you can also use `hyprland-autoname-workspaces --verbose`.
