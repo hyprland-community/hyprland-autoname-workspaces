@@ -55,11 +55,9 @@ impl Renamer {
             }
 
             let workspace_id = client.workspace.id;
-
-            let icon = match self.class_title_to_icon(&class, &title) {
-                Some(v) => v,
-                None => self.class_to_icon(&class),
-            };
+            let icon = self
+                .class_title_to_icon(&class, &title)
+                .unwrap_or(self.class_to_icon(&class));
 
             let is_dup = !deduper.insert(format!("{workspace_id}-{icon}"));
             let should_dedup = self.args.dedup && is_dup;
@@ -171,18 +169,11 @@ impl Renamer {
     #[inline(always)]
     fn class_title_to_icon(&self, class: &str, title: &str) -> Option<String> {
         let cfg = &self.cfg.lock().expect("Unable to obtain lock for config");
-        cfg.config
-            .title
-            .get(class)
-            .and_then(|x| {
-                for (k, v) in x {
-                    if title.to_uppercase().contains(k.to_uppercase().as_str()) {
-                        return Some(v);
-                    }
-                }
-                None
-            })
-            .cloned()
+        cfg.config.title.get(class).and_then(|x| {
+            x.iter()
+                .find(|(k, _)| title.to_uppercase().contains(k.to_uppercase().as_str()))
+                .map(|(_, v)| v.to_owned())
+        })
     }
 
     #[inline(always)]
