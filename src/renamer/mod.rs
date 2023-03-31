@@ -39,17 +39,25 @@ impl Renamer {
             .collect::<FxHashMap<_, _>>();
 
         for client in clients {
-            let class = client.class;
+            let class = client.class.to_uppercase();
             if class.is_empty() {
                 continue;
             }
 
-            let title = client.title;
-            if self.cfg.lock()?.config.exclude.iter().any(|(c, t)| {
-                c == &class.to_uppercase() && [title.to_uppercase(), "*".to_string()].contains(t)
-            }) {
+            let title = client.title.to_uppercase();
+            if self
+                .cfg
+                .lock()?
+                .config
+                .exclude
+                .iter()
+                .any(|(c, t)| c == &class && (t == &title || t == "*"))
+            {
                 if self.args.verbose {
-                    println!("- window: class '{class}' with title '{title}' is exclude")
+                    println!(
+                        "- window: class '{}' with title '{}' is exclude",
+                        client.class, client.title
+                    )
                 }
                 continue;
             }
@@ -63,9 +71,12 @@ impl Renamer {
             let should_dedup = self.args.dedup && is_dup;
 
             if self.args.verbose && should_dedup {
-                println!("- window: class '{class}' is duplicate")
+                println!("- window: class '{}' is duplicate", client.class)
             } else if self.args.verbose {
-                println!("- window: class '{class}', title '{title}', got this icon '{icon}'")
+                println!(
+                    "- window: class '{}', title '{}', got this icon '{icon}'",
+                    client.class, client.title
+                )
             };
 
             self.workspaces.lock()?.insert(workspace_id);
@@ -156,7 +167,7 @@ impl Renamer {
         cfg.config
             .icons
             .get(class)
-            .or_else(|| cfg.config.icons.get(class.to_uppercase().as_str()))
+            .or_else(|| cfg.config.icons.get(class))
             .unwrap_or_else(|| {
                 if self.args.verbose {
                     println!("- window: class '{class}' need a shiny icon");
@@ -171,7 +182,7 @@ impl Renamer {
         let cfg = &self.cfg.lock().expect("Unable to obtain lock for config");
         cfg.config.title.get(class).and_then(|x| {
             x.iter()
-                .find(|(k, _)| title.to_uppercase().contains(k.as_str()))
+                .find(|(k, _)| title.contains(k.as_str()))
                 .map(|(_, v)| v.to_owned())
         })
     }
