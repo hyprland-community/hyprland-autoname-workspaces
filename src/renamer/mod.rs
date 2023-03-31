@@ -57,7 +57,7 @@ impl Renamer {
             let workspace_id = client.workspace.id;
             let icon = self
                 .class_title_to_icon(&class, &title)
-                .unwrap_or(self.class_to_icon(&class));
+                .unwrap_or_else(|| self.class_to_icon(&class));
 
             let is_dup = !deduper.insert(format!("{workspace_id}-{icon}"));
             let should_dedup = self.args.dedup && is_dup;
@@ -171,7 +171,7 @@ impl Renamer {
         let cfg = &self.cfg.lock().expect("Unable to obtain lock for config");
         cfg.config.title.get(class).and_then(|x| {
             x.iter()
-                .find(|(k, _)| title.to_uppercase().contains(k.to_uppercase().as_str()))
+                .find(|(k, _)| title.to_uppercase().contains(k.as_str()))
                 .map(|(_, v)| v.to_owned())
         })
     }

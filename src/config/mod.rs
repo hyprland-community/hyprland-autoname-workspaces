@@ -31,10 +31,16 @@ impl Config {
 
         let config = read_config_file(&cfg_path)?;
 
+        let to_uppercase_deep = |vals: FxHashMap<String, FxHashMap<_, _>>| {
+            vals.into_iter()
+                .map(|(k, v)| (k.to_uppercase(), to_uppercase(v, false)))
+                .collect()
+        };
+
         Ok(Config {
             config: ConfigFile {
                 icons: to_uppercase(config.icons, false),
-                title: config.title,
+                title: to_uppercase_deep(config.title),
                 exclude: to_uppercase(config.exclude, true),
             },
             cfg_path,
