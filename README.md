@@ -39,7 +39,8 @@ $ hyprland-autoname-workspaces --dedup
 
 In the config file `~/.config/hyprland-autoname-workspaces/config.toml`.
 Edit the mapping of applications with `class = "icon"` in the `[icons]` part.
-You can also exclude applications in the `[exclude]` with `class = title`.
+
+- You can exclude applications in the `[exclude]` with `class = title`.
 
 In the `exclude` part, the key is the window `class`, and the value the `title`.
 You can use `""` in order to exclude window with empty title and `"*"` as value to match all title of a class name.
@@ -51,6 +52,16 @@ Example:
 [exclude]
 fcitx = "*"
 Steam = "Friends list"
+```
+
+- You can match on title with `[title.classname]` with `"a word in the title" = "icons"`.
+
+Example:
+
+```
+...
+[title.kitty]
+neomutt = "neomutt"
 ```
 
 No need to restart the applications then, there is an autoreload.
