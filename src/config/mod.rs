@@ -15,6 +15,8 @@ pub struct Config {
 pub struct ConfigFile {
     pub icons: FxHashMap<String, String>,
     #[serde(default)]
+    pub title: FxHashMap<String, FxHashMap<String, String>>,
+    #[serde(default)]
     pub exclude: FxHashMap<String, String>,
 }
 
@@ -32,6 +34,7 @@ impl Config {
         Ok(Config {
             config: ConfigFile {
                 icons: to_uppercase(config.icons, false),
+                title: config.title,
                 exclude: to_uppercase(config.exclude, true),
             },
             cfg_path,
@@ -59,6 +62,9 @@ fn create_default_config(cfg_path: &PathBuf) -> Result<&'static str, Box<dyn Err
 "DEFAULT" = ""
 "kitty" = "term"
 "firefox" = "browser"
+
+[title.kitty]
+"neomutt" = "neomutt"
 
 # Add your applications that need to be exclude
 # The key is the class, the value is the title.
@@ -135,6 +141,9 @@ mod tests {
 "kitty" = "term"
 "firefox" = "browser"
 
+[title.kitty]
+"neomutt" = "neomutt"
+
 # Add your applications that need to be exclude
 # The key is the class, the value is the title.
 # You can put an empty title to exclude based on
@@ -149,5 +158,21 @@ Steam = "Friends List"
         let config_string_migrated_two =
             migrate_config(&config_string_migrated, &cfg_path).unwrap();
         assert_eq!(config_string_migrated, config_string_migrated_two);
+    }
+
+    #[test]
+    fn test_class_kitty_title_neomutt() {
+        let cfg_path = &PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
+        let config = read_config_file(&cfg_path);
+        assert_eq!(
+            config
+                .unwrap()
+                .title
+                .get("kitty")
+                .unwrap()
+                .get("neomutt")
+                .unwrap(),
+            "neomutt",
+        );
     }
 }
