@@ -38,6 +38,9 @@ $ hyprland-autoname-workspaces --dedup
 ## Configuration
 
 In the config file `~/.config/hyprland-autoname-workspaces/config.toml`.
+
+_You can use regex everywhere, and its case sensitive by default_
+
 Edit the mapping of applications with `class = "icon"` in the `[icons]` part.
 
 - You can exclude applications in the `[exclude]` with `class = title`.
@@ -50,8 +53,8 @@ Example:
 ```
 ...
 [exclude]
-fcitx = "*"
-Steam = "Friends list"
+fcitx = ".*"
+[Ss]team = "Friends list.*"
 ```
 
 - You can match on title with `[title.classname]` with `"a word in the title" = "icons"`.
@@ -60,8 +63,8 @@ Example:
 
 ```
 ...
-[title.kitty]
-neomutt = "neomutt"
+[title."(?i)kitty"]
+"(?i)neomutt" = "neomutt"
 ```
 
 No need to restart the applications then, there is an autoreload.

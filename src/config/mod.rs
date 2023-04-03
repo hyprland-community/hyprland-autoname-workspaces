@@ -1,3 +1,4 @@
+use regex::Regex;
 use rustc_hash::FxHashMap;
 use serde::Deserialize;
 use std::error::Error;
@@ -12,12 +13,18 @@ pub struct Config {
 }
 
 #[derive(Deserialize)]
-pub struct ConfigFile {
+pub struct ConfigFileRaw {
     pub icons: FxHashMap<String, String>,
     #[serde(default)]
     pub title: FxHashMap<String, FxHashMap<String, String>>,
     #[serde(default)]
     pub exclude: FxHashMap<String, String>,
+}
+
+pub struct ConfigFile {
+    pub icons: Vec<(Regex, String)>,
+    pub title: Vec<(Regex, Vec<(Regex, String)>)>,
+    pub exclude: Vec<(Regex, Regex)>,
 }
 
 impl Config {
@@ -31,32 +38,65 @@ impl Config {
 
         let config = read_config_file(&cfg_path)?;
 
-        let to_uppercase_deep = |vals: FxHashMap<String, FxHashMap<_, _>>| {
-            vals.into_iter()
-                .map(|(k, v)| (k.to_uppercase(), to_uppercase(v, false)))
-                .collect()
-        };
-
-        Ok(Config {
-            config: ConfigFile {
-                icons: to_uppercase(config.icons, false),
-                title: to_uppercase_deep(config.title),
-                exclude: to_uppercase(config.exclude, true),
-            },
-            cfg_path,
-        })
+        Ok(Config { config, cfg_path })
     }
 }
 
+fn log_regex_error<T>(e: regex::Error) -> Option<T> {
+    println!("Unable to parse regex: {e:?}");
+    None
+}
+
 fn read_config_file(cfg_path: &PathBuf) -> Result<ConfigFile, Box<dyn Error>> {
-    let mut config_string = fs::read_to_string(cfg_path)?;
+    let config_string = fs::read_to_string(cfg_path)?;
 
-    config_string = migrate_config(&config_string, cfg_path)?;
-
-    let config: ConfigFile =
+    let config: ConfigFileRaw =
         toml::from_str(&config_string).map_err(|e| format!("Unable to parse: {e:?}"))?;
 
-    Ok(config)
+    let icons = config
+        .icons
+        .iter()
+        .filter_map(|(class, icon)| match Regex::new(class) {
+            Ok(class) => Some((class, icon.to_string())),
+            Err(e) => log_regex_error(e),
+        })
+        .collect();
+
+    let title = config
+        .title
+        .iter()
+        .filter_map(|(class, title_icon)| match Regex::new(class) {
+            Ok(class) => Some((
+                class,
+                title_icon
+                    .iter()
+                    .filter_map(|(title, icon)| match Regex::new(title) {
+                        Ok(title) => Some((title, icon.to_string())),
+                        Err(e) => log_regex_error(e),
+                    })
+                    .collect(),
+            )),
+            Err(e) => log_regex_error(e),
+        })
+        .collect();
+
+    let exclude = config
+        .exclude
+        .iter()
+        .filter_map(|(class, title)| match Regex::new(class) {
+            Ok(re_class) => match Regex::new(title) {
+                Ok(re_title) => Some((re_class, re_title)),
+                Err(e) => log_regex_error(e),
+            },
+            Err(e) => log_regex_error(e),
+        })
+        .collect();
+
+    Ok(ConfigFile {
+        icons,
+        title,
+        exclude,
+    })
 }
 
 fn create_default_config(cfg_path: &PathBuf) -> Result<&'static str, Box<dyn Error + 'static>> {
@@ -66,20 +106,22 @@ fn create_default_config(cfg_path: &PathBuf) -> Result<&'static str, Box<dyn Err
 # use double quote the key and the value
 # take class name from 'hyprctl clients'
 "DEFAULT" = ""
-"kitty" = "term"
-"firefox" = "browser"
+"(?i)Kitty" = "term"
+"[Ff]irefox" = "browser"
+"(?i)waydroid.*" = "droid"
 
-[title.kitty]
-"neomutt" = "neomutt"
+[title."(?i)kitty"]
+"(?i)neomutt" = "neomutt"
+
 
 # Add your applications that need to be exclude
 # The key is the class, the value is the title.
 # You can put an empty title to exclude based on
 # class name only, "" make the job.
 [exclude]
-fcitx = "*"
-Steam = "Friends List"
-TestApp = ""
+fcitx = ".*"
+"[Ss]team" = "Friends List"
+"(?i)TestApp" = ""
 "#;
 
     let mut config_file = File::create(cfg_path)?;
@@ -89,82 +131,9 @@ TestApp = ""
     Ok(default_config.trim())
 }
 
-pub fn to_uppercase(data: FxHashMap<String, String>, values: bool) -> FxHashMap<String, String> {
-    data.into_iter()
-        .map(|(k, v)| (k.to_uppercase(), if values { v.to_uppercase() } else { v }))
-        .collect()
-}
-
-pub fn migrate_config(
-    config_string: &str,
-    cfg_path: &PathBuf,
-) -> Result<String, Box<dyn Error + 'static>> {
-    // config file migration if needed
-    // can be remove "later" ...
-    if !config_string.contains("[icons]") {
-        let new_config_string = "[icons]\n".to_owned() + config_string;
-        let new_config_string_trimmed = new_config_string.trim();
-
-        fs::write(cfg_path, new_config_string_trimmed)
-            .map_err(|e| format!("Cannot migrate config file: {e:?}"))?;
-        println!("Config file migrated from v1 to v2");
-        return Ok(new_config_string_trimmed.into());
-    }
-
-    Ok(config_string.trim().to_owned())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_to_uppercase() {
-        let mut icons: FxHashMap<String, String> = FxHashMap::default();
-        icons.insert("kitty".to_owned(), "kittyicon".to_owned());
-        icons = to_uppercase(icons, false);
-        assert_eq!(icons.get("kitty"), None);
-        assert_eq!(icons.get("KITTY").unwrap(), "kittyicon");
-
-        let mut exclude: FxHashMap<String, String> = FxHashMap::default();
-        exclude.insert("Steam".to_owned(), "Friends list".to_owned());
-        exclude = to_uppercase(exclude, true);
-        assert_eq!(exclude.get("Steam"), None);
-        assert_eq!(exclude.get("STEAM").unwrap(), "FRIENDS LIST");
-    }
-
-    #[test]
-    fn test_create_config_workflow() {
-        let cfg_path = &PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
-        let config_string = create_default_config(&cfg_path).unwrap();
-        let config = read_config_file(&cfg_path);
-        assert_eq!(config.unwrap().icons.get("kitty").unwrap(), "term");
-        let config_string_legacy = r#"
-# Add your icons mapping
-# use double quote the key and the value
-# take class name from 'hyprctl clients'
-"DEFAULT" = ""
-"kitty" = "term"
-"firefox" = "browser"
-
-[title.kitty]
-"neomutt" = "neomutt"
-
-# Add your applications that need to be exclude
-# The key is the class, the value is the title.
-# You can put an empty title to exclude based on
-# class name only, "" make the job.
-[exclude]
-fcitx = ""
-Steam = "Friends List"
-"#;
-        let config_string_migrated = migrate_config(&config_string_legacy, &cfg_path).unwrap();
-        assert_eq!(config_string_migrated.contains("[icons]\n"), true);
-        assert_ne!(config_string, config_string_migrated);
-        let config_string_migrated_two =
-            migrate_config(&config_string_migrated, &cfg_path).unwrap();
-        assert_eq!(config_string_migrated, config_string_migrated_two);
-    }
 
     #[test]
     fn test_class_kitty_title_neomutt() {

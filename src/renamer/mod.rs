@@ -39,24 +39,24 @@ impl Renamer {
             .collect::<FxHashMap<_, _>>();
 
         for client in clients {
-            let class = client.class.to_uppercase();
+            let class = client.class;
             if class.is_empty() {
                 continue;
             }
 
-            let title = client.title.to_uppercase();
+            let title = client.title;
             if self
                 .cfg
                 .lock()?
                 .config
                 .exclude
                 .iter()
-                .any(|(c, t)| c == &class && (t == &title || t == "*"))
+                .any(|(c, t)| c.is_match(&class) && (t.is_match(&title)))
             {
                 if self.args.verbose {
                     println!(
                         "- window: class '{}' with title '{}' is exclude",
-                        client.class, client.title
+                        class, title
                     )
                 }
                 continue;
@@ -71,11 +71,11 @@ impl Renamer {
             let should_dedup = self.args.dedup && is_dup;
 
             if self.args.verbose && should_dedup {
-                println!("- window: class '{}' is duplicate", client.class)
+                println!("- window: class '{}' is duplicate", class)
             } else if self.args.verbose {
                 println!(
                     "- window: class '{}', title '{}', got this icon '{icon}'",
-                    client.class, client.title
+                    class, title
                 )
             };
 
@@ -166,25 +166,35 @@ impl Renamer {
         let cfg = &self.cfg.lock().expect("Unable to obtain lock for config");
         cfg.config
             .icons
-            .get(class)
-            .or_else(|| cfg.config.icons.get(class))
+            .iter()
+            .find(|(re_class, _)| re_class.is_match(class))
+            .map(|(_, icon)| icon.clone())
             .unwrap_or_else(|| {
                 if self.args.verbose {
                     println!("- window: class '{class}' need a shiny icon");
                 }
-                cfg.config.icons.get("DEFAULT").unwrap_or(&default_value)
+                cfg.config
+                    .icons
+                    .iter()
+                    .find(|(re_class, _)| re_class.to_string() == "DEFAULT")
+                    .map(|(_, icon)| icon.clone())
+                    .unwrap_or(default_value)
             })
-            .into()
     }
 
     #[inline(always)]
     fn class_title_to_icon(&self, class: &str, title: &str) -> Option<String> {
         let cfg = &self.cfg.lock().expect("Unable to obtain lock for config");
-        cfg.config.title.get(class).and_then(|x| {
-            x.iter()
-                .find(|(k, _)| title.contains(k.as_str()))
-                .map(|(_, v)| v.to_owned())
-        })
+        cfg.config
+            .title
+            .iter()
+            .find(|(re_class, _)| re_class.is_match(class))
+            .and_then(|(_, title_icon)| {
+                title_icon
+                    .iter()
+                    .find(|(re_title, _)| re_title.is_match(title))
+                    .map(|(_, icon)| icon.to_string())
+            })
     }
 
     #[inline(always)]
