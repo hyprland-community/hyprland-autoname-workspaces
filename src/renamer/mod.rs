@@ -216,3 +216,79 @@ fn rename_cmd(id: i32, apps: &str) -> Result<(), Box<dyn Error>> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    #[test]
+    fn test_class_kitty() {
+        let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
+        _ = crate::config::create_default_config(&cfg_path);
+        let config = crate::config::read_config_file(&cfg_path).unwrap();
+        let renamer = Renamer::new(
+            Config { cfg_path, config },
+            Args {
+                verbose: false,
+                dedup: false,
+            },
+        );
+        assert_eq!(renamer.class_to_icon("kittY"), "term");
+        assert_eq!(renamer.class_to_icon("Kitty"), "term");
+    }
+
+    #[test]
+    fn test_class_with_bad_values() {
+        let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
+        _ = crate::config::create_default_config(&cfg_path);
+        let config = crate::config::read_config_file(&cfg_path).unwrap();
+        let renamer = Renamer::new(
+            Config { cfg_path, config },
+            Args {
+                verbose: false,
+                dedup: false,
+            },
+        );
+        assert_eq!(renamer.class_to_icon("shoudBeDefault"), "\u{f059}");
+    }
+
+    #[test]
+    fn test_class_kitty_title_neomutt() {
+        let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
+        _ = crate::config::create_default_config(&cfg_path);
+        let config = crate::config::read_config_file(&cfg_path).unwrap();
+        let renamer = Renamer::new(
+            Config { cfg_path, config },
+            Args {
+                verbose: false,
+                dedup: false,
+            },
+        );
+        assert_eq!(
+            renamer.class_title_to_icon("kitty", "neomutt"),
+            Some("neomutt".into())
+        );
+        assert_eq!(
+            renamer.class_title_to_icon("Kitty", "Neomutt"),
+            Some("neomutt".into())
+        );
+    }
+
+    #[test]
+    fn test_class_title_match_with_bad_values() {
+        let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
+        _ = crate::config::create_default_config(&cfg_path);
+        let config = crate::config::read_config_file(&cfg_path).unwrap();
+        let renamer = Renamer::new(
+            Config { cfg_path, config },
+            Args {
+                verbose: false,
+                dedup: false,
+            },
+        );
+        assert_eq!(renamer.class_title_to_icon("aaaa", "Neomutt"), None);
+        assert_eq!(renamer.class_title_to_icon("kitty", "aaaa"), None);
+        assert_eq!(renamer.class_title_to_icon("kitty", "*"), None);
+    }
+}

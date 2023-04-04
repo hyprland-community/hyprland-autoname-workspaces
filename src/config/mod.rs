@@ -47,7 +47,7 @@ fn log_regex_error<T>(e: regex::Error) -> Option<T> {
     None
 }
 
-fn read_config_file(cfg_path: &PathBuf) -> Result<ConfigFile, Box<dyn Error>> {
+pub fn read_config_file(cfg_path: &PathBuf) -> Result<ConfigFile, Box<dyn Error>> {
     let config_string = fs::read_to_string(cfg_path)?;
 
     let config: ConfigFileRaw =
@@ -99,7 +99,7 @@ fn read_config_file(cfg_path: &PathBuf) -> Result<ConfigFile, Box<dyn Error>> {
     })
 }
 
-fn create_default_config(cfg_path: &PathBuf) -> Result<&'static str, Box<dyn Error + 'static>> {
+pub fn create_default_config(cfg_path: &PathBuf) -> Result<&'static str, Box<dyn Error + 'static>> {
     let default_config = r#"
 [icons]
 # Add your icons mapping
@@ -129,25 +129,4 @@ fcitx = ".*"
     println!("Default config created in {cfg_path:?}");
 
     Ok(default_config.trim())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_class_kitty_title_neomutt() {
-        let cfg_path = &PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
-        let config = read_config_file(&cfg_path);
-        assert_eq!(
-            config
-                .unwrap()
-                .title
-                .get("kitty")
-                .unwrap()
-                .get("neomutt")
-                .unwrap(),
-            "neomutt",
-        );
-    }
 }
