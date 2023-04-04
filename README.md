@@ -6,9 +6,11 @@
 ![](https://img.shields.io/aur/version/hyprland-autoname-workspaces-git)
 ![](https://img.shields.io/crates/v/hyprland-autoname-workspaces)
 
-This is a toy for Hyprland.
+🕹️This is a toy for Hyprland.
 
 This app automatically rename workspaces with icons of started applications - tested with _waybar_.
+
+You have to set the config file with your prefered rules based on `class` and `title`. Regex are supported.
 
 ## Install
 
@@ -72,3 +74,5 @@ No need to restart the applications then, there is an autoreload.
 _Hint_: You can use glyphsearch and copy the unicode icon of your font for example https://glyphsearch.com/?query=book&copy=unicode
 
 _Hint_: You can find hyprland class names for currently running apps using: `hyprctl clients  | grep -i class`, or you can also use `hyprland-autoname-workspaces --verbose`.
+
+_Hint_: Feel free to adapt and use this [script](https://github.com/Psykopear/i3autoname/blob/master/scripts/generate_icons.py) to generate your config file. This is untested for the moment.
