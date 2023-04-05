@@ -42,9 +42,14 @@ impl Config {
     }
 }
 
-fn log_regex_error<T>(e: regex::Error) -> Option<T> {
-    println!("Unable to parse regex: {e:?}");
-    None
+fn regex_with_error_logging(pattern: &str) -> Option<Regex> {
+    match Regex::new(pattern) {
+        Ok(re) => Some(re),
+        Err(e) => {
+            println!("Unable to parse regex: {e:?}");
+            None
+        }
+    }
 }
 
 pub fn read_config_file(cfg_path: &PathBuf) -> Result<ConfigFile, Box<dyn Error>> {
@@ -56,39 +61,36 @@ pub fn read_config_file(cfg_path: &PathBuf) -> Result<ConfigFile, Box<dyn Error>
     let icons = config
         .icons
         .iter()
-        .filter_map(|(class, icon)| match Regex::new(class) {
-            Ok(class) => Some((class, icon.to_string())),
-            Err(e) => log_regex_error(e),
+        .filter_map(|(class, icon)| {
+            regex_with_error_logging(class).map(|re| (re, icon.to_string()))
         })
         .collect();
 
     let title = config
         .title
         .iter()
-        .filter_map(|(class, title_icon)| match Regex::new(class) {
-            Ok(class) => Some((
-                class,
-                title_icon
-                    .iter()
-                    .filter_map(|(title, icon)| match Regex::new(title) {
-                        Ok(title) => Some((title, icon.to_string())),
-                        Err(e) => log_regex_error(e),
-                    })
-                    .collect(),
-            )),
-            Err(e) => log_regex_error(e),
+        .filter_map(|(class, title_icon)| {
+            regex_with_error_logging(class).map(|re| {
+                (
+                    re,
+                    title_icon
+                        .iter()
+                        .filter_map(|(title, icon)| {
+                            regex_with_error_logging(title).map(|re| (re, icon.to_string()))
+                        })
+                        .collect(),
+                )
+            })
         })
         .collect();
 
     let exclude = config
         .exclude
         .iter()
-        .filter_map(|(class, title)| match Regex::new(class) {
-            Ok(re_class) => match Regex::new(title) {
-                Ok(re_title) => Some((re_class, re_title)),
-                Err(e) => log_regex_error(e),
-            },
-            Err(e) => log_regex_error(e),
+        .filter_map(|(class, title)| {
+            regex_with_error_logging(class).and_then(|re_class| {
+                regex_with_error_logging(title).map(|re_title| (re_class, re_title))
+            })
         })
         .collect();
 
