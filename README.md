@@ -48,7 +48,7 @@ Edit the mapping of applications with `class = "icon"` in the `[icons]` part.
 - You can exclude applications in the `[exclude]` with `class = title`.
 
 In the `exclude` part, the key is the window `class`, and the value the `title`.
-You can use `""` in order to exclude window with empty title and `"*"` as value to match all title of a class name.
+You can use `""` in order to exclude window with empty title and `".*"` as value to match all title of a class name.
 
 Example:
 
@@ -56,7 +56,7 @@ Example:
 ...
 [exclude]
 fcitx = ".*"
-[Ss]team = "Friends list.*"
+"[Ss]team" = "Friends list.*"
 ```
 
 - You can match on title with `[title.classname]` with `"a word in the title" = "icons"`.
