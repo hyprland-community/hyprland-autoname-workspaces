@@ -55,7 +55,8 @@ Example:
 ```
 ...
 [exclude]
-fcitx = ".*"
+Alacritty = "^$" # will match empty title for Alacritty
+"(?i)fcitx" = ".*" # will match all title for fcitx
 "[Ss]team" = "Friends list.*"
 ```
 
