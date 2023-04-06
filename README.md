@@ -55,8 +55,9 @@ Example:
 ```
 ...
 [exclude]
-fcitx = ".*"
+"(?i)fcitx" = ".*" # will match all title for fcitx
 "[Ss]team" = "Friends list.*"
+"[Ss]team" = "^$" # will match and exclude all Steam class with empty title (some popups)
 ```
 
 - You can match on title with `[title.classname]` with `"a word in the title" = "icons"`.

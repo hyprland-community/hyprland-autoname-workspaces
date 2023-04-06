@@ -115,15 +115,16 @@ pub fn create_default_config(cfg_path: &PathBuf) -> Result<&'static str, Box<dyn
 [title."(?i)kitty"]
 "(?i)neomutt" = "neomutt"
 
-
 # Add your applications that need to be exclude
 # The key is the class, the value is the title.
 # You can put an empty title to exclude based on
 # class name only, "" make the job.
 [exclude]
-fcitx = ".*"
-"[Ss]team" = "Friends List"
-"(?i)TestApp" = ""
+"(?i)fcitx" = ".*" # will match all title for fcitx
+"(?i)TestApp" = "" # will match all title for TestApp
+aProgram = "^$" # will match null title for aProgram
+"[Ss]team" = "Friends List.*"
+"[Ss]team" = "^$" # will match all Steam window with null title (some popup)
 "#;
 
     let mut config_file = File::create(cfg_path)?;
