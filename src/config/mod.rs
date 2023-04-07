@@ -107,7 +107,7 @@ pub fn create_default_config(cfg_path: &PathBuf) -> Result<&'static str, Box<dyn
 # Add your icons mapping
 # use double quote the key and the value
 # take class name from 'hyprctl clients'
-"DEFAULT" = ""
+"DEFAULT" = " ${class}: ${title}"
 "(?i)Kitty" = "term"
 "[Ff]irefox" = "browser"
 "(?i)waydroid.*" = "droid"

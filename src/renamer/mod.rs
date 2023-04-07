@@ -65,7 +65,7 @@ impl Renamer {
             let workspace_id = client.workspace.id;
             let icon = self
                 .class_title_to_icon(&class, &title)
-                .unwrap_or_else(|| self.class_to_icon(&class));
+                .unwrap_or_else(|| self.class_to_icon(&class, &title));
 
             let is_dup = !deduper.insert(format!("{workspace_id}-{icon}"));
             let should_dedup = self.args.dedup && is_dup;
@@ -161,7 +161,7 @@ impl Renamer {
     }
 
     #[inline(always)]
-    fn class_to_icon(&self, class: &str) -> String {
+    fn class_to_icon(&self, class: &str, title: &str) -> String {
         let default_value = String::from("no default icon");
         let cfg = &self.cfg.lock().expect("Unable to obtain lock for config");
         cfg.config
@@ -180,6 +180,8 @@ impl Renamer {
                     .map(|(_, icon)| icon.clone())
                     .unwrap_or(default_value)
             })
+            .replace("${class}", &class)
+            .replace("${title}", &title)
     }
 
     #[inline(always)]
@@ -193,7 +195,11 @@ impl Renamer {
                 title_icon
                     .iter()
                     .find(|(re_title, _)| re_title.is_match(title))
-                    .map(|(_, icon)| icon.to_string())
+                    .map(|(_, icon)| {
+                        icon.to_string()
+                            .replace("${class}", &class)
+                            .replace("${title}", &title)
+                    })
             })
     }
 
@@ -234,8 +240,8 @@ mod tests {
                 dedup: false,
             },
         );
-        assert_eq!(renamer.class_to_icon("kittY"), "term");
-        assert_eq!(renamer.class_to_icon("Kitty"), "term");
+        assert_eq!(renamer.class_to_icon("kittY", "#"), "term");
+        assert_eq!(renamer.class_to_icon("Kitty", "~"), "term");
     }
 
     #[test]
@@ -250,7 +256,10 @@ mod tests {
                 dedup: false,
             },
         );
-        assert_eq!(renamer.class_to_icon("shoudBeDefault"), "\u{f059}");
+        assert_eq!(
+            renamer.class_to_icon("class", "title"),
+            "\u{f059} class: title"
+        );
     }
 
     #[test]

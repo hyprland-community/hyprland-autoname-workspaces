@@ -45,6 +45,16 @@ _You can use regex everywhere, and its case sensitive by default_
 
 Edit the mapping of applications with `class = "icon"` in the `[icons]` part.
 
+In icons value, you can use the placeholder `${class}` and `${title}`.
+
+Example:
+
+```
+[icons]
+DEFAULT = "${class}: ${title}"
+...
+```
+
 - You can exclude applications in the `[exclude]` with `class = title`.
 
 In the `exclude` part, the key is the window `class`, and the value the `title`.
