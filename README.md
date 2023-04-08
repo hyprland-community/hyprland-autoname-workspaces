@@ -8,7 +8,7 @@
 
 🕹️This is a toy for Hyprland.
 
-This app automatically rename workspaces with icons of started applications - tested with _waybar_.
+This app automatically rename workspaces with icons of started applications - tested with _[waybar](https://aur.archlinux.org/packages/waybar-hyprland-git)_.
 
 You have to set the config file with your prefered rules based on `class` and `title`. Regex are supported.
 
