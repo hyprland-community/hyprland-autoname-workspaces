@@ -76,8 +76,15 @@ Example:
 
 ```
 ...
-[title."(?i)kitty"]
-"(?i)neomutt" = "neomutt"
+[title."(xterm|(?i)kitty|alacritty)"]
+"(?i)neomutt" = "mail"
+ncdu = "file manager"
+
+[title."(firefox|chrom.*)"]
+youtube = "yt"
+google = "gg"
+...
+
 ```
 
 No need to restart the applications then, there is an autoreload.
