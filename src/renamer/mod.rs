@@ -30,7 +30,7 @@ impl Renamer {
     #[inline(always)]
     pub fn renameworkspace(&self) -> Result<(), Box<dyn Error + '_>> {
         let clients = Clients::get().unwrap();
-        let mut deduper: FxHashSet<String> = FxHashSet::default();
+        let mut counters: FxHashMap<String, i32> = FxHashMap::default();
         let mut workspaces = self
             .workspaces
             .lock()?
@@ -54,10 +54,7 @@ impl Renamer {
                 .any(|(c, t)| c.is_match(&class) && (t.is_match(&title)))
             {
                 if self.args.verbose {
-                    println!(
-                        "- window: class '{}' with title '{}' is exclude",
-                        class, title
-                    )
+                    println!("- window: class '{class}' with title '{title}' is exclude")
                 }
                 continue;
             }
@@ -67,16 +64,25 @@ impl Renamer {
                 .class_title_to_icon(&class, &title)
                 .unwrap_or_else(|| self.class_to_icon(&class, &title));
 
-            let is_dup = !deduper.insert(format!("{workspace_id}-{icon}"));
-            let should_dedup = self.args.dedup && is_dup;
+            let workspace_icon_key = format!("{workspace_id}-{icon}");
+
+            let counter = counters
+                .entry(workspace_icon_key)
+                .and_modify(|count| {
+                    *count += 1;
+                })
+                .or_insert(1);
+            let counter_super = to_superscript(*counter)?;
+
+            let should_dedup = self.args.dedup && (*counter > 1);
+
+            let prev_counter = *counter - 1;
+            let prev_counter_super = to_superscript(prev_counter)?;
 
             if self.args.verbose && should_dedup {
-                println!("- window: class '{}' is duplicate", class)
+                println!("- window: class '{class}' is duplicate {counter}x")
             } else if self.args.verbose {
-                println!(
-                    "- window: class '{}', title '{}', got this icon '{icon}'",
-                    class, title
-                )
+                println!("- window: class '{class}', title '{title}', got this icon '{icon}'")
             };
 
             self.workspaces.lock()?.insert(workspace_id);
@@ -85,12 +91,26 @@ impl Renamer {
                 .entry(workspace_id)
                 .or_insert_with(|| "".to_string());
 
-            if client.fullscreen && should_dedup {
+            if client.fullscreen && should_dedup && self.args.counter {
+                *workspace = workspace.replace(
+                    &format!("{icon}{}", *counter - 1),
+                    &format!("[{icon}{counter}]"),
+                );
+            } else if client.fullscreen && should_dedup {
                 *workspace = workspace.replace(&icon, &format!("[{icon}]"));
             } else if client.fullscreen && !should_dedup {
                 *workspace = format!("{workspace} [{icon}]");
             } else if !should_dedup {
                 *workspace = format!("{workspace} {icon}");
+            } else if self.args.counter && should_dedup {
+                if *counter > 2 {
+                    *workspace = workspace.replace(
+                        &format!("{icon}{}", prev_counter_super),
+                        &format!("{icon}{}", counter_super),
+                    );
+                } else {
+                    *workspace = workspace.replace(&icon, &format!("{icon}{}", counter_super));
+                }
             }
         }
 
@@ -180,8 +200,8 @@ impl Renamer {
                     .map(|(_, icon)| icon.clone())
                     .unwrap_or(default_value)
             })
-            .replace("${class}", &class)
-            .replace("${title}", &title)
+            .replace("${class}", class)
+            .replace("${title}", title)
     }
 
     #[inline(always)]
@@ -197,8 +217,8 @@ impl Renamer {
                     .find(|(re_title, _)| re_title.is_match(title))
                     .map(|(_, icon)| {
                         icon.to_string()
-                            .replace("${class}", &class)
-                            .replace("${title}", &title)
+                            .replace("${class}", class)
+                            .replace("${title}", title)
                     })
             })
     }
@@ -223,6 +243,30 @@ fn rename_cmd(id: i32, apps: &str) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+pub fn to_superscript(number: i32) -> Result<String, Box<dyn Error>> {
+    let s = number.to_string();
+
+    let mut m: FxHashMap<i32, &str> = FxHashMap::default();
+    m.insert(0, "⁰");
+    m.insert(1, "¹");
+    m.insert(2, "²");
+    m.insert(3, "³");
+    m.insert(4, "⁴");
+    m.insert(5, "⁵");
+    m.insert(6, "⁶");
+    m.insert(7, "⁷");
+    m.insert(8, "⁸");
+    m.insert(9, "⁹");
+
+    let mut result: Vec<&str> = Vec::new();
+    for c in s.chars() {
+        let number = c.to_string().parse::<i32>()?;
+        result.push(m[&number]);
+    }
+
+    Ok(result.join(""))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -238,6 +282,7 @@ mod tests {
             Args {
                 verbose: false,
                 dedup: false,
+                counter: false,
             },
         );
         assert_eq!(renamer.class_to_icon("kittY", "#"), "term");
@@ -254,6 +299,7 @@ mod tests {
             Args {
                 verbose: false,
                 dedup: false,
+                counter: false,
             },
         );
         assert_eq!(
@@ -272,6 +318,7 @@ mod tests {
             Args {
                 verbose: false,
                 dedup: false,
+                counter: false,
             },
         );
         assert_eq!(
@@ -294,10 +341,19 @@ mod tests {
             Args {
                 verbose: false,
                 dedup: false,
+                counter: false,
             },
         );
         assert_eq!(renamer.class_title_to_icon("aaaa", "Neomutt"), None);
         assert_eq!(renamer.class_title_to_icon("kitty", "aaaa"), None);
         assert_eq!(renamer.class_title_to_icon("kitty", "*"), None);
+    }
+
+    #[test]
+    fn test_to_superscript() {
+        let input = 1234567890;
+        let expected = "¹²³⁴⁵⁶⁷⁸⁹⁰";
+        let output = to_superscript(input).unwrap();
+        assert_eq!(expected, output);
     }
 }
