@@ -34,7 +34,7 @@ $ hyprland-autoname-workspaces
 or to dedup icon
 
 ```bash
-$ hyprland-autoname-workspaces --dedup
+$ hyprland-autoname-workspaces --dedup [--counter]
 ```
 
 ## Configuration
