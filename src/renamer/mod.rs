@@ -72,12 +72,8 @@ impl Renamer {
                     *count += 1;
                 })
                 .or_insert(1);
-            let counter_super = to_superscript(*counter)?;
 
-            let should_dedup = self.args.dedup && (*counter > 1);
-
-            let prev_counter = *counter - 1;
-            let prev_counter_super = to_superscript(prev_counter)?;
+            let should_dedup = self.cfg.lock()?.config.dedup && (*counter > 1);
 
             if self.args.verbose && should_dedup {
                 println!("- window: class '{class}' is duplicate {counter}x")
@@ -91,27 +87,8 @@ impl Renamer {
                 .entry(workspace_id)
                 .or_insert_with(|| "".to_string());
 
-            if client.fullscreen && should_dedup && self.args.counter {
-                *workspace = workspace.replace(
-                    &format!("{icon}{}", *counter - 1),
-                    &format!("[{icon}{counter}]"),
-                );
-            } else if client.fullscreen && should_dedup {
-                *workspace = workspace.replace(&icon, &format!("[{icon}]"));
-            } else if client.fullscreen && !should_dedup {
-                *workspace = format!("{workspace} [{icon}]");
-            } else if !should_dedup {
-                *workspace = format!("{workspace} {icon}");
-            } else if self.args.counter && should_dedup {
-                if *counter > 2 {
-                    *workspace = workspace.replace(
-                        &format!("{icon}{}", prev_counter_super),
-                        &format!("{icon}{}", counter_super),
-                    );
-                } else {
-                    *workspace = workspace.replace(&icon, &format!("{icon}{}", counter_super));
-                }
-            }
+            *workspace =
+                handle_new_icon(icon, client.fullscreen, workspace, should_dedup, *counter);
         }
 
         workspaces
@@ -235,6 +212,43 @@ impl Renamer {
 }
 
 #[inline(always)]
+fn handle_new_icon(
+    icon: String,
+    fullscreen: bool,
+    workspace: &str,
+    should_dedup: bool,
+    counter: i32,
+) -> String {
+    let counter_super = to_superscript(counter);
+    let prev_counter_super = to_superscript(counter - 1);
+
+    match (fullscreen, should_dedup) {
+        (true, true) => {
+            if counter > 2 {
+                workspace.replace(
+                    &format!("{icon}{prev_counter_super}"),
+                    &format!("[{icon}] {icon}{prev_counter_super}"),
+                )
+            } else {
+                workspace.replace(&icon, &format!("[{icon}] {icon}"))
+            }
+        }
+        (true, false) => format!("{workspace} [{icon}]"),
+        (false, true) => {
+            if counter > 2 {
+                workspace.replace(
+                    &format!("{icon}{prev_counter_super}"),
+                    &format!("{icon}{counter_super}"),
+                )
+            } else {
+                workspace.replace(&icon, &format!("{icon}{counter_super}"))
+            }
+        }
+        (false, false) => format!("{workspace} {icon}"),
+    }
+}
+
+#[inline(always)]
 fn rename_cmd(id: i32, apps: &str) -> Result<(), Box<dyn Error>> {
     let text = format!("{id}:{apps}");
     let content = (!apps.is_empty()).then_some(text.as_str());
@@ -243,28 +257,24 @@ fn rename_cmd(id: i32, apps: &str) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub fn to_superscript(number: i32) -> Result<String, Box<dyn Error>> {
-    let s = number.to_string();
+pub fn to_superscript(number: i32) -> String {
+    let m: FxHashMap<_, _> = [
+        ('0', "⁰"),
+        ('1', "¹"),
+        ('2', "²"),
+        ('3', "³"),
+        ('4', "⁴"),
+        ('5', "⁵"),
+        ('6', "⁶"),
+        ('7', "⁷"),
+        ('8', "⁸"),
+        ('9', "⁹"),
+    ]
+    .iter()
+    .cloned()
+    .collect();
 
-    let mut m: FxHashMap<i32, &str> = FxHashMap::default();
-    m.insert(0, "⁰");
-    m.insert(1, "¹");
-    m.insert(2, "²");
-    m.insert(3, "³");
-    m.insert(4, "⁴");
-    m.insert(5, "⁵");
-    m.insert(6, "⁶");
-    m.insert(7, "⁷");
-    m.insert(8, "⁸");
-    m.insert(9, "⁹");
-
-    let mut result: Vec<&str> = Vec::new();
-    for c in s.chars() {
-        let number = c.to_string().parse::<i32>()?;
-        result.push(m[&number]);
-    }
-
-    Ok(result.join(""))
+    number.to_string().chars().map(|c| m[&c]).collect()
 }
 
 #[cfg(test)]
@@ -277,14 +287,7 @@ mod tests {
         let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
         _ = crate::config::create_default_config(&cfg_path);
         let config = crate::config::read_config_file(&cfg_path).unwrap();
-        let renamer = Renamer::new(
-            Config { cfg_path, config },
-            Args {
-                verbose: false,
-                dedup: false,
-                counter: false,
-            },
-        );
+        let renamer = Renamer::new(Config { cfg_path, config }, Args { verbose: false });
         assert_eq!(renamer.class_to_icon("kittY", "#"), "term");
         assert_eq!(renamer.class_to_icon("Kitty", "~"), "term");
     }
@@ -294,14 +297,7 @@ mod tests {
         let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
         _ = crate::config::create_default_config(&cfg_path);
         let config = crate::config::read_config_file(&cfg_path).unwrap();
-        let renamer = Renamer::new(
-            Config { cfg_path, config },
-            Args {
-                verbose: false,
-                dedup: false,
-                counter: false,
-            },
-        );
+        let renamer = Renamer::new(Config { cfg_path, config }, Args { verbose: false });
         assert_eq!(
             renamer.class_to_icon("class", "title"),
             "\u{f059} class: title"
@@ -313,14 +309,7 @@ mod tests {
         let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
         _ = crate::config::create_default_config(&cfg_path);
         let config = crate::config::read_config_file(&cfg_path).unwrap();
-        let renamer = Renamer::new(
-            Config { cfg_path, config },
-            Args {
-                verbose: false,
-                dedup: false,
-                counter: false,
-            },
-        );
+        let renamer = Renamer::new(Config { cfg_path, config }, Args { verbose: false });
         assert_eq!(
             renamer.class_title_to_icon("kitty", "neomutt"),
             Some("neomutt".into())
@@ -336,14 +325,7 @@ mod tests {
         let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
         _ = crate::config::create_default_config(&cfg_path);
         let config = crate::config::read_config_file(&cfg_path).unwrap();
-        let renamer = Renamer::new(
-            Config { cfg_path, config },
-            Args {
-                verbose: false,
-                dedup: false,
-                counter: false,
-            },
-        );
+        let renamer = Renamer::new(Config { cfg_path, config }, Args { verbose: false });
         assert_eq!(renamer.class_title_to_icon("aaaa", "Neomutt"), None);
         assert_eq!(renamer.class_title_to_icon("kitty", "aaaa"), None);
         assert_eq!(renamer.class_title_to_icon("kitty", "*"), None);
@@ -353,7 +335,7 @@ mod tests {
     fn test_to_superscript() {
         let input = 1234567890;
         let expected = "¹²³⁴⁵⁶⁷⁸⁹⁰";
-        let output = to_superscript(input).unwrap();
+        let output = to_superscript(input);
         assert_eq!(expected, output);
     }
 }
