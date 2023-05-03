@@ -31,12 +31,6 @@ $ cargo install --locked hyprland-autoname-workspaces
 $ hyprland-autoname-workspaces
 ```
 
-or to dedup icon
-
-```bash
-$ hyprland-autoname-workspaces --dedup [--counter]
-```
-
 ## Configuration
 
 In the config file `~/.config/hyprland-autoname-workspaces/config.toml`.
@@ -85,6 +79,17 @@ youtube = "yt"
 google = "gg"
 ...
 
+```
+
+- You can deduplicate icons with the `dedup` parameter in the `root` section of config file.
+
+```
+dedup = true
+...
+[title."(xterm|(?i)kitty|alacritty)"]
+"(?i)neomutt" = "mail"
+ncdu = "file manager"
+...
 ```
 
 No need to restart the applications then, there is an autoreload.
