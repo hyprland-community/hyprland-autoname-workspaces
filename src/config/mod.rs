@@ -67,7 +67,7 @@ pub fn read_config_file(cfg_path: &PathBuf) -> Result<ConfigFile, Box<dyn Error>
         .icons
         .iter()
         .filter_map(|(class, icon)| {
-            regex_with_error_logging(class).map(|re| (re, icon.to_string()))
+            regex_with_error_logging(class).map(|re| (re, icon.to_string().replace("/", "∕")))
         })
         .collect();
 
@@ -81,7 +81,8 @@ pub fn read_config_file(cfg_path: &PathBuf) -> Result<ConfigFile, Box<dyn Error>
                     title_icon
                         .iter()
                         .filter_map(|(title, icon)| {
-                            regex_with_error_logging(title).map(|re| (re, icon.to_string()))
+                            regex_with_error_logging(title)
+                                .map(|re| (re, icon.to_string().replace("/", "∕")))
                         })
                         .collect(),
                 )
