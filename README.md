@@ -92,7 +92,13 @@ dedup = true
 ncdu = "file manager"
 ...
 ```
-
+- You can also modify delimiter between multiple clients with the `delim` parameter in the `format` section of config file
+```
+dedup = true
+[format]
+delim = " " # NARROW NO-BREAK SPACE
+...
+```
 No need to restart the applications then, there is an autoreload.
 
 _Hint_: You can use glyphsearch and copy the unicode icon of your font for example https://glyphsearch.com/?query=book&copy=unicode

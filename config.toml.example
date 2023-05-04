@@ -1,4 +1,7 @@
+[format]
 dedup = true
+delim = " "
+workspaces = "{id}: {clients}"
 
 [icons]
 DEFAULT = ""

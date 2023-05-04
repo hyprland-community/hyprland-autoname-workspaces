@@ -6,14 +6,16 @@ use hyprland::event_listener::EventListenerMutable as EventListener;
 use hyprland::prelude::*;
 use hyprland::shared::WorkspaceType;
 use inotify::{Inotify, WatchMask};
-use rustc_hash::{FxHashMap, FxHashSet};
+use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::sync::{Arc, Mutex};
+use strfmt::strfmt;
+
 #[macro_use]
 mod macros;
 
 pub struct Renamer {
-    workspaces: Mutex<FxHashSet<i32>>,
+    workspaces: Mutex<HashSet<i32>>,
     cfg: Mutex<Config>,
     args: Args,
 }
@@ -21,7 +23,7 @@ pub struct Renamer {
 impl Renamer {
     pub fn new(cfg: Config, args: Args) -> Self {
         Renamer {
-            workspaces: Mutex::new(FxHashSet::default()),
+            workspaces: Mutex::new(HashSet::default()),
             cfg: Mutex::new(cfg),
             args,
         }
@@ -30,13 +32,13 @@ impl Renamer {
     #[inline(always)]
     pub fn renameworkspace(&self) -> Result<(), Box<dyn Error + '_>> {
         let clients = Clients::get().unwrap();
-        let mut counters: FxHashMap<String, i32> = FxHashMap::default();
+        let mut counters: HashMap<String, i32> = HashMap::default();
         let mut workspaces = self
             .workspaces
             .lock()?
             .iter()
             .map(|&c| (c, "".to_string()))
-            .collect::<FxHashMap<_, _>>();
+            .collect::<HashMap<_, _>>();
 
         for client in clients {
             let class = client.class;
@@ -73,7 +75,20 @@ impl Renamer {
                 })
                 .or_insert(1);
 
-            let should_dedup = self.cfg.lock()?.config.dedup && (*counter > 1);
+            self.workspaces.lock()?.insert(workspace_id);
+
+            let workspace = workspaces
+                .entry(workspace_id)
+                .or_insert_with(|| "".to_string());
+
+            let cfg = self.cfg.lock()?;
+            let delim = if workspace.is_empty() {
+                "".to_string()
+            } else {
+                cfg.config.format.delim.to_string()
+            };
+
+            let should_dedup = cfg.config.format.dedup && (*counter > 1);
 
             if self.args.verbose && should_dedup {
                 println!("- window: class '{class}' is duplicate {counter}x")
@@ -81,19 +96,19 @@ impl Renamer {
                 println!("- window: class '{class}', title '{title}', got this icon '{icon}'")
             };
 
-            self.workspaces.lock()?.insert(workspace_id);
-
-            let workspace = workspaces
-                .entry(workspace_id)
-                .or_insert_with(|| "".to_string());
-
-            *workspace =
-                handle_new_icon(icon, client.fullscreen, workspace, should_dedup, *counter);
+            *workspace = handle_new_icon(
+                icon,
+                delim,
+                client.fullscreen,
+                workspace,
+                should_dedup,
+                *counter,
+            );
         }
 
         workspaces
             .iter()
-            .try_for_each(|(&id, apps)| rename_cmd(id, apps))?;
+            .try_for_each(|(&id, clients)| self.rename_cmd(id, clients))?;
 
         Ok(())
     }
@@ -102,7 +117,7 @@ impl Renamer {
         self.workspaces
             .lock()?
             .iter()
-            .try_for_each(|&id| rename_cmd(id, ""))
+            .try_for_each(|&id| self.rename_cmd(id, ""))
     }
 
     pub fn start_listeners(self: &Arc<Self>) -> Result<(), Box<dyn Error>> {
@@ -209,11 +224,28 @@ impl Renamer {
 
         Ok(())
     }
+
+    #[inline(always)]
+    fn rename_cmd(&self, id: i32, clients: &str) -> Result<(), Box<dyn Error + '_>> {
+        let workspace_fmt = &self.cfg.lock()?.config.format.workspace;
+        let vars = HashMap::from([
+            ("id".to_string(), id.to_string()),
+            ("clients".to_string(), clients.to_string()),
+        ]);
+
+        let workspace = strfmt(workspace_fmt, &vars)?;
+        let content = (!clients.is_empty()).then_some(workspace.as_str());
+
+        hyprland::dispatch!(RenameWorkspace, id, content)?;
+
+        Ok(())
+    }
 }
 
 #[inline(always)]
 fn handle_new_icon(
     icon: String,
+    delim: String,
     fullscreen: bool,
     workspace: &str,
     should_dedup: bool,
@@ -227,13 +259,13 @@ fn handle_new_icon(
             if counter > 2 {
                 workspace.replace(
                     &format!("{icon}{prev_counter_super}"),
-                    &format!("[{icon}] {icon}{prev_counter_super}"),
+                    &format!("[{icon}]{delim}{icon}{prev_counter_super}"),
                 )
             } else {
-                workspace.replace(&icon, &format!("[{icon}] {icon}"))
+                workspace.replace(&icon, &format!("[{icon}]{delim}{icon}"))
             }
         }
-        (true, false) => format!("{workspace} [{icon}]"),
+        (true, false) => format!("{workspace}{delim}[{icon}]"),
         (false, true) => {
             if counter > 2 {
                 workspace.replace(
@@ -244,21 +276,12 @@ fn handle_new_icon(
                 workspace.replace(&icon, &format!("{icon}{counter_super}"))
             }
         }
-        (false, false) => format!("{workspace} {icon}"),
+        (false, false) => format!("{workspace}{delim}{icon}"),
     }
 }
 
-#[inline(always)]
-fn rename_cmd(id: i32, apps: &str) -> Result<(), Box<dyn Error>> {
-    let text = format!("{id}:{apps}");
-    let content = (!apps.is_empty()).then_some(text.as_str());
-    hyprland::dispatch!(RenameWorkspace, id, content)?;
-
-    Ok(())
-}
-
 pub fn to_superscript(number: i32) -> String {
-    let m: FxHashMap<_, _> = [
+    let m: HashMap<_, _> = [
         ('0', "⁰"),
         ('1', "¹"),
         ('2', "²"),

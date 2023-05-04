@@ -12,6 +12,24 @@ pub struct Config {
     pub cfg_path: PathBuf,
 }
 
+fn default_delim_formatter() -> String {
+    " ".to_string()
+}
+
+fn default_workspace_formatter() -> String {
+    "{id}: {clients}".to_string()
+}
+
+#[derive(Deserialize)]
+pub struct FormatConfigRaw {
+    #[serde(default)]
+    pub dedup: bool,
+    #[serde(default = "default_delim_formatter")]
+    pub delim: String,
+    #[serde(default = "default_workspace_formatter")]
+    pub workspace: String,
+}
+
 #[derive(Deserialize)]
 pub struct ConfigFileRaw {
     pub icons: FxHashMap<String, String>,
@@ -19,15 +37,14 @@ pub struct ConfigFileRaw {
     pub title: FxHashMap<String, FxHashMap<String, String>>,
     #[serde(default)]
     pub exclude: FxHashMap<String, String>,
-    #[serde(default)]
-    pub dedup: bool,
+    pub format: FormatConfigRaw,
 }
 
 pub struct ConfigFile {
     pub icons: Vec<(Regex, String)>,
     pub title: Vec<(Regex, Vec<(Regex, String)>)>,
     pub exclude: Vec<(Regex, Regex)>,
-    pub dedup: bool,
+    pub format: FormatConfigRaw,
 }
 
 impl Config {
@@ -61,7 +78,7 @@ pub fn read_config_file(cfg_path: &PathBuf) -> Result<ConfigFile, Box<dyn Error>
     let config: ConfigFileRaw =
         toml::from_str(&config_string).map_err(|e| format!("Unable to parse: {e:?}"))?;
 
-    let dedup = config.dedup;
+    let format = config.format;
 
     let icons = config
         .icons
@@ -103,15 +120,21 @@ pub fn read_config_file(cfg_path: &PathBuf) -> Result<ConfigFile, Box<dyn Error>
         icons,
         title,
         exclude,
-        dedup,
+        format,
     })
 }
 
 pub fn create_default_config(cfg_path: &PathBuf) -> Result<&'static str, Box<dyn Error + 'static>> {
     let default_config = r#"
+
+[format]
 # Deduplicate icons if enable.
 # A superscripted counter will be added.
 dedup = false
+# window delimiter
+delim = " "
+# workspace formatter
+workspace = "{id}: {clients}"
 
 [icons]
 # Add your icons mapping
