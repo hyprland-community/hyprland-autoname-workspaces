@@ -87,8 +87,12 @@ impl Renamer {
                 .entry(workspace_id)
                 .or_insert_with(|| "".to_string());
 
+            let delim = match workspace.is_empty() {
+                false=>self.cfg.lock()?.config.delim.to_string(),
+                true=>"".to_string()
+            };
             *workspace =
-                handle_new_icon(icon, client.fullscreen, workspace, should_dedup, *counter);
+                handle_new_icon(icon, delim , client.fullscreen, workspace, should_dedup, *counter);
         }
 
         workspaces
@@ -214,6 +218,7 @@ impl Renamer {
 #[inline(always)]
 fn handle_new_icon(
     icon: String,
+    delim: String,
     fullscreen: bool,
     workspace: &str,
     should_dedup: bool,
@@ -227,13 +232,13 @@ fn handle_new_icon(
             if counter > 2 {
                 workspace.replace(
                     &format!("{icon}{prev_counter_super}"),
-                    &format!("[{icon}] {icon}{prev_counter_super}"),
+                    &format!("[{icon}]{delim}{icon}{prev_counter_super}"),
                 )
             } else {
-                workspace.replace(&icon, &format!("[{icon}] {icon}"))
+                workspace.replace(&icon, &format!("[{icon}]{delim}{icon}"))
             }
         }
-        (true, false) => format!("{workspace} [{icon}]"),
+        (true, false) => format!("{workspace}{delim}[{icon}]"),
         (false, true) => {
             if counter > 2 {
                 workspace.replace(
@@ -244,13 +249,13 @@ fn handle_new_icon(
                 workspace.replace(&icon, &format!("{icon}{counter_super}"))
             }
         }
-        (false, false) => format!("{workspace} {icon}"),
+        (false, false) => format!("{workspace}{delim}{icon}"),
     }
 }
 
 #[inline(always)]
 fn rename_cmd(id: i32, apps: &str) -> Result<(), Box<dyn Error>> {
-    let text = format!("{id}:{apps}");
+    let text = format!("{id}: {apps}");
     let content = (!apps.is_empty()).then_some(text.as_str());
     hyprland::dispatch!(RenameWorkspace, id, content)?;
 

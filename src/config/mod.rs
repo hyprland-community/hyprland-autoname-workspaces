@@ -21,6 +21,12 @@ pub struct ConfigFileRaw {
     pub exclude: FxHashMap<String, String>,
     #[serde(default)]
     pub dedup: bool,
+    #[serde(default="default_delim")]
+    pub delim: String,
+}
+
+fn default_delim() -> String {
+    " ".to_string()
 }
 
 pub struct ConfigFile {
@@ -28,6 +34,7 @@ pub struct ConfigFile {
     pub title: Vec<(Regex, Vec<(Regex, String)>)>,
     pub exclude: Vec<(Regex, Regex)>,
     pub dedup: bool,
+    pub delim: String,
 }
 
 impl Config {
@@ -62,6 +69,8 @@ pub fn read_config_file(cfg_path: &PathBuf) -> Result<ConfigFile, Box<dyn Error>
         toml::from_str(&config_string).map_err(|e| format!("Unable to parse: {e:?}"))?;
 
     let dedup = config.dedup;
+
+    let delim = config.delim;
 
     let icons = config
         .icons
@@ -104,6 +113,7 @@ pub fn read_config_file(cfg_path: &PathBuf) -> Result<ConfigFile, Box<dyn Error>
         title,
         exclude,
         dedup,
+        delim,
     })
 }
 
@@ -112,6 +122,7 @@ pub fn create_default_config(cfg_path: &PathBuf) -> Result<&'static str, Box<dyn
 # Deduplicate icons if enable.
 # A superscripted counter will be added.
 dedup = false
+delim = " "
 
 [icons]
 # Add your icons mapping
