@@ -99,3 +99,5 @@ _Hint_: You can use glyphsearch and copy the unicode icon of your font for examp
 _Hint_: You can find hyprland class names for currently running apps using: `hyprctl clients  | grep -i class`, or you can also use `hyprland-autoname-workspaces --verbose`.
 
 _Hint_: Feel free to adapt and use this [script](https://github.com/Psykopear/i3autoname/blob/master/scripts/generate_icons.py) to generate your config file. This is untested for the moment.
+
+_Hint_: You can bootstrap your `[icons]` with the `contrib/generate_icons.py` script.
