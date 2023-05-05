@@ -19,22 +19,24 @@ pub struct ConfigFileRaw {
     pub title: FxHashMap<String, FxHashMap<String, String>>,
     #[serde(default)]
     pub exclude: FxHashMap<String, String>,
+    #[serde(default)]//="default_format")]
+    pub format: FxHashMap<String, String>,
     #[serde(default)]
     pub dedup: bool,
-    #[serde(default="default_delim")]
-    pub delim: String,
 }
 
-fn default_delim() -> String {
-    " ".to_string()
-}
+/*fn default_format() -> FxHashMap<String, String> {
+    FxHashMap<Stringfrom([
+    ("delim".to_string(), " ".to_string()),
+])
+}*/
 
 pub struct ConfigFile {
     pub icons: Vec<(Regex, String)>,
     pub title: Vec<(Regex, Vec<(Regex, String)>)>,
     pub exclude: Vec<(Regex, Regex)>,
+    pub format: FxHashMap<String, String>,
     pub dedup: bool,
-    pub delim: String,
 }
 
 impl Config {
@@ -70,7 +72,7 @@ pub fn read_config_file(cfg_path: &PathBuf) -> Result<ConfigFile, Box<dyn Error>
 
     let dedup = config.dedup;
 
-    let delim = config.delim;
+    let format = config.format;
 
     let icons = config
         .icons
@@ -112,8 +114,8 @@ pub fn read_config_file(cfg_path: &PathBuf) -> Result<ConfigFile, Box<dyn Error>
         icons,
         title,
         exclude,
+        format,
         dedup,
-        delim,
     })
 }
 
@@ -122,6 +124,8 @@ pub fn create_default_config(cfg_path: &PathBuf) -> Result<&'static str, Box<dyn
 # Deduplicate icons if enable.
 # A superscripted counter will be added.
 dedup = false
+
+[format]
 delim = " "
 
 [icons]

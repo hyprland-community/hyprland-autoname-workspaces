@@ -88,7 +88,7 @@ impl Renamer {
                 .or_insert_with(|| "".to_string());
 
             let delim = match workspace.is_empty() {
-                false=>self.cfg.lock()?.config.delim.to_string(),
+                false=>self.cfg.lock()?.config.format["delim"].to_string(),
                 true=>"".to_string()
             };
             *workspace =
