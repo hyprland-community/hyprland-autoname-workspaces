@@ -92,7 +92,7 @@ impl Renamer {
                 true=>"".to_string()
             };
             *workspace =
-                handle_new_icon(icon, delim , client.fullscreen, workspace, should_dedup, *counter);
+                handle_new_icon(icon, delim, client.fullscreen, workspace, should_dedup, *counter);
         }
 
         workspaces
