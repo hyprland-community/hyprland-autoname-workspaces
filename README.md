@@ -82,9 +82,11 @@ google = "gg"
 ```
 
 - You can deduplicate icons with the `dedup` parameter in the `root` section of config file.
+- You can also modify delimiter between multiple clients with the `delim` parameter
 
 ```
 dedup = true
+delim = " " # NARROW NO-BREAK SPACE
 ...
 [title."(xterm|(?i)kitty|alacritty)"]
 "(?i)neomutt" = "mail"
