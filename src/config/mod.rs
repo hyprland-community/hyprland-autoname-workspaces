@@ -1,5 +1,6 @@
 use regex::Regex;
 use rustc_hash::FxHashMap;
+use std::collections::HashMap;
 use serde::Deserialize;
 use std::error::Error;
 use std::fs;
@@ -19,17 +20,19 @@ pub struct ConfigFileRaw {
     pub title: FxHashMap<String, FxHashMap<String, String>>,
     #[serde(default)]
     pub exclude: FxHashMap<String, String>,
-    #[serde(default)]//="default_format")]
+    #[serde(default="default_format")]
     pub format: FxHashMap<String, String>,
     #[serde(default)]
     pub dedup: bool,
 }
 
-/*fn default_format() -> FxHashMap<String, String> {
-    FxHashMap<Stringfrom([
-    ("delim".to_string(), " ".to_string()),
-])
-}*/
+
+fn default_format() -> FxHashMap<String, String> {
+    let mut map = FxHashMap::default();
+    map.insert("delim".to_string(), " ".to_string());
+    map
+}
+
 
 pub struct ConfigFile {
     pub icons: Vec<(Regex, String)>,

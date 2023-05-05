@@ -86,12 +86,17 @@ impl Renamer {
             let workspace = workspaces
                 .entry(workspace_id)
                 .or_insert_with(|| "".to_string());
-
-            let delim = match workspace.is_empty() {
-                false=>self.cfg.lock()?.config.format["delim"].to_string(),
-                true=>"".to_string()
-            };
-            *workspace =
+            let delim = if workspace.is_empty() {
+                            "".to_string()
+                        } else {
+                        let cfg = self.cfg.lock()?;
+                        if cfg.config.format.contains_key("delim") {
+                            cfg.config.format["delim"].to_string()
+                        } else {
+                            " ".to_string()
+                        }
+                    };
+                       *workspace =
                 handle_new_icon(icon, delim, client.fullscreen, workspace, should_dedup, *counter);
         }
 
