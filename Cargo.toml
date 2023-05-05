@@ -8,8 +8,8 @@ keywords = ["linux", "desktop-application", "hyprland","waybar","wayland"]
 description = "This app automatically rename workspaces with icons of started applications."
 readme = "README.md"
 license = "ISC"
-homepage = "https://github.com/cyrinux/hyprland-autoname-workspaces"
-repository = "https://github.com/cyrinux/hyprland-autoname-workspaces"
+homepage = "https://github.com/hyprland-community/hyprland-autoname-workspaces"
+repository = "https://github.com/hyprland-community/hyprland-autoname-workspaces"
 
 [dependencies]
 regex = "1"

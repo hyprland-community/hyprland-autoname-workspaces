@@ -1,10 +1,11 @@
 # 🪟 hyprland-autoname-workspaces
 
 ![](https://img.shields.io/crates/d/hyprland-autoname-workspaces)
-![](https://img.shields.io/github/issues-raw/cyrinux/hyprland-autoname-workspaces)
-![](https://img.shields.io/github/stars/cyrinux/hyprland-autoname-workspaces)
+![](https://img.shields.io/github/issues-raw/hyprland-community/hyprland-autoname-workspaces)
+![](https://img.shields.io/github/stars/hyprland-community/hyprland-autoname-workspaces)
 ![](https://img.shields.io/aur/version/hyprland-autoname-workspaces-git)
 ![](https://img.shields.io/crates/v/hyprland-autoname-workspaces)
+[![Discord](https://img.shields.io/discord/1055990214411169892?label=discord)](https://discord.gg/zzWqvcKRMy)
 
 🕹️This is a toy for Hyprland.
 
