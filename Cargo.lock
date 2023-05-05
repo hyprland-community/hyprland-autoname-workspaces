@@ -349,16 +349,16 @@ dependencies = [
 
 [[package]]
 name = "hyprland-autoname-workspaces"
-version = "0.4.4"
+version = "0.5.0"
 dependencies = [
  "clap",
  "hyprland",
  "inotify",
  "regex",
- "rustc-hash",
  "serde",
  "signal-hook",
  "strfmt",
+ "tokio",
  "toml",
  "xdg",
 ]
@@ -440,9 +440,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.142"
+version = "0.2.143"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a987beff54b60ffa6d51982e1aa1146bc42f19bd26be28b0586f252fccf5317"
+checksum = "edc207893e85c5d6be840e969b496b53d94cec8be2d501b214f50daa97fa8024"
 
 [[package]]
 name = "linux-raw-sys"
@@ -596,12 +596,6 @@ name = "regex-syntax"
 version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a5996294f19bd3aae0453a862ad728f60e6600695733dd5df01da90c54363a3c"
-
-[[package]]
-name = "rustc-hash"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
 
 [[package]]
 name = "rustc_version"

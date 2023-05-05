@@ -1,6 +1,6 @@
 use crate::config::Config;
 use crate::params::Args;
-use hyprland::data::Clients;
+use hyprland::data::{Client, Clients};
 use hyprland::dispatch::*;
 use hyprland::event_listener::EventListenerMutable as EventListener;
 use hyprland::prelude::*;
@@ -21,12 +21,12 @@ pub struct Renamer {
 }
 
 impl Renamer {
-    pub fn new(cfg: Config, args: Args) -> Self {
-        Renamer {
+    pub fn new(cfg: Config, args: Args) -> Arc<Self> {
+        Arc::new(Renamer {
             workspaces: Mutex::new(HashSet::default()),
             cfg: Mutex::new(cfg),
             args,
-        }
+        })
     }
 
     #[inline(always)]
@@ -37,39 +37,44 @@ impl Renamer {
             .workspaces
             .lock()?
             .iter()
-            .map(|&c| (c, "".to_string()))
+            .map(|&c| (c, String::new()))
             .collect::<HashMap<_, _>>();
 
         for client in clients {
-            let class = client.class;
-            if class.is_empty() {
+            if client.class.is_empty() {
                 continue;
             }
 
-            let title = client.title;
             if self
                 .cfg
                 .lock()?
                 .config
                 .exclude
                 .iter()
-                .any(|(c, t)| c.is_match(&class) && (t.is_match(&title)))
+                .any(|(c, t)| c.is_match(&client.class) && (t.is_match(&client.title)))
             {
                 if self.args.verbose {
-                    println!("- window: class '{class}' with title '{title}' is exclude")
+                    println!(
+                        "- window: class '{}' with title '{}' is exclude",
+                        client.class, client.title
+                    )
                 }
                 continue;
             }
 
             let workspace_id = client.workspace.id;
-            let icon = self
-                .class_title_to_icon(&class, &title)
-                .unwrap_or_else(|| self.class_to_icon(&class, &title));
+            let client_icon = self
+                .class_title_to_icon(&client.class, &client.title, false)
+                .unwrap_or_else(|| self.class_to_icon(&client.class, false));
 
-            let workspace_icon_key = format!("{workspace_id}-{icon}");
+            let client_active_icon = self
+                .class_title_to_icon(&client.class, &client.title, true)
+                .unwrap_or_else(|| self.class_to_icon(&client.class, true));
+
+            let workspace_client_key = format!("{workspace_id}-{}", client_icon);
 
             let counter = counters
-                .entry(workspace_icon_key)
+                .entry(workspace_client_key)
                 .and_modify(|count| {
                     *count += 1;
                 })
@@ -77,33 +82,11 @@ impl Renamer {
 
             self.workspaces.lock()?.insert(workspace_id);
 
-            let workspace = workspaces
-                .entry(workspace_id)
-                .or_insert_with(|| "".to_string());
+            let workspace = workspaces.entry(workspace_id).or_insert_with(String::new);
 
-            let cfg = self.cfg.lock()?;
-            let delim = if workspace.is_empty() {
-                "".to_string()
-            } else {
-                cfg.config.format.delim.to_string()
-            };
-
-            let should_dedup = cfg.config.format.dedup && (*counter > 1);
-
-            if self.args.verbose && should_dedup {
-                println!("- window: class '{class}' is duplicate {counter}x")
-            } else if self.args.verbose {
-                println!("- window: class '{class}', title '{title}', got this icon '{icon}'")
-            };
-
-            *workspace = handle_new_icon(
-                icon,
-                delim,
-                client.fullscreen,
-                workspace,
-                should_dedup,
-                *counter,
-            );
+            *workspace = self
+                .handle_new_client(client, client_icon, client_active_icon, workspace, *counter)
+                .expect("- not able to handle the icon");
         }
 
         workspaces
@@ -173,34 +156,47 @@ impl Renamer {
     }
 
     #[inline(always)]
-    fn class_to_icon(&self, class: &str, title: &str) -> String {
-        let default_value = String::from("no default icon");
+    fn class_to_icon(&self, class: &str, active: bool) -> String {
+        let default_value = "no default icon".to_string();
         let cfg = &self.cfg.lock().expect("Unable to obtain lock for config");
-        cfg.config
-            .icons
+        let icons = if active {
+            &cfg.config.icons_active
+        } else {
+            &cfg.config.icons
+        };
+
+        icons
             .iter()
             .find(|(re_class, _)| re_class.is_match(class))
-            .map(|(_, icon)| icon.clone())
+            .map(|(_, icon)| icon.to_string())
             .unwrap_or_else(|| {
                 if self.args.verbose {
                     println!("- window: class '{class}' need a shiny icon");
                 }
-                cfg.config
-                    .icons
-                    .iter()
-                    .find(|(re_class, _)| re_class.to_string() == "DEFAULT")
-                    .map(|(_, icon)| icon.clone())
-                    .unwrap_or(default_value)
+                if active {
+                    cfg.config.format.client_active.to_string()
+                } else {
+                    icons
+                        .iter()
+                        .find(|(re_class, _)| re_class.to_string() == "DEFAULT")
+                        .map(|(_, icon)| icon.to_string())
+                        .unwrap_or(default_value)
+                }
             })
-            .replace("${class}", class)
-            .replace("${title}", title)
+            // migration: to be remove in next release
+            .replace("${class}", "{class}")
     }
 
     #[inline(always)]
-    fn class_title_to_icon(&self, class: &str, title: &str) -> Option<String> {
+    fn class_title_to_icon(&self, class: &str, title: &str, active: bool) -> Option<String> {
         let cfg = &self.cfg.lock().expect("Unable to obtain lock for config");
-        cfg.config
-            .title
+        let title_icons = if active {
+            &cfg.config.title_active
+        } else {
+            &cfg.config.title
+        };
+
+        title_icons
             .iter()
             .find(|(re_class, _)| re_class.is_match(class))
             .and_then(|(_, title_icon)| {
@@ -209,8 +205,9 @@ impl Renamer {
                     .find(|(re_title, _)| re_title.is_match(title))
                     .map(|(_, icon)| {
                         icon.to_string()
-                            .replace("${class}", class)
-                            .replace("${title}", title)
+                            // migration: to be remove in next release
+                            .replace("${class}", "{class}")
+                            .replace("${title}", "{title}")
                     })
             })
     }
@@ -227,56 +224,133 @@ impl Renamer {
 
     #[inline(always)]
     fn rename_cmd(&self, id: i32, clients: &str) -> Result<(), Box<dyn Error + '_>> {
-        let workspace_fmt = &self.cfg.lock()?.config.format.workspace;
-        let vars = HashMap::from([
-            ("id".to_string(), id.to_string()),
-            ("clients".to_string(), clients.to_string()),
+        {
+            let cfg = &self.cfg.lock()?.config;
+            let workspace_fmt = &cfg.format.workspace;
+            let vars = HashMap::from([
+                ("id".to_string(), id.to_string()),
+                ("delim".to_string(), cfg.format.delim.to_string()),
+                ("clients".to_string(), clients.to_string()),
+            ]);
+            let workspace = formatter!(workspace_fmt, vars);
+            let content = (!clients.is_empty()).then_some(workspace.trim_end());
+
+            hyprland::dispatch!(RenameWorkspace, id, content)?;
+
+            Ok(())
+        }
+    }
+
+    #[inline(always)]
+    fn handle_new_client(
+        &self,
+        clt: Client,
+        client_icon: String,
+        client_active_icon: String,
+        workspace: &str,
+        counter: i32,
+    ) -> Result<String, Box<dyn Error + '_>> {
+        let should_dedup = self.cfg.lock()?.config.format.dedup && (counter > 1);
+
+        if self.args.verbose && should_dedup {
+            println!("- window: class '{}' is duplicate {counter}x", clt.class)
+        } else if self.args.verbose {
+            println!(
+                "- window: class '{}', title '{}', got this icon '{client_icon}'",
+                clt.class, clt.title
+            )
+        };
+
+        let cfg = &self.cfg.lock()?.config;
+
+        // Formatter strings
+        let counter_super = to_superscript(counter);
+        let prev_counter = (counter - 1).to_string();
+        let prev_counter_super = to_superscript(counter - 1);
+        let client_dup = &cfg.format.client_dup.to_string();
+        let client_dup_fullscreen = &cfg.format.client_dup_fullscreen.to_string();
+        let client_active = &cfg.format.client_active.to_string();
+        let client_fullscreen = &cfg.format.client_fullscreen.to_string();
+        let client = &cfg.format.client.to_string();
+        let delim = &cfg.format.delim.to_string();
+
+        let mut vars = HashMap::from([
+            ("title".to_string(), clt.title),
+            ("class".to_string(), clt.class),
+            (
+                "client_fullscreen".to_string(),
+                client_fullscreen.to_string(),
+            ),
+            ("counter".to_string(), counter.to_string()),
+            ("counter_unfocused".to_string(), prev_counter),
+            ("counter_s".to_string(), counter_super),
+            ("counter_unfocused_s".to_string(), prev_counter_super),
+            ("delim".to_string(), delim.to_string()),
         ]);
 
-        let workspace = strfmt(workspace_fmt, &vars)?;
-        let content = (!clients.is_empty()).then_some(workspace.as_str());
+        let _test_client_active = 9999; // to be change with true active
+        let class = &vars["class"];
 
-        hyprland::dispatch!(RenameWorkspace, id, content)?;
+        let is_active = class == "chromium";
+        // let is_active = clt.pid == test_client_active;
+        let icon = if is_active {
+            // let icon = if clt.pid == test_client_active {
+            vars.insert("default_icon".to_string(), client_icon);
+            let x = formatter!(client_active_icon.replace("{icon}", "{default_icon}"), vars);
+            vars.remove("default_icon");
+            x
+        } else {
+            client_icon
+        };
 
-        Ok(())
-    }
-}
+        vars.insert("icon".to_string(), icon);
+        vars.insert("client".to_string(), formatter!(client, vars));
+        vars.insert("client_active".to_string(), formatter!(client_active, vars));
 
-#[inline(always)]
-fn handle_new_icon(
-    icon: String,
-    delim: String,
-    fullscreen: bool,
-    workspace: &str,
-    should_dedup: bool,
-    counter: i32,
-) -> String {
-    let counter_super = to_superscript(counter);
-    let prev_counter_super = to_superscript(counter - 1);
-
-    match (fullscreen, should_dedup) {
-        (true, true) => {
-            if counter > 2 {
-                workspace.replace(
-                    &format!("{icon}{prev_counter_super}"),
-                    &format!("[{icon}]{delim}{icon}{prev_counter_super}"),
-                )
-            } else {
-                workspace.replace(&icon, &format!("[{icon}]{delim}{icon}"))
+        Ok(match (clt.fullscreen, should_dedup) {
+            (true, true) => {
+                /* fullscreen with dedup */
+                if counter > 2 {
+                    let from = formatter!(
+                        client_dup
+                            .replace("{counter_s}", "{counter_unfocused_s}")
+                            .replace("{counter}", "{counter_unfocused"),
+                        vars
+                    );
+                    let to = formatter!(client_dup_fullscreen, vars);
+                    workspace.replace(&from, &to)
+                } else {
+                    let from = formatter!(client_dup, vars);
+                    let to = formatter!(client_dup_fullscreen, vars);
+                    workspace.replace(&from, &to)
+                }
             }
-        }
-        (true, false) => format!("{workspace}{delim}[{icon}]"),
-        (false, true) => {
-            if counter > 2 {
-                workspace.replace(
-                    &format!("{icon}{prev_counter_super}"),
-                    &format!("{icon}{counter_super}"),
-                )
-            } else {
-                workspace.replace(&icon, &format!("{icon}{counter_super}"))
+            (true, false) => {
+                /* fullscreen with no dedup */
+                format!("{workspace}{}", formatter!(client_fullscreen, vars))
             }
-        }
-        (false, false) => format!("{workspace}{delim}{icon}"),
+            (false, true) => {
+                /* no fullscreen with dedup */
+                if counter > 2 {
+                    let from = formatter!(
+                        client_dup
+                            .replace("{counter_s}", "{counter_unfocused_s}")
+                            .replace("{counter}", "{counter_unfocused"),
+                        vars
+                    );
+                    let to = formatter!(client_dup, vars);
+                    workspace.replace(&from, &to)
+                } else {
+                    let from = formatter!(client, vars);
+                    let to = formatter!(client_dup, vars);
+                    workspace.replace(&from, &to)
+                }
+            }
+            (false, false) => {
+                /* no fullscreen with no dedup */
+                format!("{workspace}{}", formatter!(client, vars))
+            }
+        })
     }
 }
 
@@ -305,53 +379,88 @@ mod tests {
     use super::*;
     use std::path::PathBuf;
 
+    use std::sync::Once;
+
+    static INIT: Once = Once::new();
+
+    pub fn initialize() {
+        INIT.call_once(|| {
+            let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
+            _ = crate::config::create_default_config(&cfg_path);
+        });
+    }
+
     #[test]
     fn test_class_kitty() {
+        initialize();
         let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
-        _ = crate::config::create_default_config(&cfg_path);
         let config = crate::config::read_config_file(&cfg_path).unwrap();
         let renamer = Renamer::new(Config { cfg_path, config }, Args { verbose: false });
-        assert_eq!(renamer.class_to_icon("kittY", "#"), "term");
-        assert_eq!(renamer.class_to_icon("Kitty", "~"), "term");
+        assert_eq!(renamer.class_to_icon("kittY", false), "term");
+        assert_eq!(renamer.class_to_icon("Kitty", false), "term");
+    }
+
+    #[test]
+    fn test_class_kitty_active() {
+        initialize();
+        let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
+        let config = crate::config::read_config_file(&cfg_path).unwrap();
+        let renamer = Renamer::new(Config { cfg_path, config }, Args { verbose: false });
+        assert_eq!(
+            renamer.class_to_icon("Kitty", true),
+            "<span foreground='red'>{icon}</span>"
+        );
+    }
+
+    #[test]
+    fn test_default_active() {
+        initialize();
+        let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
+        let config = crate::config::read_config_file(&cfg_path).unwrap();
+        let renamer = Renamer::new(Config { cfg_path, config }, Args { verbose: false });
+        assert_eq!(
+            renamer.class_to_icon("Chromium", true),
+            "<span background='orange'>{icon}</span>{delim}"
+        );
     }
 
     #[test]
     fn test_class_with_bad_values() {
+        initialize();
         let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
-        _ = crate::config::create_default_config(&cfg_path);
         let config = crate::config::read_config_file(&cfg_path).unwrap();
         let renamer = Renamer::new(Config { cfg_path, config }, Args { verbose: false });
         assert_eq!(
-            renamer.class_to_icon("class", "title"),
-            "\u{f059} class: title"
+            renamer.class_to_icon("class", false),
+            "\u{f059} {class}: {title}"
         );
     }
 
     #[test]
     fn test_class_kitty_title_neomutt() {
+        initialize();
         let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
-        _ = crate::config::create_default_config(&cfg_path);
         let config = crate::config::read_config_file(&cfg_path).unwrap();
         let renamer = Renamer::new(Config { cfg_path, config }, Args { verbose: false });
         assert_eq!(
-            renamer.class_title_to_icon("kitty", "neomutt"),
+            renamer.class_title_to_icon("kitty", "neomutt", false),
             Some("neomutt".into())
         );
         assert_eq!(
-            renamer.class_title_to_icon("Kitty", "Neomutt"),
+            renamer.class_title_to_icon("Kitty", "Neomutt", false),
             Some("neomutt".into())
         );
     }
 
     #[test]
     fn test_class_title_match_with_bad_values() {
+        initialize();
         let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
-        _ = crate::config::create_default_config(&cfg_path);
         let config = crate::config::read_config_file(&cfg_path).unwrap();
         let renamer = Renamer::new(Config { cfg_path, config }, Args { verbose: false });
-        assert_eq!(renamer.class_title_to_icon("aaaa", "Neomutt"), None);
-        assert_eq!(renamer.class_title_to_icon("kitty", "aaaa"), None);
-        assert_eq!(renamer.class_title_to_icon("kitty", "*"), None);
+        assert_eq!(renamer.class_title_to_icon("aaaa", "Neomutt", false), None);
+        assert_eq!(renamer.class_title_to_icon("kitty", "aaaa", false), None);
+        assert_eq!(renamer.class_title_to_icon("kitty", "*", false), None);
     }
 
     #[test]

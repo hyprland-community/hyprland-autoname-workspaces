@@ -12,7 +12,8 @@ use signal_hook::iterator::Signals;
 use std::sync::*;
 use std::{process, thread};
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let cfg = Config::new().expect("Unable to read config");
 
     // Init

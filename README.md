@@ -40,13 +40,13 @@ _You can use regex everywhere, and its case sensitive by default_
 
 Edit the mapping of applications with `class = "icon"` in the `[icons]` part.
 
-In icons value, you can use the placeholder `${class}` and `${title}`.
+In icons value, you can use the placeholders `{class}` and `{title}`.
 
 Example:
 
 ```
 [icons]
-DEFAULT = "${class}: ${title}"
+DEFAULT = "{class}: {title}"
 ...
 ```
 
@@ -65,7 +65,7 @@ Example:
 "[Ss]team" = "^$" # will match and exclude all Steam class with empty title (some popups)
 ```
 
-- You can match on title with `[title.classname]` with `"a word in the title" = "icons"`.
+- You can match on title with `[title.classname]` and `[title_active.class]` with `"a word in the title" = "icons"`.
 
 Example:
 
@@ -78,6 +78,10 @@ ncdu = "file manager"
 [title."(firefox|chrom.*)"]
 youtube = "yt"
 google = "gg"
+
+[title_active."(firefox|chrom.*)"]
+youtube = "<span color='red'>yt</span>"
+google = "<span color='blue'>{icon}</span>"
 ...
 
 ```
@@ -92,13 +96,38 @@ dedup = true
 ncdu = "file manager"
 ...
 ```
-- You can also modify delimiter between multiple clients with the `delim` parameter in the `format` section of config file
+
+- You can also redefine all the default formatter with those `[format]` section formatters parameters.
+  The available list of `{placeholder}` is:
+
+workspaces:
+
+- client
+- id
+
+clients:
+
+- delim
+- icon
+- counter_s, counter_unfocused_s, counter, counter_unfocused
+- class, iitle
+
 ```
-dedup = true
 [format]
+dedup = true
 delim = " " # NARROW NO-BREAK SPACE
+workspaces = "{id}: {clients}"
+client = "{icon}{delim}"
+client_active = "<span color="red">{client}</span>{delim}"
+workspace = "<b><span color='red'>{id}:</span></b>{delim}{clients}"
+client_dup = "{icon}{counter_s}{delim}"
+client_dup_fullscreen = "[{icon}]{delim}{icon}{counter_unfocused_s}"
+client_fullscreen = "[{icon}]{delim}"
 ...
 ```
+
+See `config.toml.example` and the wiki for more example, feel free to share your config !
+
 No need to restart the applications then, there is an autoreload.
 
 _Hint_: You can use glyphsearch and copy the unicode icon of your font for example https://glyphsearch.com/?query=book&copy=unicode
