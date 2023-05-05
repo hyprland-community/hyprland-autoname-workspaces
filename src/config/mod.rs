@@ -19,24 +19,15 @@ pub struct ConfigFileRaw {
     pub title: FxHashMap<String, FxHashMap<String, String>>,
     #[serde(default)]
     pub exclude: FxHashMap<String, String>,
-    #[serde(default="default_format")]
-    pub format: FxHashMap<String, String>,
     #[serde(default)]
-    pub dedup: bool,
+    pub format: FxHashMap<String, String>,
 }
-
-
-fn default_format() -> FxHashMap<String, String> {
-    [("delim".to_string(), " ".to_string())].iter().cloned().collect()
-}
-
 
 pub struct ConfigFile {
     pub icons: Vec<(Regex, String)>,
     pub title: Vec<(Regex, Vec<(Regex, String)>)>,
     pub exclude: Vec<(Regex, Regex)>,
     pub format: FxHashMap<String, String>,
-    pub dedup: bool,
 }
 
 impl Config {
@@ -69,8 +60,6 @@ pub fn read_config_file(cfg_path: &PathBuf) -> Result<ConfigFile, Box<dyn Error>
 
     let config: ConfigFileRaw =
         toml::from_str(&config_string).map_err(|e| format!("Unable to parse: {e:?}"))?;
-
-    let dedup = config.dedup;
 
     let format = config.format;
 
@@ -115,7 +104,6 @@ pub fn read_config_file(cfg_path: &PathBuf) -> Result<ConfigFile, Box<dyn Error>
         title,
         exclude,
         format,
-        dedup,
     })
 }
 
@@ -123,10 +111,10 @@ pub fn create_default_config(cfg_path: &PathBuf) -> Result<&'static str, Box<dyn
     let default_config = r#"
 # Deduplicate icons if enable.
 # A superscripted counter will be added.
-dedup = false
 
 [format]
 delim = " "
+dedup = false
 
 [icons]
 # Add your icons mapping

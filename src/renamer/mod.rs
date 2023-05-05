@@ -72,8 +72,16 @@ impl Renamer {
                     *count += 1;
                 })
                 .or_insert(1);
+            let dedup = {
+                        let cfg = self.cfg.lock()?;
+                        if cfg.config.format.contains_key("dedup") {
 
-            let should_dedup = self.cfg.lock()?.config.dedup && (*counter > 1);
+                            matches!(&cfg.config.format["dedup"][..], "true"| "1")
+                        } else {
+                            false
+                        }
+                    };
+            let should_dedup =  dedup && (*counter > 1);
 
             if self.args.verbose && should_dedup {
                 println!("- window: class '{class}' is duplicate {counter}x")
