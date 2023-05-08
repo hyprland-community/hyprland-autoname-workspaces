@@ -193,6 +193,22 @@ fn regex_with_error_logging(pattern: &str) -> Option<Regex> {
     }
 }
 
+/// Generates the title configuration for the application.
+///
+/// This function accepts a nested HashMap where the outer HashMap's keys represent class names,
+/// and the inner HashMap's keys represent titles, and their values are icons.
+/// It returns a Vec of tuples, where the first element is a Regex object created from the class name,
+/// and the second element is a Vec of tuples containing a Regex object created from the title and the corresponding icon as a String.
+///
+/// # Arguments
+///
+/// * `icons` - A nested HashMap where the outer keys are class names, and the inner keys are titles with their corresponding icon values.
+///
+/// # Examples
+///
+/// ```
+/// let title_icons = generate_title_config(title_icons_map);
+/// ```
 fn generate_title_config(
     icons: HashMap<String, HashMap<String, String>>,
 ) -> Vec<(Regex, Vec<(Regex, String)>)> {
@@ -214,6 +230,21 @@ fn generate_title_config(
         .collect()
 }
 
+/// Generates the icon configuration for the application.
+///
+/// This function accepts a HashMap where the keys represent class names and the values are icons.
+/// It returns a Vec of tuples, where the first element is a Regex object created from the class name,
+/// and the second element is the corresponding icon as a String.
+///
+/// # Arguments
+///
+/// * `icons` - A HashMap with keys as class names and values as icons.
+///
+/// # Examples
+///
+/// ```
+/// let icons_config = generate_icon_config(icons_map);
+/// ```
 fn generate_icon_config(icons: HashMap<String, String>) -> Vec<(Regex, String)> {
     icons
         .iter()
@@ -223,6 +254,21 @@ fn generate_icon_config(icons: HashMap<String, String>) -> Vec<(Regex, String)> 
         .collect()
 }
 
+/// Generates the exclude configuration for the application.
+///
+/// This function accepts a HashMap where the keys represent class names and the values are titles.
+/// It returns a Vec of tuples, where the first element is a Regex object created from the class name,
+/// and the second element is a Regex object created from the title.
+///
+/// # Arguments
+///
+/// * `icons` - A HashMap with keys as class names and values as titles.
+///
+/// # Examples
+///
+/// ```
+/// let exclude_config = generate_exclude_config(exclude_map);
+/// ```
 fn generate_exclude_config(icons: HashMap<String, String>) -> Vec<(Regex, Regex)> {
     icons
         .iter()
@@ -232,4 +278,50 @@ fn generate_exclude_config(icons: HashMap<String, String>) -> Vec<(Regex, Regex)
             })
         })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+
+    #[test]
+    fn test_generate_title_config() {
+        let mut title_icons_map: HashMap<String, HashMap<String, String>> = HashMap::new();
+        let mut inner_map: HashMap<String, String> = HashMap::new();
+        inner_map.insert("Title1".to_string(), "Icon1".to_string());
+        title_icons_map.insert("Class1".to_string(), inner_map);
+
+        let title_config = generate_title_config(title_icons_map);
+
+        assert_eq!(title_config.len(), 1);
+        assert!(title_config[0].0.is_match("Class1"));
+        assert_eq!(title_config[0].1.len(), 1);
+        assert!(title_config[0].1[0].0.is_match("Title1"));
+        assert_eq!(title_config[0].1[0].1, "Icon1");
+    }
+
+    #[test]
+    fn test_generate_icon_config() {
+        let mut icons_map: HashMap<String, String> = HashMap::new();
+        icons_map.insert("Class1".to_string(), "Icon1".to_string());
+
+        let icons_config = generate_icon_config(icons_map);
+
+        assert_eq!(icons_config.len(), 1);
+        assert!(icons_config[0].0.is_match("Class1"));
+        assert_eq!(icons_config[0].1, "Icon1");
+    }
+
+    #[test]
+    fn test_generate_exclude_config() {
+        let mut exclude_map: HashMap<String, String> = HashMap::new();
+        exclude_map.insert("Class1".to_string(), "Title1".to_string());
+
+        let exclude_config = generate_exclude_config(exclude_map);
+
+        assert_eq!(exclude_config.len(), 1);
+        assert!(exclude_config[0].0.is_match("Class1"));
+        assert!(exclude_config[0].1.is_match("Title1"));
+    }
 }
