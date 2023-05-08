@@ -45,15 +45,9 @@ impl Renamer {
         // Filter clients
         let clients: Vec<Client> = binding
             .iter()
-            .filter_map(|client| {
-                if client.class.is_empty() {
-                    None
-                } else {
-                    Some(client)
-                }
-            })
-            .filter_map(|client| {
-                if self
+            .filter(|client| !client.class.is_empty())
+            .filter(|client| {
+                !self
                     .cfg
                     .lock()
                     .unwrap()
@@ -61,18 +55,8 @@ impl Renamer {
                     .exclude
                     .iter()
                     .any(|(c, t)| c.is_match(&client.class) && (t.is_match(&client.title)))
-                {
-                    if self.args.verbose {
-                        println!(
-                            "- window: class '{}' with title '{}' is exclude",
-                            client.class, client.title
-                        )
-                    }
-                    None
-                } else {
-                    Some(client.clone())
-                }
             })
+            .map(|c| c.clone())
             .collect();
 
         for clt in clients {
