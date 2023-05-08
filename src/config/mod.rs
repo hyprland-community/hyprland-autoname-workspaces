@@ -109,16 +109,6 @@ impl Config {
     }
 }
 
-fn regex_with_error_logging(pattern: &str) -> Option<Regex> {
-    match Regex::new(pattern) {
-        Ok(re) => Some(re),
-        Err(e) => {
-            println!("Unable to parse regex: {e:?}");
-            None
-        }
-    }
-}
-
 pub fn read_config_file(cfg_path: &PathBuf) -> Result<ConfigFile, Box<dyn Error>> {
     let config_string = fs::read_to_string(cfg_path)?;
 
@@ -194,4 +184,14 @@ aProgram = "^$" # will match null title for aProgram
     println!("Default config created in {cfg_path:?}");
 
     Ok(default_config)
+}
+
+fn regex_with_error_logging(pattern: &str) -> Option<Regex> {
+    match Regex::new(pattern) {
+        Ok(re) => Some(re),
+        Err(e) => {
+            println!("Unable to parse regex: {e:?}");
+            None
+        }
+    }
 }
