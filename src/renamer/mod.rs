@@ -288,13 +288,8 @@ impl Renamer {
             ("delim".to_string(), delim.to_string()),
         ]);
 
-        let _test_client_active = 9999; // to be change with true active
-        let class = &vars["class"];
-
-        let is_active = class == "chromium";
-        // let is_active = clt.pid == test_client_active;
+        let is_active = false;
         let icon = if is_active {
-            // let icon = if clt.pid == test_client_active {
             vars.insert("default_icon".to_string(), client_icon);
             let x = formatter!(client_active_icon.replace("{icon}", "{default_icon}"), vars);
             vars.remove("default_icon");
