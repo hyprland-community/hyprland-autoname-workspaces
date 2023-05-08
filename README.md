@@ -137,3 +137,5 @@ _Hint_: You can find hyprland class names for currently running apps using: `hyp
 _Hint_: Feel free to adapt and use this [script](https://github.com/Psykopear/i3autoname/blob/master/scripts/generate_icons.py) to generate your config file. This is untested for the moment.
 
 _Hint_: You can bootstrap your `[icons]` with the `contrib/generate_icons.py` script.
+
+_Hint_: All styling param that you can use with `<span>` are here: https://docs.gtk.org/Pango/pango_markup.html
