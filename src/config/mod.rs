@@ -80,7 +80,7 @@ pub struct ConfigFileRaw {
     pub title_active: HashMap<String, HashMap<String, String>>,
     #[serde(default)]
     pub exclude: HashMap<String, String>,
-    #[serde(default, flatten)]
+    #[serde(default)]
     pub format: ConfigFormatRaw,
 }
 
