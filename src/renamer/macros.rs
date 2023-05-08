@@ -44,7 +44,7 @@ macro_rules! formatter {
     ($fmt:expr, $vars:expr) => {{
         let mut result = $fmt.to_owned();
         loop {
-            if !result.contains("{") {
+            if !(result.contains("{") && result.contains("}")) {
                 break result;
             }
             let formatted = strfmt(&result, &$vars).unwrap_or_else(|_| result.clone());
