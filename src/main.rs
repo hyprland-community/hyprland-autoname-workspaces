@@ -9,14 +9,13 @@ use crate::renamer::*;
 use clap::Parser;
 use signal_hook::consts::{SIGINT, SIGTERM};
 use signal_hook::iterator::Signals;
-use std::sync::*;
 use std::{process, thread};
 
 fn main() {
     let cfg = Config::new().expect("Unable to read config");
 
     // Init
-    let renamer = Arc::new(Renamer::new(cfg, Args::parse()));
+    let renamer = Renamer::new(cfg, Args::parse());
     renamer
         .renameworkspace()
         .expect("App can't rename workspaces on start");
