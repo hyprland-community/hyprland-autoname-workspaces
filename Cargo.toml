@@ -14,8 +14,7 @@ repository = "https://github.com/hyprland-community/hyprland-autoname-workspaces
 [dependencies]
 regex = "1"
 clap = { version = "4.1.1", features = ["derive"] }
-hyprland = { path = "/home/cyril/library/src/personal/github.com/cyrinux/hyprland-rs" }
-# hyprland = "0.3.2"
+hyprland = { git = "https://github.com/hyprland-community/hyprland-rs.git", branch="master" }
 signal-hook = "0.3.14"
 toml = { version = "0.5.10", features = ["indexmap", "preserve_order"] }
 xdg = "2.4.1"

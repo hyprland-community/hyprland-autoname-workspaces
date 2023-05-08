@@ -329,6 +329,7 @@ dependencies = [
 [[package]]
 name = "hyprland"
 version = "0.3.2"
+source = "git+https://github.com/hyprland-community/hyprland-rs.git?branch=master#0f849db6e2d34bf01126a7616668c546fa9f7dd3"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -366,6 +367,7 @@ dependencies = [
 [[package]]
 name = "hyprland-macros"
 version = "0.3.2"
+source = "git+https://github.com/hyprland-community/hyprland-rs.git?branch=master#0f849db6e2d34bf01126a7616668c546fa9f7dd3"
 dependencies = [
  "quote",
  "syn 2.0.15",
