@@ -56,7 +56,7 @@ impl Renamer {
                     .iter()
                     .any(|(c, t)| c.is_match(&client.class) && (t.is_match(&client.title)))
             })
-            .map(|c| c.clone())
+            .cloned()
             .collect();
 
         for clt in clients {
