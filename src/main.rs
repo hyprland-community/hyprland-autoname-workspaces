@@ -13,9 +13,14 @@ use std::{process, thread};
 
 fn main() {
     let cfg = Config::new().expect("Unable to read config");
+    let args = Args::parse();
+
+    if args.dump {
+        println!("{:#?}", &cfg);
+    }
 
     // Init
-    let renamer = Renamer::new(cfg, Args::parse());
+    let renamer = Renamer::new(cfg, args);
     renamer
         .renameworkspace()
         .expect("App can't rename workspaces on start");

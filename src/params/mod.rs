@@ -6,4 +6,6 @@ pub struct Args {
     /// Verbose
     #[arg(short, long)]
     pub verbose: bool,
+    #[arg(short, long)]
+    pub dump: bool,
 }

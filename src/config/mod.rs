@@ -7,7 +7,7 @@ use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Config {
     pub config: ConfigFile,
     pub cfg_path: PathBuf,
@@ -45,7 +45,7 @@ fn default_icons() -> HashMap<String, String> {
     HashMap::from([("DEFAULT".to_string(), " {class}".to_string())])
 }
 
-#[derive(Deserialize, Default)]
+#[derive(Deserialize, Default, Debug)]
 pub struct ConfigFormatRaw {
     #[serde(default)]
     pub dedup: bool,
@@ -81,7 +81,7 @@ pub struct ConfigFileRaw {
     pub format: ConfigFormatRaw,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct ConfigFile {
     pub icons: Vec<(Regex, String)>,
     pub icons_active: Vec<(Regex, String)>,
