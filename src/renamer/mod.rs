@@ -31,7 +31,6 @@ impl Renamer {
 
     #[inline(always)]
     pub fn renameworkspace(&self) -> Result<(), Box<dyn Error + '_>> {
-        let clients = Clients::get().unwrap();
         let mut counters: HashMap<String, i32> = HashMap::default();
         let mut workspaces = self
             .workspaces
@@ -40,32 +39,46 @@ impl Renamer {
             .map(|&c| (c, String::new()))
             .collect::<HashMap<_, _>>();
 
-        for client in clients {
-            if client.class.is_empty() {
-                continue;
-            }
+        // Connect to Hyprland
+        let binding = Clients::get().unwrap();
 
-            if self
-                .cfg
-                .lock()?
-                .config
-                .exclude
-                .iter()
-                .any(|(c, t)| c.is_match(&client.class) && (t.is_match(&client.title)))
-            {
-                if self.args.verbose {
-                    println!(
-                        "- window: class '{}' with title '{}' is exclude",
-                        client.class, client.title
-                    )
+        // Filter clients
+        let clients: Vec<Client> = binding
+            .iter()
+            .filter_map(|client| {
+                if client.class.is_empty() {
+                    None
+                } else {
+                    Some(client)
                 }
-                continue;
-            }
+            })
+            .filter_map(|client| {
+                if self
+                    .cfg
+                    .lock()
+                    .unwrap()
+                    .config
+                    .exclude
+                    .iter()
+                    .any(|(c, t)| c.is_match(&client.class) && (t.is_match(&client.title)))
+                {
+                    if self.args.verbose {
+                        println!(
+                            "- window: class '{}' with title '{}' is exclude",
+                            client.class, client.title
+                        )
+                    }
+                    None
+                } else {
+                    Some(client.clone())
+                }
+            })
+            .collect();
 
-            let workspace_id = client.workspace.id;
+        for clt in clients {
+            let workspace_id = clt.workspace.id;
 
-            let (client_icon, client_active_icon) =
-                self.get_client_icons(&client.class, &client.title);
+            let (client_icon, client_active_icon) = self.get_client_icons(&clt.class, &clt.title);
 
             let workspace_client_key = format!("{workspace_id}-{}", client_icon);
 
@@ -81,7 +94,7 @@ impl Renamer {
             let workspace = workspaces.entry(workspace_id).or_insert_with(String::new);
 
             *workspace = self
-                .handle_new_client(client, client_icon, client_active_icon, workspace, *counter)
+                .handle_new_client(clt, client_icon, client_active_icon, workspace, *counter)
                 .expect("- not able to handle the icon");
         }
 
