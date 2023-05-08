@@ -411,7 +411,13 @@ mod tests {
         initialize();
         let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
         let config = crate::config::read_config_file(&cfg_path).unwrap();
-        let renamer = Renamer::new(Config { cfg_path, config }, Args { verbose: false });
+        let renamer = Renamer::new(
+            Config { cfg_path, config },
+            Args {
+                verbose: false,
+                dump: false,
+            },
+        );
         assert_eq!(renamer.class_to_icon("kittY", false), "term");
         assert_eq!(renamer.class_to_icon("Kitty", false), "term");
     }
@@ -421,7 +427,13 @@ mod tests {
         initialize();
         let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
         let config = crate::config::read_config_file(&cfg_path).unwrap();
-        let renamer = Renamer::new(Config { cfg_path, config }, Args { verbose: false });
+        let renamer = Renamer::new(
+            Config { cfg_path, config },
+            Args {
+                verbose: false,
+                dump: false,
+            },
+        );
         assert_eq!(
             renamer.class_to_icon("Kitty", true),
             "<span foreground='red'>{icon}</span>"
@@ -433,7 +445,13 @@ mod tests {
         initialize();
         let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
         let config = crate::config::read_config_file(&cfg_path).unwrap();
-        let renamer = Renamer::new(Config { cfg_path, config }, Args { verbose: false });
+        let renamer = Renamer::new(
+            Config { cfg_path, config },
+            Args {
+                verbose: false,
+                dump: false,
+            },
+        );
         assert_eq!(
             renamer.class_to_icon("Chromium", true),
             "<span background='orange'>{icon}</span>{delim}"
@@ -445,7 +463,13 @@ mod tests {
         initialize();
         let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
         let config = crate::config::read_config_file(&cfg_path).unwrap();
-        let renamer = Renamer::new(Config { cfg_path, config }, Args { verbose: false });
+        let renamer = Renamer::new(
+            Config { cfg_path, config },
+            Args {
+                verbose: false,
+                dump: false,
+            },
+        );
         assert_eq!(
             renamer.class_to_icon("class", false),
             "\u{f059} {class}: {title}"
@@ -457,7 +481,13 @@ mod tests {
         initialize();
         let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
         let config = crate::config::read_config_file(&cfg_path).unwrap();
-        let renamer = Renamer::new(Config { cfg_path, config }, Args { verbose: false });
+        let renamer = Renamer::new(
+            Config { cfg_path, config },
+            Args {
+                verbose: false,
+                dump: false,
+            },
+        );
         assert_eq!(
             renamer.class_title_to_icon("kitty", "neomutt", false),
             Some("neomutt".into())
@@ -473,7 +503,13 @@ mod tests {
         initialize();
         let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
         let config = crate::config::read_config_file(&cfg_path).unwrap();
-        let renamer = Renamer::new(Config { cfg_path, config }, Args { verbose: false });
+        let renamer = Renamer::new(
+            Config { cfg_path, config },
+            Args {
+                verbose: false,
+                dump: false,
+            },
+        );
         assert_eq!(renamer.class_title_to_icon("aaaa", "Neomutt", false), None);
         assert_eq!(renamer.class_title_to_icon("kitty", "aaaa", false), None);
         assert_eq!(renamer.class_title_to_icon("kitty", "*", false), None);

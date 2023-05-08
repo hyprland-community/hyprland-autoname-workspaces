@@ -45,7 +45,23 @@ fn default_icons() -> HashMap<String, String> {
     HashMap::from([("DEFAULT".to_string(), " {class}".to_string())])
 }
 
-#[derive(Deserialize, Default, Debug)]
+// Nested serde default doesnt work.
+impl Default for ConfigFormatRaw {
+    fn default() -> Self {
+        ConfigFormatRaw {
+            dedup: false,
+            delim: default_delim_formatter(),
+            workspace: default_workspace_formatter(),
+            client: default_client_formatter(),
+            client_fullscreen: default_client_fullscreen_formatter(),
+            client_active: default_client_active_formatter(),
+            client_dup: default_client_dup_formatter(),
+            client_dup_fullscreen: default_client_dup_fullscreen_formatter(),
+        }
+    }
+}
+
+#[derive(Deserialize, Debug)]
 pub struct ConfigFormatRaw {
     #[serde(default)]
     pub dedup: bool,
@@ -141,6 +157,7 @@ workspace = "{id}: {clients}" # {id} and {clients} supported
 client = "{icon}{delim}"
 client_active = "<span background='orange'>{icon}</span>{delim}"
 # deduplicate client formatter
+client_fullscreen = "[{icon}]{delim}"
 client_dup = "{client}{counter_sup}{delim}"
 client_dup_fullscreen = "[{icon}]{delim}{icon}{counter_unfocused}{delim}"
 
@@ -183,6 +200,28 @@ aProgram = "^$" # will match null title for aProgram
     Ok(default_config)
 }
 
+/// Creates a Regex from a given pattern and logs an error if the pattern is invalid.
+///
+/// # Arguments
+///
+/// * `pattern` - A string representing the regex pattern to be compiled.
+///
+/// # Returns
+///
+/// * `Option<Regex>` - Returns Some(Regex) if the pattern is valid, otherwise None.
+///
+/// # Example
+///
+/// ```
+/// use regex::Regex;
+/// use crate::regex_with_error_logging;
+///
+/// let valid_pattern = "Class1";
+/// let invalid_pattern = "Class1[";
+///
+/// assert!(regex_with_error_logging(valid_pattern).is_some());
+/// assert!(regex_with_error_logging(invalid_pattern).is_none());
+/// ```
 fn regex_with_error_logging(pattern: &str) -> Option<Regex> {
     match Regex::new(pattern) {
         Ok(re) => Some(re),
@@ -323,5 +362,14 @@ mod tests {
         assert_eq!(exclude_config.len(), 1);
         assert!(exclude_config[0].0.is_match("Class1"));
         assert!(exclude_config[0].1.is_match("Title1"));
+    }
+
+    #[test]
+    fn test_regex_with_error_logging() {
+        let valid_pattern = "Class1";
+        let invalid_pattern = "Class1[";
+
+        assert!(regex_with_error_logging(valid_pattern).is_some());
+        assert!(regex_with_error_logging(invalid_pattern).is_none());
     }
 }
