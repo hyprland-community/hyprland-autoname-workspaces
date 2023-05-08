@@ -7,9 +7,6 @@ use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 
-#[macro_use]
-mod macros;
-
 #[derive(Default)]
 pub struct Config {
     pub config: ConfigFile,
@@ -116,11 +113,11 @@ pub fn read_config_file(cfg_path: &PathBuf) -> Result<ConfigFile, Box<dyn Error>
         toml::from_str(&config_string).map_err(|e| format!("Unable to parse: {e:?}"))?;
 
     Ok(ConfigFile {
-        icons: generate_icon_config!(config.icons),
-        icons_active: generate_icon_config!(config.icons_active),
-        title: generate_title_config!(config.title),
-        title_active: generate_title_config!(config.title_active),
-        exclude: generate_exclude_config!(config.exclude),
+        icons: generate_icon_config(config.icons),
+        icons_active: generate_icon_config(config.icons_active),
+        title: generate_title_config(config.title),
+        title_active: generate_title_config(config.title_active),
+        exclude: generate_exclude_config(config.exclude),
         format: config.format,
     })
 }
@@ -194,4 +191,45 @@ fn regex_with_error_logging(pattern: &str) -> Option<Regex> {
             None
         }
     }
+}
+
+fn generate_title_config(
+    icons: HashMap<String, HashMap<String, String>>,
+) -> Vec<(Regex, Vec<(Regex, String)>)> {
+    icons
+        .iter()
+        .filter_map(|(class, title_icon)| {
+            regex_with_error_logging(class).map(|re| {
+                (
+                    re,
+                    title_icon
+                        .iter()
+                        .filter_map(|(title, icon)| {
+                            regex_with_error_logging(title).map(|re| (re, icon.to_string()))
+                        })
+                        .collect(),
+                )
+            })
+        })
+        .collect()
+}
+
+fn generate_icon_config(icons: HashMap<String, String>) -> Vec<(Regex, String)> {
+    icons
+        .iter()
+        .filter_map(|(class, icon)| {
+            regex_with_error_logging(class).map(|re| (re, icon.to_string()))
+        })
+        .collect()
+}
+
+fn generate_exclude_config(icons: HashMap<String, String>) -> Vec<(Regex, Regex)> {
+    icons
+        .iter()
+        .filter_map(|(class, title)| {
+            regex_with_error_logging(class).and_then(|re_class| {
+                regex_with_error_logging(title).map(|re_title| (re_class, re_title))
+            })
+        })
+        .collect()
 }
