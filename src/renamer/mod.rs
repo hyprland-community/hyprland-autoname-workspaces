@@ -225,7 +225,7 @@ impl Renamer {
                 ("delim".to_string(), cfg.format.delim.to_string()),
                 ("clients".to_string(), clients.to_string()),
             ]);
-            let workspace = formatter!(workspace_fmt, vars);
+            let workspace = formatter(workspace_fmt, &vars);
             let content = (!clients.is_empty()).then_some(workspace.trim_end());
 
             hyprland::dispatch!(RenameWorkspace, id, content)?;
@@ -284,7 +284,10 @@ impl Renamer {
         let is_active = false;
         let icon = if is_active {
             vars.insert("default_icon".to_string(), client_icon);
-            let x = formatter!(client_active_icon.replace("{icon}", "{default_icon}"), vars);
+            let x = formatter(
+                &client_active_icon.replace("{icon}", "{default_icon}"),
+                &vars,
+            );
             vars.remove("default_icon");
             x
         } else {
@@ -292,51 +295,51 @@ impl Renamer {
         };
 
         vars.insert("icon".to_string(), icon);
-        vars.insert("client".to_string(), formatter!(client, vars));
-        vars.insert("client_active".to_string(), formatter!(client_active, vars));
+        vars.insert("client".to_string(), formatter(client, &vars));
+        vars.insert("client_active".to_string(), formatter(client_active, &vars));
 
         Ok(match (clt.fullscreen, should_dedup) {
             (true, true) => {
                 /* fullscreen with dedup */
                 if counter > 2 {
-                    let from = formatter!(
-                        client_dup
+                    let from = formatter(
+                        &client_dup
                             .replace("{counter_sup}", "{counter_unfocused_sup}")
-                            .replace("{counter}", "{counter_unfocused"),
-                        vars
+                            .replace("{counter}", "{counter_unfocused}"),
+                        &vars,
                     );
-                    let to = formatter!(client_dup_fullscreen, vars);
+                    let to = formatter(client_dup_fullscreen, &vars);
                     workspace.replace(&from, &to)
                 } else {
-                    let from = formatter!(client_dup, vars);
-                    let to = formatter!(client_dup_fullscreen, vars);
+                    let from = formatter(client_dup, &vars);
+                    let to = formatter(client_dup_fullscreen, &vars);
                     workspace.replace(&from, &to)
                 }
             }
             (true, false) => {
                 /* fullscreen with no dedup */
-                format!("{workspace}{}", formatter!(client_fullscreen, vars))
+                format!("{workspace}{}", formatter(client_fullscreen, &vars))
             }
             (false, true) => {
                 /* no fullscreen with dedup */
                 if counter > 2 {
-                    let from = formatter!(
-                        client_dup
+                    let from = formatter(
+                        &client_dup
                             .replace("{counter_sup}", "{counter_unfocused_sup}")
-                            .replace("{counter}", "{counter_unfocused"),
-                        vars
+                            .replace("{counter}", "{counter_unfocused}"),
+                        &vars,
                     );
-                    let to = formatter!(client_dup, vars);
+                    let to = formatter(client_dup, &vars);
                     workspace.replace(&from, &to)
                 } else {
-                    let from = formatter!(client, vars);
-                    let to = formatter!(client_dup, vars);
+                    let from = formatter(client, &vars);
+                    let to = formatter(client_dup, &vars);
                     workspace.replace(&from, &to)
                 }
             }
             (false, false) => {
                 /* no fullscreen with no dedup */
-                format!("{workspace}{}", formatter!(client, vars))
+                format!("{workspace}{}", formatter(client, &vars))
             }
         })
     }
@@ -367,11 +370,24 @@ pub fn to_superscript(number: i32) -> String {
         ('8', "⁸"),
         ('9', "⁹"),
     ]
-    .iter()
-    .cloned()
+    .into_iter()
     .collect();
 
     number.to_string().chars().map(|c| m[&c]).collect()
+}
+
+fn formatter(fmt: &str, vars: &HashMap<String, String>) -> String {
+    let mut result = fmt.to_owned();
+    loop {
+        if !(result.contains('{') && result.contains('}')) {
+            break result;
+        }
+        let formatted = strfmt(&result, vars).unwrap_or_else(|_| result.clone());
+        if formatted == result {
+            break result;
+        }
+        result = formatted;
+    }
 }
 
 #[cfg(test)]
@@ -418,7 +434,10 @@ mod tests {
         let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
         let config = crate::config::read_config_file(&cfg_path).unwrap();
         let renamer = Renamer::new(Config { cfg_path, config }, Args { verbose: false });
-        assert_eq!(renamer.class_to_icon("Chromium", true), "*{icon}*");
+        assert_eq!(
+            renamer.class_to_icon("Chromium", true),
+            "<span background='orange'>{icon}</span>{delim}"
+        );
     }
 
     #[test]
