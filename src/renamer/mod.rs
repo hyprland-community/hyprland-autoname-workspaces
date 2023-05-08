@@ -63,13 +63,9 @@ impl Renamer {
             }
 
             let workspace_id = client.workspace.id;
-            let client_icon = self
-                .class_title_to_icon(&client.class, &client.title, false)
-                .unwrap_or_else(|| self.class_to_icon(&client.class, false));
 
-            let client_active_icon = self
-                .class_title_to_icon(&client.class, &client.title, true)
-                .unwrap_or_else(|| self.class_to_icon(&client.class, true));
+            let (client_icon, client_active_icon) =
+                self.get_client_icons(&client.class, &client.title);
 
             let workspace_client_key = format!("{workspace_id}-{}", client_icon);
 
@@ -347,6 +343,18 @@ impl Renamer {
             }
         })
     }
+
+    fn get_client_icons(&self, class: &str, title: &str) -> (String, String) {
+        let client_icon = self
+            .class_title_to_icon(class, title, false)
+            .unwrap_or_else(|| self.class_to_icon(class, false));
+
+        let client_active_icon = self
+            .class_title_to_icon(class, title, true)
+            .unwrap_or_else(|| self.class_to_icon(class, true));
+
+        (client_icon, client_active_icon)
+    }
 }
 
 pub fn to_superscript(number: i32) -> String {
@@ -413,10 +421,7 @@ mod tests {
         let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
         let config = crate::config::read_config_file(&cfg_path).unwrap();
         let renamer = Renamer::new(Config { cfg_path, config }, Args { verbose: false });
-        assert_eq!(
-            renamer.class_to_icon("Chromium", true),
-            "<span background='orange'>{icon}</span>{delim}"
-        );
+        assert_eq!(renamer.class_to_icon("Chromium", true), "*{icon}*");
     }
 
     #[test]
