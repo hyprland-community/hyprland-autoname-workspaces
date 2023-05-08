@@ -25,7 +25,7 @@ fn default_client_active_formatter() -> String {
 }
 
 fn default_client_dup_formatter() -> String {
-    "{icon}{counter_s}{delim}".to_string()
+    "{icon}{counter_sup}{delim}".to_string()
 }
 
 fn default_client_fullscreen_formatter() -> String {
@@ -33,7 +33,7 @@ fn default_client_fullscreen_formatter() -> String {
 }
 
 fn default_client_dup_fullscreen_formatter() -> String {
-    "[{icon}]{delim}{icon}{counter_unfocused_s}".to_string()
+    "[{icon}]{delim}{icon}{counter_unfocused_sup}".to_string()
 }
 
 fn default_workspace_formatter() -> String {
@@ -205,7 +205,7 @@ dedup = false
 delim = " "
 
 # available formatter:
-# {counter_s} - superscripted count of clients on the workspace, and simple {counter}, {delim}
+# {counter_sup} - superscripted count of clients on the workspace, and simple {counter}, {delim}
 # {icon}, {client}
 # workspace formatter
 workspace = "{id}: {clients}" # {id} and {clients} supported
@@ -213,7 +213,7 @@ workspace = "{id}: {clients}" # {id} and {clients} supported
 client = "{icon}{delim}"
 client_active = "<span background='orange'>{icon}</span>{delim}"
 # deduplicate client formatter
-client_dup = "{client}{counter_s}{delim}"
+client_dup = "{client}{counter_sup}{delim}"
 client_dup_fullscreen = "[{icon}]{delim}{icon}{counter_unfocused}{delim}"
 
 [icons]

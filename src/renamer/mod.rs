@@ -264,9 +264,9 @@ impl Renamer {
         let cfg = &self.cfg.lock()?.config;
 
         // Formatter strings
-        let counter_super = to_superscript(counter);
+        let counter_sup = to_superscript(counter);
         let prev_counter = (counter - 1).to_string();
-        let prev_counter_super = to_superscript(counter - 1);
+        let prev_counter_sup = to_superscript(counter - 1);
         let client_dup = &cfg.format.client_dup.to_string();
         let client_dup_fullscreen = &cfg.format.client_dup_fullscreen.to_string();
         let client_active = &cfg.format.client_active.to_string();
@@ -283,8 +283,8 @@ impl Renamer {
             ),
             ("counter".to_string(), counter.to_string()),
             ("counter_unfocused".to_string(), prev_counter),
-            ("counter_s".to_string(), counter_super),
-            ("counter_unfocused_s".to_string(), prev_counter_super),
+            ("counter_sup".to_string(), counter_sup),
+            ("counter_unfocused_sup".to_string(), prev_counter_sup),
             ("delim".to_string(), delim.to_string()),
         ]);
 
@@ -308,7 +308,7 @@ impl Renamer {
                 if counter > 2 {
                     let from = formatter!(
                         client_dup
-                            .replace("{counter_s}", "{counter_unfocused_s}")
+                            .replace("{counter_sup}", "{counter_unfocused_sup}")
                             .replace("{counter}", "{counter_unfocused"),
                         vars
                     );
@@ -329,7 +329,7 @@ impl Renamer {
                 if counter > 2 {
                     let from = formatter!(
                         client_dup
-                            .replace("{counter_s}", "{counter_unfocused_s}")
+                            .replace("{counter_sup}", "{counter_unfocused_sup}")
                             .replace("{counter}", "{counter_unfocused"),
                         vars
                     );
