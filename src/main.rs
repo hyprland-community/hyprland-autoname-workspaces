@@ -17,6 +17,7 @@ fn main() {
 
     if args.dump {
         println!("{:#?}", &cfg);
+        process::exit(0);
     }
 
     // Init
