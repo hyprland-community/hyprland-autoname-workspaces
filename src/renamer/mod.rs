@@ -374,6 +374,7 @@ pub fn to_superscript(number: i32) -> String {
 
 fn formatter(fmt: &str, vars: &HashMap<String, String>) -> String {
     let mut result = fmt.to_owned();
+    // let mut i = 0;
     loop {
         if !(result.contains('{') && result.contains('}')) {
             break result;
@@ -383,6 +384,11 @@ fn formatter(fmt: &str, vars: &HashMap<String, String>) -> String {
             break result;
         }
         result = formatted;
+        println!("formatter: {:?}", result);
+        // i += 1;
+        // if i > 2 {
+        //     break result;
+        // }
     }
 }
 
