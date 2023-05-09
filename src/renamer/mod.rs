@@ -31,7 +31,6 @@ impl Renamer {
 
     #[inline(always)]
     pub fn renameworkspace(&self) -> Result<(), Box<dyn Error + '_>> {
-        let cfg = &self.cfg.lock()?.config;
         let mut counters: HashMap<String, i32> = HashMap::default();
         let mut workspaces = self
             .workspaces
@@ -44,14 +43,15 @@ impl Renamer {
         let binding = Clients::get().unwrap();
 
         // Filter clients
-        let clients: Vec<Client> = binding
+        let exclude = self.cfg.lock().unwrap().config.exclude.clone();
+        let clients = binding
             .filter(|c| !c.class.is_empty())
             .filter(|c| {
-                cfg.exclude
+                !exclude
                     .iter()
                     .any(|(class, title)| class.is_match(&c.class) && (title.is_match(&c.title)))
             })
-            .collect();
+            .collect::<Vec<Client>>();
 
         for clt in clients {
             let workspace_id = clt.workspace.id;
