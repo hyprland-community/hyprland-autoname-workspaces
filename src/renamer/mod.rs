@@ -61,19 +61,16 @@ impl Renamer {
 
         for clt in clients {
             let workspace_id = clt.workspace.id;
+            self.workspaces.lock()?.insert(workspace_id);
 
             let (client_icon, client_active_icon) = self.get_client_icons(&clt.class, &clt.title);
 
-            let workspace_client_key = format!("{workspace_id}-{}", client_icon);
-
             let counter = counters
-                .entry(workspace_client_key)
+                .entry(format!("{workspace_id}-{}", client_icon))
                 .and_modify(|count| {
                     *count += 1;
                 })
                 .or_insert(1);
-
-            self.workspaces.lock()?.insert(workspace_id);
 
             let workspace = workspaces.entry(workspace_id).or_insert_with(String::new);
 

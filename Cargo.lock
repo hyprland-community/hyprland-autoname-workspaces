@@ -357,6 +357,7 @@ dependencies = [
  "inotify",
  "regex",
  "serde",
+ "serde_json",
  "signal-hook",
  "strfmt",
  "tokio",

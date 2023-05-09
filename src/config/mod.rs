@@ -48,16 +48,7 @@ fn default_icons() -> HashMap<String, String> {
 // Nested serde default doesnt work.
 impl Default for ConfigFormatRaw {
     fn default() -> Self {
-        ConfigFormatRaw {
-            dedup: false,
-            delim: default_delim_formatter(),
-            workspace: default_workspace_formatter(),
-            client: default_client_formatter(),
-            client_fullscreen: default_client_fullscreen_formatter(),
-            client_active: default_client_active_formatter(),
-            client_dup: default_client_dup_formatter(),
-            client_dup_fullscreen: default_client_dup_fullscreen_formatter(),
-        }
+        toml::from_str("").unwrap()
     }
 }
 
