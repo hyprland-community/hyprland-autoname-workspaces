@@ -272,7 +272,12 @@ impl Renamer {
             ("delim".to_string(), delim.to_string()),
         ]);
 
-        let is_active = false;
+        let is_active = Client::get_active()
+            .unwrap_or(None)
+            .map(|x| x.pid)
+            .unwrap_or(0)
+            == clt.pid;
+
         let icon = if is_active {
             vars.insert("default_icon".to_string(), client_icon);
             let x = formatter(
