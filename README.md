@@ -116,10 +116,10 @@ clients:
 [format]
 dedup = true
 delim = " " # NARROW NO-BREAK SPACE
-workspaces = "{id}: {clients}"
+workspace = "<span color='red'>{id}:</span>{delim}{clients}"
+workspace_empty = "<span color='red'>{id}</span>"
 client = "{icon}{delim}"
 client_active = "<span color="red">{client}</span>{delim}"
-workspace = "<b><span color='red'>{id}:</span></b>{delim}{clients}"
 client_dup = "{icon}{counter_sup}{delim}"
 client_dup_fullscreen = "[{icon}]{delim}{icon}{counter_unfocused_sup}"
 client_fullscreen = "[{icon}]{delim}"

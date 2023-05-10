@@ -23,7 +23,7 @@ pub struct Renamer {
 impl Renamer {
     pub fn new(cfg: Config, args: Args) -> Arc<Self> {
         Arc::new(Renamer {
-            workspaces: Mutex::new(HashSet::from_iter((1..=10).collect::<HashSet<i32>>())),
+            workspaces: Mutex::new(HashSet::from_iter((0..=10).collect::<HashSet<i32>>())),
             cfg: Mutex::new(cfg),
             args,
         })
@@ -36,14 +36,18 @@ impl Renamer {
             .workspaces
             .lock()?
             .iter()
-            .map(|&c| (c, String::new()))
+            .map(|&c| (c, "".to_string()))
             .collect::<HashMap<_, _>>();
+
+        // let mut pairs: Vec<_> = workspaces.into_iter().collect();
+        // pairs.sort_by_key(|(k, _)| *k);
+        // let mut ordered_workspaces: HashMap<_, _> = pairs.into_iter().collect();
 
         // Connect to Hyprland
         let binding = Clients::get().unwrap();
 
         // Filter clients
-        let exclude = self.cfg.lock().unwrap().config.exclude.clone();
+        let exclude = self.cfg.lock()?.config.exclude.clone();
         let clients = binding
             .filter(|c| !c.class.is_empty())
             .filter(|c| {
@@ -75,9 +79,10 @@ impl Renamer {
 
         let mut sorted_workspaces: Vec<(&i32, &String)> = workspaces.iter().collect();
         sorted_workspaces.sort_by_key(|k| k.0);
-        sorted_workspaces
-            .iter()
-            .try_for_each(|(&id, clients)| self.rename_cmd(id, clients))?;
+        sorted_workspaces.iter().try_for_each(|(&id, clients)| {
+            println!("rename id: {id}");
+            self.rename_cmd(id, clients)
+        })?;
 
         Ok(())
     }
@@ -213,15 +218,20 @@ impl Renamer {
         {
             let cfg = &self.cfg.lock()?.config;
             let workspace_fmt = &cfg.format.workspace;
+            let workspace_empty_fmt = &cfg.format.workspace_empty;
+            let id_two_digits = format!("{:02}", id);
             let vars = HashMap::from([
-                ("id".to_string(), id.to_string()),
+                ("id".to_string(), id_two_digits),
                 ("delim".to_string(), cfg.format.delim.to_string()),
                 ("clients".to_string(), clients.to_string()),
             ]);
-            let workspace = formatter(workspace_fmt, &vars);
-            let content = (!clients.is_empty()).then_some(workspace.trim());
-
-            hyprland::dispatch!(RenameWorkspace, id, content)?;
+            let workspace = if clients.is_empty() {
+                formatter(workspace_empty_fmt, &vars)
+            } else {
+                formatter(workspace_fmt, &vars)
+            };
+            let content = workspace;
+            hyprland::dispatch!(RenameWorkspace, id, Some(content.trim()))?;
 
             Ok(())
         }

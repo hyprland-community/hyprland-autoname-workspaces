@@ -37,8 +37,12 @@ fn default_client_dup_fullscreen_formatter() -> String {
     "[{icon}]{delim}{icon}{counter_unfocused_sup}".to_string()
 }
 
+fn default_workspace_empty_formatter() -> String {
+    "{id}".to_string()
+}
+
 fn default_workspace_formatter() -> String {
-    "{id}: {clients}".to_string()
+    "{id}:{delim}{clients}".to_string()
 }
 
 fn default_icons() -> HashMap<String, String> {
@@ -60,6 +64,8 @@ pub struct ConfigFormatRaw {
     pub delim: String,
     #[serde(default = "default_workspace_formatter")]
     pub workspace: String,
+    #[serde(default = "default_workspace_empty_formatter")]
+    pub workspace_empty: String,
     #[serde(default = "default_client_formatter")]
     pub client: String,
     #[serde(default = "default_client_fullscreen_formatter")]
@@ -143,7 +149,8 @@ delim = " "
 # {counter_sup} - superscripted count of clients on the workspace, and simple {counter}, {delim}
 # {icon}, {client}
 # workspace formatter
-workspace = "{id}: {clients}" # {id} and {clients} supported
+workspace = "{id}:{delim}{clients}" # {id}, {delim} and {clients} are supported
+workspace_empty = "{id}" # {id}, {delim} and {clients} are supported
 # client formatter
 client = "{icon}{delim}"
 client_active = "<span background='orange'>{icon}</span>{delim}"
