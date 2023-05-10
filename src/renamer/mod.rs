@@ -23,7 +23,7 @@ pub struct Renamer {
 impl Renamer {
     pub fn new(cfg: Config, args: Args) -> Arc<Self> {
         Arc::new(Renamer {
-            workspaces: Mutex::new(HashSet::default()),
+            workspaces: Mutex::new(HashSet::from_iter((1..=10).collect::<HashSet<i32>>())),
             cfg: Mutex::new(cfg),
             args,
         })
@@ -73,7 +73,9 @@ impl Renamer {
                 .expect("- not able to handle the icon");
         }
 
-        workspaces
+        let mut sorted_workspaces: Vec<(&i32, &String)> = workspaces.iter().collect();
+        sorted_workspaces.sort_by_key(|k| k.0);
+        sorted_workspaces
             .iter()
             .try_for_each(|(&id, clients)| self.rename_cmd(id, clients))?;
 
@@ -217,7 +219,7 @@ impl Renamer {
                 ("clients".to_string(), clients.to_string()),
             ]);
             let workspace = formatter(workspace_fmt, &vars);
-            let content = (!clients.is_empty()).then_some(workspace.trim_end());
+            let content = (!clients.is_empty()).then_some(workspace.trim());
 
             hyprland::dispatch!(RenameWorkspace, id, content)?;
 
@@ -374,7 +376,7 @@ pub fn to_superscript(number: i32) -> String {
 
 fn formatter(fmt: &str, vars: &HashMap<String, String>) -> String {
     let mut result = fmt.to_owned();
-    // let mut i = 0;
+    let mut i = 0;
     loop {
         if !(result.contains('{') && result.contains('}')) {
             break result;
@@ -385,10 +387,10 @@ fn formatter(fmt: &str, vars: &HashMap<String, String>) -> String {
         }
         result = formatted;
         println!("formatter: {:?}", result);
-        // i += 1;
-        // if i > 2 {
-        //     break result;
-        // }
+        i += 1;
+        if i > 3 {
+            break result;
+        }
     }
 }
 
