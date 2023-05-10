@@ -13,6 +13,10 @@ This app automatically rename workspaces with icons of started applications - te
 
 You have to set the config file with your prefered rules based on `class` and `title`. Regex are supported.
 
+## FAQ, tips and tricks
+
+https://github.com/hyprland-community/hyprland-autoname-workspaces/wiki/FAQ
+
 ## Install
 
 ### AUR
