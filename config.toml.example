@@ -11,6 +11,7 @@ client_fullscreen = "[{icon}]{delim}"
 
 [icons]
 DEFAULT = ""
+"(?i)firefox" = "<span color='orange'> firefox</span>"
 "(?i)kitty" = ""
 "(?i)alacritty" = ""
 bleachbit = ""
@@ -27,7 +28,6 @@ dmenu-clipboard = ""
 dmenu-pass = ""
 duolingo = ""
 element = ""
-firefox = ""
 fontforge = ""
 gcr-prompter = ""
 gsimplecalc = ""
@@ -92,7 +92,8 @@ nemo = ""
 zoom = ""
 
 [icons_active]
-"(?i)firefox" = "<span color='orange'>{icon}</span>"
+DEFAULT="{icon}"
+"(?i)firefox" = "<span color='orange'> firefox</span>"
 
 [title."(firefox|chrom.*)"]
 "(?i)youtube" = "ꟳ"
