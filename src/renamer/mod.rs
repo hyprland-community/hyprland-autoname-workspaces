@@ -23,7 +23,7 @@ pub struct Renamer {
 impl Renamer {
     pub fn new(cfg: Config, args: Args) -> Arc<Self> {
         Arc::new(Renamer {
-            workspaces: Mutex::new(HashSet::from_iter((0..=10).collect::<HashSet<i32>>())),
+            workspaces: Mutex::new(HashSet::default()),
             cfg: Mutex::new(cfg),
             args,
         })
@@ -38,10 +38,6 @@ impl Renamer {
             .iter()
             .map(|&c| (c, "".to_string()))
             .collect::<HashMap<_, _>>();
-
-        // let mut pairs: Vec<_> = workspaces.into_iter().collect();
-        // pairs.sort_by_key(|(k, _)| *k);
-        // let mut ordered_workspaces: HashMap<_, _> = pairs.into_iter().collect();
 
         // Connect to Hyprland
         let binding = Clients::get().unwrap();
@@ -77,12 +73,9 @@ impl Renamer {
                 .expect("- not able to handle the icon");
         }
 
-        let mut sorted_workspaces: Vec<(&i32, &String)> = workspaces.iter().collect();
-        sorted_workspaces.sort_by_key(|k| k.0);
-        sorted_workspaces.iter().try_for_each(|(&id, clients)| {
-            println!("rename id: {id}");
-            self.rename_cmd(id, clients)
-        })?;
+        workspaces
+            .iter()
+            .try_for_each(|(&id, clients)| self.rename_cmd(id, clients))?;
 
         Ok(())
     }
@@ -174,8 +167,6 @@ impl Renamer {
                         .unwrap_or(default_value)
                 }
             })
-            // migration: to be remove in next release
-            .replace("${class}", "{class}")
     }
 
     #[inline(always)]
@@ -194,12 +185,7 @@ impl Renamer {
                 title_icon
                     .iter()
                     .find(|(re_title, _)| re_title.is_match(title))
-                    .map(|(_, icon)| {
-                        icon.to_string()
-                            // migration: to be remove in next release
-                            .replace("${class}", "{class}")
-                            .replace("${title}", "{title}")
-                    })
+                    .map(|(_, icon)| icon.to_string())
             })
     }
 
@@ -221,17 +207,17 @@ impl Renamer {
             let workspace_empty_fmt = &cfg.format.workspace_empty;
             let id_two_digits = format!("{:02}", id);
             let vars = HashMap::from([
-                ("id".to_string(), id_two_digits),
+                ("id".to_string(), id.to_string()),
+                ("id_long".to_string(), id_two_digits),
                 ("delim".to_string(), cfg.format.delim.to_string()),
                 ("clients".to_string(), clients.to_string()),
             ]);
-            let workspace = if clients.is_empty() {
-                formatter(workspace_empty_fmt, &vars)
-            } else {
+            let workspace = if !clients.is_empty() {
                 formatter(workspace_fmt, &vars)
+            } else {
+                formatter(workspace_empty_fmt, &vars)
             };
-            let content = workspace;
-            hyprland::dispatch!(RenameWorkspace, id, Some(content.trim()))?;
+            hyprland::dispatch!(RenameWorkspace, id, Some(workspace.trim()))?;
 
             Ok(())
         }
@@ -246,6 +232,12 @@ impl Renamer {
         workspace: &str,
         counter: i32,
     ) -> Result<String, Box<dyn Error + '_>> {
+        let is_active = Client::get_active()
+            .unwrap_or(None)
+            .map(|x| x.pid)
+            .unwrap_or(0)
+            == clt.pid;
+
         let should_dedup = self.cfg.lock()?.config.format.dedup && (counter > 1);
 
         if self.args.verbose && should_dedup {
@@ -284,20 +276,12 @@ impl Renamer {
             ("delim".to_string(), delim.to_string()),
         ]);
 
-        let is_active = Client::get_active()
-            .unwrap_or(None)
-            .map(|x| x.pid)
-            .unwrap_or(0)
-            == clt.pid;
-
         let icon = if is_active {
             vars.insert("default_icon".to_string(), client_icon);
-            let x = formatter(
+            formatter(
                 &client_active_icon.replace("{icon}", "{default_icon}"),
                 &vars,
-            );
-            vars.remove("default_icon");
-            x
+            )
         } else {
             client_icon
         };
@@ -396,9 +380,9 @@ fn formatter(fmt: &str, vars: &HashMap<String, String>) -> String {
             break result;
         }
         result = formatted;
-        println!("formatter: {:?}", result);
         i += 1;
         if i > 3 {
+            eprintln!("placeholders loop, aborting");
             break result;
         }
     }

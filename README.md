@@ -100,17 +100,18 @@ ncdu = "file manager"
 - You can also redefine all the default formatter with those `[format]` section formatters parameters.
   The available list of `{placeholder}` is:
 
-workspaces:
+workspace:
 
 - client
-- id
+- id (or id_long)
+- delim
 
 clients:
 
-- delim
 - icon
 - counter_s, counter_unfocused_s, counter, counter_unfocused
 - class, iitle
+- delim
 
 ```
 [format]
