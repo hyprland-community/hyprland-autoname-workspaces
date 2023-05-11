@@ -59,17 +59,34 @@ impl Renamer {
 
             let (client_icon, client_active_icon) = self.get_client_icons(&clt.class, &clt.title);
 
-            let counter = counters
-                .entry(format!("{workspace_id}-{}", client_icon))
-                .and_modify(|count| {
-                    *count += 1;
-                })
-                .or_insert(1);
+            let is_active = Client::get_active()
+                .unwrap_or(None)
+                .map(|x| x.pid)
+                .unwrap_or(0)
+                == clt.pid;
+
+            let counter = if is_active {
+                1
+            } else {
+                *counters
+                    .entry(format!("{workspace_id}-{}", client_icon))
+                    .and_modify(|count| {
+                        *count += 1;
+                    })
+                    .or_insert(1)
+            };
 
             let workspace = workspaces.entry(workspace_id).or_insert_with(String::new);
 
             *workspace = self
-                .handle_new_client(clt, client_icon, client_active_icon, workspace, *counter)
+                .handle_new_client(
+                    clt,
+                    client_icon,
+                    client_active_icon,
+                    workspace,
+                    counter,
+                    is_active,
+                )
                 .expect("- not able to handle the icon");
         }
 
@@ -231,13 +248,8 @@ impl Renamer {
         client_active_icon: String,
         workspace: &str,
         counter: i32,
+        is_active: bool,
     ) -> Result<String, Box<dyn Error + '_>> {
-        let is_active = Client::get_active()
-            .unwrap_or(None)
-            .map(|x| x.pid)
-            .unwrap_or(0)
-            == clt.pid;
-
         let should_dedup = self.cfg.lock()?.config.format.dedup && (counter > 1);
 
         if self.args.verbose && should_dedup {
