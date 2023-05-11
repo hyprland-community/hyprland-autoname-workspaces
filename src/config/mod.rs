@@ -7,10 +7,10 @@ use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct Config {
     pub config: ConfigFile,
-    pub cfg_path: PathBuf,
+    pub cfg_path: Option<PathBuf>,
 }
 
 fn default_delim_formatter() -> String {
@@ -18,23 +18,27 @@ fn default_delim_formatter() -> String {
 }
 
 fn default_client_formatter() -> String {
-    "{icon}{delim}".to_string()
+    "{icon}".to_string()
 }
 
 fn default_client_active_formatter() -> String {
     "*{icon}*".to_string()
 }
 
-fn default_client_dup_formatter() -> String {
-    "{icon}{counter_sup}{delim}".to_string()
-}
-
 fn default_client_fullscreen_formatter() -> String {
     "[{icon}]".to_string()
 }
 
+fn default_client_dup_formatter() -> String {
+    "{icon}{counter_sup}".to_string()
+}
+
 fn default_client_dup_fullscreen_formatter() -> String {
     "[{icon}]{delim}{icon}{counter_unfocused_sup}".to_string()
+}
+
+fn default_client_dup_active_formatter() -> String {
+    "*{icon}*{delim}{icon}{counter_unfocused_sup}".to_string()
 }
 
 fn default_workspace_empty_formatter() -> String {
@@ -56,7 +60,7 @@ impl Default for ConfigFormatRaw {
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct ConfigFormatRaw {
     #[serde(default)]
     pub dedup: bool,
@@ -74,6 +78,8 @@ pub struct ConfigFormatRaw {
     pub client_active: String,
     #[serde(default = "default_client_dup_formatter")]
     pub client_dup: String,
+    #[serde(default = "default_client_dup_active_formatter")]
+    pub client_dup_active: String,
     #[serde(default = "default_client_dup_fullscreen_formatter")]
     pub client_dup_fullscreen: String,
 }
@@ -94,7 +100,7 @@ pub struct ConfigFileRaw {
     pub format: ConfigFormatRaw,
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 pub struct ConfigFile {
     pub icons: Vec<(Regex, String)>,
     pub icons_active: Vec<(Regex, String)>,
@@ -105,25 +111,40 @@ pub struct ConfigFile {
 }
 
 impl Config {
-    pub fn new() -> Result<Config, Box<dyn Error>> {
-        let xdg_dirs = xdg::BaseDirectories::with_prefix("hyprland-autoname-workspaces")?;
-        let cfg_path = xdg_dirs.place_config_file("config.toml")?;
-
+    pub fn new(cfg_path: PathBuf) -> Result<Config, Box<dyn Error>> {
         if !cfg_path.exists() {
             _ = create_default_config(&cfg_path);
         }
 
-        let config = read_config_file(&cfg_path)?;
+        let config = read_config_file(Some(&cfg_path))?;
 
-        Ok(Config { config, cfg_path })
+        Ok(Config {
+            config,
+            cfg_path: Some(cfg_path),
+        })
     }
 }
 
-pub fn read_config_file(cfg_path: &PathBuf) -> Result<ConfigFile, Box<dyn Error>> {
-    let config_string = fs::read_to_string(cfg_path)?;
+pub fn get_config_path(args: &Option<String>) -> Result<PathBuf, Box<dyn Error>> {
+    let cfg_path = match args {
+        Some(path) => PathBuf::from(path),
+        _ => {
+            let xdg_dirs = xdg::BaseDirectories::with_prefix("hyprland-autoname-workspaces")?;
+            xdg_dirs.place_config_file("config.toml")?
+        }
+    };
 
-    let config: ConfigFileRaw =
-        toml::from_str(&config_string).map_err(|e| format!("Unable to parse: {e:?}"))?;
+    Ok(cfg_path)
+}
+
+pub fn read_config_file(cfg_path: Option<&PathBuf>) -> Result<ConfigFile, Box<dyn Error>> {
+    let config: ConfigFileRaw = match cfg_path {
+        Some(path) => {
+            let config_string = fs::read_to_string(path)?;
+            toml::from_str(&config_string).map_err(|e| format!("Unable to parse: {e:?}"))?
+        }
+        None => toml::from_str("").map_err(|e| format!("Unable to parse: {e:?}"))?,
+    };
 
     Ok(ConfigFile {
         icons: generate_icon_config(config.icons),
@@ -138,26 +159,28 @@ pub fn read_config_file(cfg_path: &PathBuf) -> Result<ConfigFile, Box<dyn Error>
 pub fn create_default_config(cfg_path: &PathBuf) -> Result<&'static str, Box<dyn Error + 'static>> {
     // TODO: maybe we should dump the config from the default values of the struct?
     let default_config = r#"
-[format]
+# [format]
 # Deduplicate icons if enable.
 # A superscripted counter will be added.
-dedup = false
+# dedup = false
 # window delimiter
-delim = " "
+# delim = " "
 
 # available formatter:
 # {counter_sup} - superscripted count of clients on the workspace, and simple {counter}, {delim}
 # {icon}, {client}
 # workspace formatter
-workspace = "{id}:{delim}{clients}" # {id}, {delim} and {clients} are supported
-workspace_empty = "{id}" # {id}, {delim} and {clients} are supported
+# workspace = "{id}:{delim}{clients}" # {id}, {delim} and {clients} are supported
+# workspace_empty = "{id}" # {id}, {delim} and {clients} are supported
 # client formatter
-client = "{icon}{delim}"
-client_active = "<span background='orange'>{icon}</span>{delim}"
+# client = "{icon}"
+# client_active = "*{icon}*"
+
 # deduplicate client formatter
-client_fullscreen = "[{icon}]{delim}"
-client_dup = "{client}{counter_sup}{delim}"
-client_dup_fullscreen = "[{icon}]{delim}{icon}{counter_unfocused}{delim}"
+# client_fullscreen = "[{icon}]"
+# client_dup = "{client}{counter_sup}"
+# client_dup_fullscreen = "[{icon}]{delim}{icon}{counter_unfocused}"
+# client_dup_active = "*{icon}*{delim}{icon}{counter_unfocused}"
 
 [icons]
 # Add your icons mapping
@@ -169,8 +192,8 @@ client_dup_fullscreen = "[{icon}]{delim}{icon}{counter_unfocused}{delim}"
 "(?i)waydroid.*" = "droid"
 
 [icons_active]
-# DEFAULT = "{icon}" # what to do with this ?
-"(?i)Kitty" = "<span foreground='red'>{icon}</span>"
+DEFAULT = "*{icon}*"
+"(?i)ExampleOneTerm" = "<span foreground='red'>{icon}</span>"
 
 [title."(?i)kitty"]
 "(?i)neomutt" = "neomutt"

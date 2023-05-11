@@ -1,5 +1,5 @@
 BIN := hyprland-autoname-workspaces
-VERSION := 0.5.2
+VERSION := 1.0.0
 
 PREFIX ?= /usr
 LIB_DIR = $(DESTDIR)$(PREFIX)/lib
@@ -24,6 +24,11 @@ test:
 lint:
 	cargo fmt -- --check
 	cargo clippy -- -Dwarnings
+
+.PHONY: coverage
+coverage:
+	cargo install tarpaulin
+	cargo tarpaulin --out html; xdg-open tarpaulin-report.html
 
 .PHONY: run
 run:
