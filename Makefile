@@ -1,5 +1,5 @@
 BIN := hyprland-autoname-workspaces
-VERSION := 0.3.7
+VERSION := 0.5.0
 
 PREFIX ?= /usr
 LIB_DIR = $(DESTDIR)$(PREFIX)/lib
