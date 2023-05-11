@@ -13,6 +13,10 @@ This app automatically rename workspaces with icons of started applications - te
 
 You have to set the config file with your prefered rules based on `class` and `title`. Regex are supported.
 
+## FAQ, tips and tricks
+
+https://github.com/hyprland-community/hyprland-autoname-workspaces/wiki/FAQ
+
 ## Install
 
 ### AUR
@@ -100,26 +104,27 @@ ncdu = "file manager"
 - You can also redefine all the default formatter with those `[format]` section formatters parameters.
   The available list of `{placeholder}` is:
 
-workspaces:
+workspace:
 
 - client
-- id
+- id (or id_long)
+- delim
 
 clients:
 
-- delim
 - icon
 - counter_s, counter_unfocused_s, counter, counter_unfocused
 - class, iitle
+- delim
 
 ```
 [format]
 dedup = true
 delim = " " # NARROW NO-BREAK SPACE
-workspaces = "{id}: {clients}"
+workspace = "<span color='red'>{id}:</span>{delim}{clients}"
+workspace_empty = "<span color='red'>{id}</span>"
 client = "{icon}{delim}"
-client_active = "<span color="red">{client}</span>{delim}"
-workspace = "<b><span color='red'>{id}:</span></b>{delim}{clients}"
+client_active = "<span color="red">{icon}</span>{delim}"
 client_dup = "{icon}{counter_sup}{delim}"
 client_dup_fullscreen = "[{icon}]{delim}{icon}{counter_unfocused_sup}"
 client_fullscreen = "[{icon}]{delim}"

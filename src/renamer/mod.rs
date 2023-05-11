@@ -36,14 +36,14 @@ impl Renamer {
             .workspaces
             .lock()?
             .iter()
-            .map(|&c| (c, String::new()))
+            .map(|&c| (c, "".to_string()))
             .collect::<HashMap<_, _>>();
 
         // Connect to Hyprland
         let binding = Clients::get().unwrap();
 
         // Filter clients
-        let exclude = self.cfg.lock().unwrap().config.exclude.clone();
+        let exclude = self.cfg.lock()?.config.exclude.clone();
         let clients = binding
             .filter(|c| !c.class.is_empty())
             .filter(|c| {
@@ -59,17 +59,34 @@ impl Renamer {
 
             let (client_icon, client_active_icon) = self.get_client_icons(&clt.class, &clt.title);
 
-            let counter = counters
-                .entry(format!("{workspace_id}-{}", client_icon))
-                .and_modify(|count| {
-                    *count += 1;
-                })
-                .or_insert(1);
+            let is_active = Client::get_active()
+                .unwrap_or(None)
+                .map(|x| x.pid)
+                .unwrap_or(0)
+                == clt.pid;
+
+            let counter = if is_active {
+                1
+            } else {
+                *counters
+                    .entry(format!("{workspace_id}-{}", client_icon))
+                    .and_modify(|count| {
+                        *count += 1;
+                    })
+                    .or_insert(1)
+            };
 
             let workspace = workspaces.entry(workspace_id).or_insert_with(String::new);
 
             *workspace = self
-                .handle_new_client(clt, client_icon, client_active_icon, workspace, *counter)
+                .handle_new_client(
+                    clt,
+                    client_icon,
+                    client_active_icon,
+                    workspace,
+                    counter,
+                    is_active,
+                )
                 .expect("- not able to handle the icon");
         }
 
@@ -167,8 +184,6 @@ impl Renamer {
                         .unwrap_or(default_value)
                 }
             })
-            // migration: to be remove in next release
-            .replace("${class}", "{class}")
     }
 
     #[inline(always)]
@@ -187,12 +202,7 @@ impl Renamer {
                 title_icon
                     .iter()
                     .find(|(re_title, _)| re_title.is_match(title))
-                    .map(|(_, icon)| {
-                        icon.to_string()
-                            // migration: to be remove in next release
-                            .replace("${class}", "{class}")
-                            .replace("${title}", "{title}")
-                    })
+                    .map(|(_, icon)| icon.to_string())
             })
     }
 
@@ -211,15 +221,20 @@ impl Renamer {
         {
             let cfg = &self.cfg.lock()?.config;
             let workspace_fmt = &cfg.format.workspace;
+            let workspace_empty_fmt = &cfg.format.workspace_empty;
+            let id_two_digits = format!("{:02}", id);
             let vars = HashMap::from([
                 ("id".to_string(), id.to_string()),
+                ("id_long".to_string(), id_two_digits),
                 ("delim".to_string(), cfg.format.delim.to_string()),
                 ("clients".to_string(), clients.to_string()),
             ]);
-            let workspace = formatter(workspace_fmt, &vars);
-            let content = (!clients.is_empty()).then_some(workspace.trim_end());
-
-            hyprland::dispatch!(RenameWorkspace, id, content)?;
+            let workspace = if !clients.is_empty() {
+                formatter(workspace_fmt, &vars)
+            } else {
+                formatter(workspace_empty_fmt, &vars)
+            };
+            hyprland::dispatch!(RenameWorkspace, id, Some(workspace.trim()))?;
 
             Ok(())
         }
@@ -233,6 +248,7 @@ impl Renamer {
         client_active_icon: String,
         workspace: &str,
         counter: i32,
+        is_active: bool,
     ) -> Result<String, Box<dyn Error + '_>> {
         let should_dedup = self.cfg.lock()?.config.format.dedup && (counter > 1);
 
@@ -272,15 +288,12 @@ impl Renamer {
             ("delim".to_string(), delim.to_string()),
         ]);
 
-        let is_active = false;
         let icon = if is_active {
             vars.insert("default_icon".to_string(), client_icon);
-            let x = formatter(
+            formatter(
                 &client_active_icon.replace("{icon}", "{default_icon}"),
                 &vars,
-            );
-            vars.remove("default_icon");
-            x
+            )
         } else {
             client_icon
         };
@@ -369,6 +382,7 @@ pub fn to_superscript(number: i32) -> String {
 
 fn formatter(fmt: &str, vars: &HashMap<String, String>) -> String {
     let mut result = fmt.to_owned();
+    let mut i = 0;
     loop {
         if !(result.contains('{') && result.contains('}')) {
             break result;
@@ -378,6 +392,11 @@ fn formatter(fmt: &str, vars: &HashMap<String, String>) -> String {
             break result;
         }
         result = formatted;
+        i += 1;
+        if i > 3 {
+            eprintln!("placeholders loop, aborting");
+            break result;
+        }
     }
 }
 
