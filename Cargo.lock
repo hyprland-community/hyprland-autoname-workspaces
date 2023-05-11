@@ -196,6 +196,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "file-lock"
+version = "2.1.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f59be9010c5418713a48aac4c1b897d85dafd958055683dc31bdae553536647b"
+dependencies = [
+ "cc",
+ "libc",
+]
+
+[[package]]
 name = "futures"
 version = "0.3.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -354,6 +364,7 @@ name = "hyprland-autoname-workspaces"
 version = "0.5.2"
 dependencies = [
  "clap",
+ "file-lock",
  "hyprland",
  "inotify",
  "regex",
