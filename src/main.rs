@@ -9,6 +9,7 @@ use crate::renamer::*;
 use clap::Parser;
 use signal_hook::consts::{SIGINT, SIGTERM};
 use signal_hook::iterator::Signals;
+use single_instance::SingleInstance;
 use std::{process, thread};
 
 fn main() {
@@ -18,6 +19,12 @@ fn main() {
     if args.dump {
         println!("{:#?}", &cfg);
         process::exit(0);
+    }
+
+    let instance = SingleInstance::new("Hyprland-autoname-workspaces").unwrap();
+    if !instance.is_single() {
+        eprintln!("Hyprland-autoname-workspaces is already running, exit");
+        process::exit(1);
     }
 
     // Init
