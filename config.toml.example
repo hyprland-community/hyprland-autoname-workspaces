@@ -2,7 +2,7 @@
 dedup = true
 delim = " "
 client = "{icon}{delim}"
-client_active = "<span color='red'>{icon}</span>{delim}"
+client_active = "<span color='red'>{icon}</span>"
 workspace = "<b><span color='red'>{id}:</span></b>{delim}{clients}"
 workspace_empty = "<b><span color='yellow'>{id}:</span></b>{delim}{clients}"
 client_dup = "{icon}{counter_sup}{delim}"
@@ -11,7 +11,7 @@ client_fullscreen = "[{icon}]{delim}"
 
 [icons_active]
 DEFAULT="{icon}"
-"(?i)firefox" = "<span color='orange'> firefox</span>"
+"(?i)firefox" = "<span color='orange'> {class}</span>"
 
 [title."(firefox|chrom.*)"]
 "(?i)youtube" = "ꟳ"
@@ -22,7 +22,7 @@ DEFAULT="{icon}"
 
 [icons]
 DEFAULT = ""
-"(?i)firefox" = "<span color='orange'> firefox</span>"
+"(?i)firefox" = "<span color='orange'> </span>"
 "(?i)kitty" = ""
 "(?i)alacritty" = ""
 bleachbit = ""
