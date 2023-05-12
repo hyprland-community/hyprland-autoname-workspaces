@@ -1,7 +1,7 @@
 [package]
 name = "hyprland-autoname-workspaces"
 authors = ["Cyril Levis", "Maxim Baz"]
-version = "0.5.0"
+version = "0.5.1"
 edition = "2021"
 categories = ["gui"]
 keywords = ["linux", "desktop-application", "hyprland","waybar","wayland"]
@@ -14,7 +14,7 @@ repository = "https://github.com/hyprland-community/hyprland-autoname-workspaces
 [dependencies]
 regex = "1"
 clap = { version = "4.1.1", features = ["derive"] }
-hyprland = { git = "https://github.com/hyprland-community/hyprland-rs.git", branch="master", features = ["silent"] }
+hyprland = { version = "0.3.3", features = ["silent"] }
 signal-hook = "0.3.14"
 toml = { version = "0.5.10", features = ["indexmap", "preserve_order"] }
 xdg = "2.4.1"
