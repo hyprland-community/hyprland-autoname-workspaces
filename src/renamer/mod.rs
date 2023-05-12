@@ -1,6 +1,6 @@
 use crate::config::Config;
 use crate::params::Args;
-use hyprland::data::{Client, Clients};
+use hyprland::data::{Client, Clients, Workspace};
 use hyprland::dispatch::*;
 use hyprland::event_listener::EventListenerMutable as EventListener;
 use hyprland::prelude::*;
@@ -90,11 +90,23 @@ impl Renamer {
                 .expect("- not able to handle the icon");
         }
 
+        // Rename active workspace if empty
+        self.rename_empty_workspace();
+
+        // Rename all the others workspaces
         workspaces
             .iter()
             .try_for_each(|(&id, clients)| self.rename_cmd(id, clients))?;
 
         Ok(())
+    }
+
+    fn rename_empty_workspace(&self) {
+        _ = Workspace::get_active().map(|w| {
+            if w.windows == 0 {
+                _ = self.rename_cmd(w.id, "");
+            }
+        });
     }
 
     pub fn reset_workspaces(&self) -> Result<(), Box<dyn Error + '_>> {
