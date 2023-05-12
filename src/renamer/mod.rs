@@ -4,7 +4,7 @@ use hyprland::data::{Client, Clients, Workspace};
 use hyprland::dispatch::*;
 use hyprland::event_listener::EventListenerMutable as EventListener;
 use hyprland::prelude::*;
-use hyprland::shared::WorkspaceType;
+use hyprland::shared::{Address, WorkspaceType};
 use inotify::{Inotify, WatchMask};
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
@@ -61,9 +61,10 @@ impl Renamer {
 
             let is_active = Client::get_active()
                 .unwrap_or(None)
-                .map(|x| x.pid)
-                .unwrap_or(0)
-                == clt.pid;
+                .map(|x| x.address)
+                .unwrap_or(Address::new("0"))
+                .to_string()
+                == clt.address.to_string();
 
             let counter = if is_active {
                 1
