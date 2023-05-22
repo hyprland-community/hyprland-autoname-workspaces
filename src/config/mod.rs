@@ -105,10 +105,7 @@ pub struct ConfigFile {
 }
 
 impl Config {
-    pub fn new() -> Result<Config, Box<dyn Error>> {
-        let xdg_dirs = xdg::BaseDirectories::with_prefix("hyprland-autoname-workspaces")?;
-        let cfg_path = xdg_dirs.place_config_file("config.toml")?;
-
+    pub fn new(cfg_path: PathBuf) -> Result<Config, Box<dyn Error>> {
         if !cfg_path.exists() {
             _ = create_default_config(&cfg_path);
         }
@@ -116,6 +113,20 @@ impl Config {
         let config = read_config_file(&cfg_path)?;
 
         Ok(Config { config, cfg_path })
+    }
+}
+
+pub fn get_config_path(args: &Option<String>) -> Result<PathBuf, Box<dyn Error>> {
+    match args {
+        Some(path) => {
+            let cfg_path = PathBuf::from(path);
+            Ok(cfg_path)
+        }
+        _ => {
+            let xdg_dirs = xdg::BaseDirectories::with_prefix("hyprland-autoname-workspaces")?;
+            let cfg_path = xdg_dirs.place_config_file("config.toml")?;
+            Ok(cfg_path)
+        }
     }
 }
 

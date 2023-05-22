@@ -157,7 +157,7 @@ impl Renamer {
             println!("Reloading config !");
             // Clojure to force quick release of lock
             {
-                match Config::new() {
+                match Config::new(self.cfg.lock()?.cfg_path.clone()) {
                     Ok(config) => self.cfg.lock()?.config = config.config,
                     Err(err) => println!("Unable to reload config: {err:?}"),
                 }
@@ -437,6 +437,7 @@ mod tests {
         let renamer = Renamer::new(
             Config { cfg_path, config },
             Args {
+                config: Some("/tmp/hyprland-autoname-workspaces-test.toml".to_string()),
                 verbose: false,
                 dump: false,
             },
@@ -453,6 +454,7 @@ mod tests {
         let renamer = Renamer::new(
             Config { cfg_path, config },
             Args {
+                config: Some("/tmp/hyprland-autoname-workspaces-test.toml".to_string()),
                 verbose: false,
                 dump: false,
             },
@@ -471,6 +473,7 @@ mod tests {
         let renamer = Renamer::new(
             Config { cfg_path, config },
             Args {
+                config: Some("/tmp/hyprland-autoname-workspaces-test.toml".to_string()),
                 verbose: false,
                 dump: false,
             },
@@ -489,6 +492,7 @@ mod tests {
         let renamer = Renamer::new(
             Config { cfg_path, config },
             Args {
+                config: Some("/tmp/hyprland-autoname-workspaces-test.toml".to_string()),
                 verbose: false,
                 dump: false,
             },
@@ -507,6 +511,7 @@ mod tests {
         let renamer = Renamer::new(
             Config { cfg_path, config },
             Args {
+                config: Some("/tmp/hyprland-autoname-workspaces-test.toml".to_string()),
                 verbose: false,
                 dump: false,
             },
@@ -529,6 +534,7 @@ mod tests {
         let renamer = Renamer::new(
             Config { cfg_path, config },
             Args {
+                config: Some("/tmp/hyprland-autoname-workspaces-test.toml".to_string()),
                 verbose: false,
                 dump: false,
             },

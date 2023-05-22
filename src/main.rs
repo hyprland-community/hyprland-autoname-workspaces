@@ -7,14 +7,16 @@ use crate::params::Args;
 use crate::renamer::*;
 
 use clap::Parser;
+use config::get_config_path;
 use signal_hook::consts::{SIGINT, SIGTERM};
 use signal_hook::iterator::Signals;
 use single_instance::SingleInstance;
 use std::{process, thread};
 
 fn main() {
-    let cfg = Config::new().expect("Unable to read config");
     let args = Args::parse();
+    let cfg_path = get_config_path(&args.config).unwrap();
+    let cfg = Config::new(cfg_path).expect("Unable to read config");
 
     if args.dump {
         println!("{:#?}", &cfg);
