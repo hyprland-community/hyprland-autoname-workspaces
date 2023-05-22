@@ -119,7 +119,7 @@ impl Config {
 pub fn get_config_path(args: &Option<String>) -> Result<PathBuf, Box<dyn Error>> {
     let cfg_path = match args {
         Some(path) => {
-            let cfg_path = PathBuf::from(path);
+            PathBuf::from(path)
         }
         _ => {
             let xdg_dirs = xdg::BaseDirectories::with_prefix("hyprland-autoname-workspaces")?;
