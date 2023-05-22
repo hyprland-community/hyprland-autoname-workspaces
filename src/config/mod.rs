@@ -117,7 +117,7 @@ impl Config {
 }
 
 pub fn get_config_path(args: &Option<String>) -> Result<PathBuf, Box<dyn Error>> {
-    match args {
+    let cfg_path = match args {
         Some(path) => {
             let cfg_path = PathBuf::from(path);
             Ok(cfg_path)
