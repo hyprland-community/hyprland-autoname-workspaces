@@ -123,7 +123,7 @@ pub fn get_config_path(args: &Option<String>) -> Result<PathBuf, Box<dyn Error>>
         }
         _ => {
             let xdg_dirs = xdg::BaseDirectories::with_prefix("hyprland-autoname-workspaces")?;
-            let cfg_path = xdg_dirs.place_config_file("config.toml")?;
+            xdg_dirs.place_config_file("config.toml")?
         }
     }
 }
