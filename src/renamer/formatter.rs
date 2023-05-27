@@ -45,7 +45,7 @@ impl Renamer {
         let config_format = &config.format;
         let client = client.clone();
 
-        let is_dedup = config_format.dedup && (counter > 1);
+        let is_dedup = config.format.dedup && (counter > 1);
 
         let counter_sup = to_superscript(counter);
         let prev_counter = (counter - 1).to_string();
@@ -69,7 +69,7 @@ impl Renamer {
         ]);
 
         let icon = match (client.is_active, client.matched_rule.clone()) {
-            (true, c @ Class(_, _) | c @ Title(_, _)) => {
+            (true, c @ Class(_, _) | c @ InitialTitleInClass(_, _) | c @ TitleInClass(_, _)) => {
                 vars.insert("default_icon".to_string(), c.icon());
                 formatter(
                     &fmt_client_active.replace("{icon}", "{default_icon}"),

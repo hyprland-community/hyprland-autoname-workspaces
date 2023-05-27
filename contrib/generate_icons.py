@@ -62,7 +62,7 @@ def main(uri, version, include_aliases):
     """
     icons_dict = yaml.full_load(requests.get(uri).text)
 
-    print("[icons]")
+    print("[class]")
 
     # Custom icons
     print_custom_icons()

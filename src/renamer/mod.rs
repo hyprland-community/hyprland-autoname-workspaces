@@ -28,7 +28,9 @@ pub struct Renamer {
 
 #[derive(Clone, Debug, PartialOrd, Ord, Eq)]
 pub struct AppClient {
+    initial_class: String,
     class: String,
+    initial_title: String,
     title: String,
     is_active: bool,
     is_fullscreen: bool,
@@ -46,7 +48,9 @@ impl PartialEq for AppClient {
 impl AppClient {
     fn new(client: Client, is_active: bool, matched_rule: IconConfig) -> Self {
         AppClient {
+            initial_class: client.initial_class,
             class: client.class,
+            initial_title: client.initial_title,
             title: client.title,
             is_active,
             is_fullscreen: client.fullscreen,
@@ -114,7 +118,14 @@ impl Renamer {
                 .push(AppClient::new(
                     client.clone(),
                     is_active,
-                    self.parse_icon(client.class, client.title, is_active, config),
+                    self.parse_icon(
+                        client.initial_class,
+                        client.class,
+                        client.initial_title,
+                        client.title,
+                        is_active,
+                        config,
+                    ),
                 ));
         }
 
@@ -270,48 +281,60 @@ mod tests {
     #[test]
     fn test_app_client_partial_eq() {
         let client1 = AppClient {
+            initial_class: "kitty".to_string(),
             class: "kitty".to_string(),
             title: "~".to_string(),
             is_active: false,
             is_fullscreen: false,
+            initial_title: "zsh".to_string(),
             matched_rule: IconConfig::Class("(kitty|alacritty)".to_string(), "term".to_string()),
         };
 
         let client2 = AppClient {
+            initial_class: "alacritty".to_string(),
             class: "alacritty".to_string(),
             title: "xplr".to_string(),
+            initial_title: "zsh".to_string(),
             is_active: false,
             is_fullscreen: false,
             matched_rule: IconConfig::Class("(kitty|alacritty)".to_string(), "term".to_string()),
         };
 
         let client3 = AppClient {
+            initial_class: "kitty".to_string(),
             class: "kitty".to_string(),
             title: "".to_string(),
+            initial_title: "zsh".to_string(),
             is_active: true,
             is_fullscreen: false,
             matched_rule: IconConfig::Class("(kitty|alacritty)".to_string(), "term".to_string()),
         };
 
         let client4 = AppClient {
+            initial_class: "alacritty".to_string(),
             class: "alacritty".to_string(),
             title: "".to_string(),
+            initial_title: "zsh".to_string(),
             is_active: false,
             is_fullscreen: true,
             matched_rule: IconConfig::Class("(kitty|alacritty)".to_string(), "term".to_string()),
         };
 
         let client5 = AppClient {
+            initial_class: "kitty".to_string(),
             class: "kitty".to_string(),
             title: "".to_string(),
+            initial_title: "zsh".to_string(),
             is_active: false,
             is_fullscreen: true,
             matched_rule: IconConfig::Class("(kitty|alacritty)".to_string(), "term".to_string()),
         };
 
         let client6 = AppClient {
+            initial_class: "alacritty".to_string(),
             class: "alacritty".to_string(),
             title: "".to_string(),
+            initial_title: "zsh".to_string(),
             is_active: false,
             is_fullscreen: false,
             matched_rule: IconConfig::Class("alacritty".to_string(), "term".to_string()),
@@ -328,7 +351,7 @@ mod tests {
     fn test_dedup_kitty_and_alacritty_if_one_regex() {
         let mut config = crate::config::read_config_file(None).unwrap();
         config
-            .icons
+            .class
             .push((Regex::new("(kitty|alacritty)").unwrap(), "term".to_string()));
 
         config.format.dedup = true;
@@ -354,11 +377,15 @@ mod tests {
                 id: 1,
                 clients: vec![
                     AppClient {
+                        initial_class: "kitty".to_string(),
                         class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -367,10 +394,14 @@ mod tests {
                     },
                     AppClient {
                         class: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -378,11 +409,15 @@ mod tests {
                         ),
                     },
                     AppClient {
+                        initial_class: "alacritty".to_string(),
                         class: "alacritty".to_string(),
                         title: "alacritty".to_string(),
+                        initial_title: "alacritty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "alacritty".to_string(),
+                            "alacritty".to_string(),
                             "alacritty".to_string(),
                             "alacritty".to_string(),
                             false,
@@ -391,10 +426,14 @@ mod tests {
                     },
                     AppClient {
                         class: "alacritty".to_string(),
+                        initial_class: "alacritty".to_string(),
                         title: "alacritty".to_string(),
+                        initial_title: "alacritty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "alacritty".to_string(),
+                            "alacritty".to_string(),
                             "alacritty".to_string(),
                             "alacritty".to_string(),
                             false,
@@ -402,11 +441,15 @@ mod tests {
                         ),
                     },
                     AppClient {
+                        initial_class: "alacritty".to_string(),
                         class: "alacritty".to_string(),
                         title: "alacritty".to_string(),
+                        initial_title: "alacritty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "alacritty".to_string(),
+                            "alacritty".to_string(),
                             "alacritty".to_string(),
                             "alacritty".to_string(),
                             false,
@@ -422,14 +465,111 @@ mod tests {
     }
 
     #[test]
-    fn test_dedup_kitty_and_alacritty_if_two_regex() {
+    fn test_parse_icon_initial_title_and_initial_title_active() {
         let mut config = crate::config::read_config_file(None).unwrap();
         config
-            .icons
+            .class
             .push((Regex::new("kitty").unwrap(), "term".to_string()));
 
         config
-            .icons
+            .class
+            .push((Regex::new("alacritty").unwrap(), "term".to_string()));
+
+        config.initial_title_in_class.push((
+            Regex::new("(kitty|alacritty)").unwrap(),
+            vec![(Regex::new("zsh").unwrap(), "Zsh".to_string())],
+        ));
+
+        config.initial_title_in_class_active.push((
+            Regex::new("alacritty").unwrap(),
+            vec![(Regex::new("zsh").unwrap(), "#Zsh#".to_string())],
+        ));
+
+        config.format.client_dup = "{icon}{counter}".to_string();
+
+        let renamer = Renamer::new(
+            Config {
+                cfg_path: None,
+                config: config.clone(),
+            },
+            Args {
+                verbose: false,
+                debug: false,
+                config: None,
+                dump: false,
+            },
+        );
+
+        let expected = [(1, "Zsh #Zsh# *Zsh*".to_string())].into_iter().collect();
+
+        let actual = renamer.generate_workspaces_string(
+            vec![AppWorkspace {
+                id: 1,
+                clients: vec![
+                    AppClient {
+                        initial_class: "alacritty".to_string(),
+                        class: "alacritty".to_string(),
+                        title: "alacritty".to_string(),
+                        initial_title: "zsh".to_string(),
+                        is_active: false,
+                        is_fullscreen: false,
+                        matched_rule: renamer.parse_icon(
+                            "alacritty".to_string(),
+                            "alacritty".to_string(),
+                            "zsh".to_string(),
+                            "alacritty".to_string(),
+                            false,
+                            &config,
+                        ),
+                    },
+                    AppClient {
+                        initial_class: "alacritty".to_string(),
+                        class: "alacritty".to_string(),
+                        title: "alacritty".to_string(),
+                        initial_title: "zsh".to_string(),
+                        is_active: true,
+                        is_fullscreen: false,
+                        matched_rule: renamer.parse_icon(
+                            "alacritty".to_string(),
+                            "alacritty".to_string(),
+                            "zsh".to_string(),
+                            "alacritty".to_string(),
+                            true,
+                            &config,
+                        ),
+                    },
+                    AppClient {
+                        initial_class: "kitty".to_string(),
+                        class: "kitty".to_string(),
+                        title: "~".to_string(),
+                        initial_title: "zsh".to_string(),
+                        is_active: true,
+                        is_fullscreen: false,
+                        matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
+                            "zsh".to_string(),
+                            "~".to_string(),
+                            true,
+                            &config,
+                        ),
+                    },
+                ],
+            }],
+            &config,
+        );
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_dedup_kitty_and_alacritty_if_two_regex() {
+        let mut config = crate::config::read_config_file(None).unwrap();
+        config
+            .class
+            .push((Regex::new("kitty").unwrap(), "term".to_string()));
+
+        config
+            .class
             .push((Regex::new("alacritty").unwrap(), "term".to_string()));
 
         config.format.dedup = true;
@@ -457,9 +597,13 @@ mod tests {
                     AppClient {
                         class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -468,10 +612,14 @@ mod tests {
                     },
                     AppClient {
                         class: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -480,10 +628,14 @@ mod tests {
                     },
                     AppClient {
                         class: "alacritty".to_string(),
+                        initial_class: "alacritty".to_string(),
                         title: "alacritty".to_string(),
+                        initial_title: "alacritty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "alacritty".to_string(),
+                            "alacritty".to_string(),
                             "alacritty".to_string(),
                             "alacritty".to_string(),
                             false,
@@ -492,10 +644,14 @@ mod tests {
                     },
                     AppClient {
                         class: "alacritty".to_string(),
+                        initial_class: "alacritty".to_string(),
                         title: "alacritty".to_string(),
+                        initial_title: "alacritty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "alacritty".to_string(),
+                            "alacritty".to_string(),
                             "alacritty".to_string(),
                             "alacritty".to_string(),
                             false,
@@ -503,11 +659,15 @@ mod tests {
                         ),
                     },
                     AppClient {
+                        initial_class: "alacritty".to_string(),
                         class: "alacritty".to_string(),
                         title: "alacritty".to_string(),
+                        initial_title: "alacritty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "alacritty".to_string(),
+                            "alacritty".to_string(),
                             "alacritty".to_string(),
                             "alacritty".to_string(),
                             false,
@@ -534,7 +694,7 @@ mod tests {
     fn test_no_dedup_no_focus_no_fullscreen_one_workspace() {
         let mut config = crate::config::read_config_file(None).unwrap();
         config
-            .icons
+            .class
             .push((Regex::new("kitty").unwrap(), "term".to_string()));
 
         let renamer = Renamer::new(
@@ -559,11 +719,15 @@ mod tests {
                 id: 1,
                 clients: vec![
                     AppClient {
+                        initial_class: "kitty".to_string(),
                         class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -572,10 +736,14 @@ mod tests {
                     },
                     AppClient {
                         class: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -584,10 +752,30 @@ mod tests {
                     },
                     AppClient {
                         class: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
+                            "kitty".to_string(),
+                            "kitty".to_string(),
+                            false,
+                            &config,
+                        ),
+                    },
+                    AppClient {
+                        initial_class: "kitty".to_string(),
+                        class: "kitty".to_string(),
+                        title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
+                        is_active: false,
+                        is_fullscreen: false,
+                        matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -596,22 +784,14 @@ mod tests {
                     },
                     AppClient {
                         class: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
-                            false,
-                            &config,
-                        ),
-                    },
-                    AppClient {
-                        class: "kitty".to_string(),
-                        title: "kitty".to_string(),
-                        is_active: false,
-                        is_fullscreen: false,
-                        matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -630,7 +810,7 @@ mod tests {
     fn test_no_dedup_focus_no_fullscreen_one_workspace_middle() {
         let mut config = crate::config::read_config_file(None).unwrap();
         config
-            .icons
+            .class
             .push((Regex::new("kitty").unwrap(), "term".to_string()));
         config.format.client_active = "*{icon}*".to_string();
 
@@ -656,11 +836,31 @@ mod tests {
                 id: 1,
                 clients: vec![
                     AppClient {
+                        initial_class: "kitty".to_string(),
                         class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
+                            "kitty".to_string(),
+                            "kitty".to_string(),
+                            false,
+                            &config,
+                        ),
+                    },
+                    AppClient {
+                        initial_class: "kitty".to_string(),
+                        class: "kitty".to_string(),
+                        title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
+                        is_active: false,
+                        is_fullscreen: false,
+                        matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -669,22 +869,14 @@ mod tests {
                     },
                     AppClient {
                         class: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
                         title: "kitty".to_string(),
-                        is_active: false,
-                        is_fullscreen: false,
-                        matched_rule: renamer.parse_icon(
-                            "kitty".to_string(),
-                            "kitty".to_string(),
-                            false,
-                            &config,
-                        ),
-                    },
-                    AppClient {
-                        class: "kitty".to_string(),
-                        title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: true,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             true,
@@ -693,10 +885,14 @@ mod tests {
                     },
                     AppClient {
                         class: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -705,10 +901,14 @@ mod tests {
                     },
                     AppClient {
                         class: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -727,7 +927,7 @@ mod tests {
     fn test_no_dedup_no_focus_fullscreen_one_workspace_middle() {
         let mut config = crate::config::read_config_file(None).unwrap();
         config
-            .icons
+            .class
             .push((Regex::new("kitty").unwrap(), "term".to_string()));
         config.format.client_active = "*{icon}*".to_string();
         config.format.client_fullscreen = "[{icon}]".to_string();
@@ -754,11 +954,15 @@ mod tests {
                 id: 1,
                 clients: vec![
                     AppClient {
+                        initial_class: "kitty".to_string(),
                         class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -767,10 +971,14 @@ mod tests {
                     },
                     AppClient {
                         class: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -779,22 +987,14 @@ mod tests {
                     },
                     AppClient {
                         class: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: true,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
-                            false,
-                            &config,
-                        ),
-                    },
-                    AppClient {
-                        class: "kitty".to_string(),
-                        title: "kitty".to_string(),
-                        is_active: false,
-                        is_fullscreen: false,
-                        matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -803,10 +1003,30 @@ mod tests {
                     },
                     AppClient {
                         class: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
+                            "kitty".to_string(),
+                            "kitty".to_string(),
+                            false,
+                            &config,
+                        ),
+                    },
+                    AppClient {
+                        initial_class: "kitty".to_string(),
+                        class: "kitty".to_string(),
+                        title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
+                        is_active: false,
+                        is_fullscreen: false,
+                        matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -825,7 +1045,7 @@ mod tests {
     fn test_no_dedup_focus_fullscreen_one_workspace_middle() {
         let mut config = crate::config::read_config_file(None).unwrap();
         config
-            .icons
+            .class
             .push((Regex::new("kitty").unwrap(), "term".to_string()));
         config.format.client_active = "*{icon}*".to_string();
         config.format.client_fullscreen = "[{icon}]".to_string();
@@ -853,10 +1073,14 @@ mod tests {
                 clients: vec![
                     AppClient {
                         class: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -865,10 +1089,14 @@ mod tests {
                     },
                     AppClient {
                         class: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -877,10 +1105,14 @@ mod tests {
                     },
                     AppClient {
                         class: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: true,
                         is_fullscreen: true,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             true,
@@ -889,10 +1121,14 @@ mod tests {
                     },
                     AppClient {
                         class: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -901,10 +1137,14 @@ mod tests {
                     },
                     AppClient {
                         class: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -923,7 +1163,7 @@ mod tests {
     fn test_dedup_no_focus_no_fullscreen_one_workspace() {
         let mut config = crate::config::read_config_file(None).unwrap();
         config
-            .icons
+            .class
             .push((Regex::new("kitty").unwrap(), "term".to_string()));
         config.format.dedup = true;
         config.format.client_dup = "{icon}{counter}".to_string();
@@ -948,36 +1188,46 @@ mod tests {
                 id: 1,
                 clients: vec![
                     AppClient {
+                        initial_class: "kitty".to_string(),
                         class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: IconConfig::Class("kitty".to_string(), "term".to_string()),
                     },
                     AppClient {
+                        initial_class: "kitty".to_string(),
                         class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: IconConfig::Class("kitty".to_string(), "term".to_string()),
                     },
                     AppClient {
+                        initial_class: "kitty".to_string(),
                         class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: IconConfig::Class("kitty".to_string(), "term".to_string()),
                     },
                     AppClient {
+                        initial_class: "kitty".to_string(),
                         class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: IconConfig::Class("kitty".to_string(), "term".to_string()),
                     },
                     AppClient {
+                        initial_class: "kitty".to_string(),
                         class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: IconConfig::Class("kitty".to_string(), "term".to_string()),
@@ -994,7 +1244,7 @@ mod tests {
     fn test_dedup_focus_no_fullscreen_one_workspace_middle() {
         let mut config = crate::config::read_config_file(None).unwrap();
         config
-            .icons
+            .class
             .push((Regex::new("kitty").unwrap(), "term".to_string()));
 
         config.format.dedup = true;
@@ -1023,10 +1273,14 @@ mod tests {
                 clients: vec![
                     AppClient {
                         class: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -1035,10 +1289,14 @@ mod tests {
                     },
                     AppClient {
                         class: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -1046,11 +1304,15 @@ mod tests {
                         ),
                     },
                     AppClient {
+                        initial_class: "kitty".to_string(),
                         class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: true,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             true,
@@ -1058,11 +1320,15 @@ mod tests {
                         ),
                     },
                     AppClient {
+                        initial_class: "kitty".to_string(),
                         class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -1071,10 +1337,14 @@ mod tests {
                     },
                     AppClient {
                         class: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -1093,7 +1363,7 @@ mod tests {
     fn test_dedup_no_focus_fullscreen_one_workspace_middle() {
         let mut config = crate::config::read_config_file(None).unwrap();
         config
-            .icons
+            .class
             .push((Regex::new("kitty").unwrap(), "term".to_string()));
 
         config.format.dedup = true;
@@ -1122,10 +1392,14 @@ mod tests {
                 clients: vec![
                     AppClient {
                         class: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -1134,10 +1408,14 @@ mod tests {
                     },
                     AppClient {
                         class: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -1146,22 +1424,14 @@ mod tests {
                     },
                     AppClient {
                         class: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: true,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
-                            false,
-                            &config,
-                        ),
-                    },
-                    AppClient {
-                        class: "kitty".to_string(),
-                        title: "kitty".to_string(),
-                        is_active: false,
-                        is_fullscreen: false,
-                        matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -1170,10 +1440,30 @@ mod tests {
                     },
                     AppClient {
                         class: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
+                            "kitty".to_string(),
+                            "kitty".to_string(),
+                            false,
+                            &config,
+                        ),
+                    },
+                    AppClient {
+                        class: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
+                        title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
+                        is_active: false,
+                        is_fullscreen: false,
+                        matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -1192,7 +1482,7 @@ mod tests {
     fn test_dedup_focus_fullscreen_one_workspace_middle() {
         let mut config = crate::config::read_config_file(None).unwrap();
         config
-            .icons
+            .class
             .push((Regex::new("kitty").unwrap(), "term".to_string()));
         config.format.dedup = true;
         config.format.client = "{icon}".to_string();
@@ -1224,10 +1514,14 @@ mod tests {
                 clients: vec![
                     AppClient {
                         class: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -1236,10 +1530,14 @@ mod tests {
                     },
                     AppClient {
                         class: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -1247,11 +1545,15 @@ mod tests {
                         ),
                     },
                     AppClient {
+                        initial_class: "kitty".to_string(),
                         class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: true,
                         is_fullscreen: true,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             true,
@@ -1260,10 +1562,14 @@ mod tests {
                     },
                     AppClient {
                         class: "kitty".to_string(),
+                        initial_class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -1271,11 +1577,15 @@ mod tests {
                         ),
                     },
                     AppClient {
+                        initial_class: "kitty".to_string(),
                         class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             false,
@@ -1294,20 +1604,20 @@ mod tests {
     fn test_default_active_icon() {
         let mut config = crate::config::read_config_file(None).unwrap();
         config
-            .icons
+            .class
             .push((Regex::new("kitty").unwrap(), "k".to_string()));
         config
-            .icons
+            .class
             .push((Regex::new("alacritty").unwrap(), "a".to_string()));
         config
-            .icons
+            .class
             .push((Regex::new("DEFAULT").unwrap(), "d".to_string()));
 
         config
-            .icons_active
+            .class_active
             .push((Regex::new("kitty").unwrap(), "KKK".to_string()));
         config
-            .icons_active
+            .class_active
             .push((Regex::new("DEFAULT").unwrap(), "DDD".to_string()));
 
         config.format.client_active = "*{icon}*".to_string();
@@ -1332,11 +1642,15 @@ mod tests {
                 id: 1,
                 clients: vec![
                     AppClient {
+                        initial_class: "kitty".to_string(),
                         class: "kitty".to_string(),
                         title: "kitty".to_string(),
+                        initial_title: "kitty".to_string(),
                         is_active: true,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "kitty".to_string(),
                             "kitty".to_string(),
                             "kitty".to_string(),
                             true,
@@ -1345,10 +1659,14 @@ mod tests {
                     },
                     AppClient {
                         class: "alacritty".to_string(),
+                        initial_class: "alacritty".to_string(),
                         title: "alacritty".to_string(),
+                        initial_title: "alacritty".to_string(),
                         is_active: true,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "alacritty".to_string(),
+                            "alacritty".to_string(),
                             "alacritty".to_string(),
                             "alacritty".to_string(),
                             true,
@@ -1357,10 +1675,14 @@ mod tests {
                     },
                     AppClient {
                         class: "qute".to_string(),
+                        initial_class: "qute".to_string(),
                         title: "qute".to_string(),
+                        initial_title: "qute".to_string(),
                         is_active: true,
                         is_fullscreen: false,
                         matched_rule: renamer.parse_icon(
+                            "qute".to_string(),
+                            "qute".to_string(),
                             "qute".to_string(),
                             "qute".to_string(),
                             true,
@@ -1376,14 +1698,62 @@ mod tests {
     }
 
     #[test]
+    fn test_no_class_but_title_icon() {
+        let mut config = crate::config::read_config_file(None).unwrap();
+        config.title_in_class.push((
+            Regex::new("^$").unwrap(),
+            vec![(Regex::new("(?i)spotify").unwrap(), "spotify".to_string())],
+        ));
+
+        let renamer = Renamer::new(
+            Config {
+                cfg_path: None,
+                config: config.clone(),
+            },
+            Args {
+                verbose: false,
+                debug: false,
+                config: None,
+                dump: false,
+            },
+        );
+
+        let expected = [(1, "spotify".to_string())].into_iter().collect();
+
+        let actual = renamer.generate_workspaces_string(
+            vec![AppWorkspace {
+                id: 1,
+                clients: vec![AppClient {
+                    initial_class: "".to_string(),
+                    class: "".to_string(),
+                    title: "spotify".to_string(),
+                    initial_title: "spotify".to_string(),
+                    is_active: false,
+                    is_fullscreen: false,
+                    matched_rule: renamer.parse_icon(
+                        "".to_string(),
+                        "".to_string(),
+                        "spotify".to_string(),
+                        "spotify".to_string(),
+                        false,
+                        &config,
+                    ),
+                }],
+            }],
+            &config,
+        );
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
     fn test_no_default_class_active_fallback_to_class_default() {
         let mut config = crate::config::read_config_file(None).unwrap();
 
         config
-            .icons_active
+            .class_active
             .push((Regex::new("DEFAULT").unwrap(), "default active".to_string()));
 
-        println!("config => {:#?}", config);
         let renamer = Renamer::new(
             Config {
                 cfg_path: None,
@@ -1403,12 +1773,16 @@ mod tests {
             vec![AppWorkspace {
                 id: 1,
                 clients: vec![AppClient {
+                    initial_class: "kitty".to_string(),
                     class: "kitty".to_string(),
                     title: "~".to_string(),
+                    initial_title: "zsh".to_string(),
                     is_active: true,
                     is_fullscreen: false,
                     matched_rule: renamer.parse_icon(
                         "kitty".to_string(),
+                        "kitty".to_string(),
+                        "zsh".to_string(),
                         "~".to_string(),
                         true,
                         &config,
@@ -1439,12 +1813,16 @@ mod tests {
             vec![AppWorkspace {
                 id: 1,
                 clients: vec![AppClient {
+                    initial_class: "kitty".to_string(),
                     class: "kitty".to_string(),
+                    initial_title: "zsh".to_string(),
                     title: "~".to_string(),
                     is_active: true,
                     is_fullscreen: false,
                     matched_rule: renamer.parse_icon(
                         "kitty".to_string(),
+                        "kitty".to_string(),
+                        "zsh".to_string(),
                         "~".to_string(),
                         true,
                         &config,
@@ -1455,6 +1833,155 @@ mod tests {
         );
 
         let expected = [(1, "\u{f059} kitty".to_string())].into_iter().collect();
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_initial_title_in_initial_class_combos() {
+        let mut config = crate::config::read_config_file(None).unwrap();
+
+        config
+            .class
+            .push((Regex::new("kitty").unwrap(), "term0".to_string()));
+
+        config.title_in_class.push((
+            Regex::new("kitty").unwrap(),
+            vec![(Regex::new("~").unwrap(), "term1".to_string())],
+        ));
+
+        config.title_in_initial_class.push((
+            Regex::new("kitty").unwrap(),
+            vec![(Regex::new("~").unwrap(), "term2".to_string())],
+        ));
+
+        let renamer = Renamer::new(
+            Config {
+                cfg_path: None,
+                config: config.clone(),
+            },
+            Args {
+                verbose: false,
+                debug: false,
+                config: None,
+                dump: false,
+            },
+        );
+
+        let expected = [(1, "term2".to_string())].into_iter().collect();
+
+        let actual = renamer.generate_workspaces_string(
+            vec![AppWorkspace {
+                id: 1,
+                clients: vec![AppClient {
+                    initial_class: "kitty".to_string(),
+                    class: "kitty".to_string(),
+                    title: "~".to_string(),
+                    initial_title: "zsh".to_string(),
+                    is_active: false,
+                    is_fullscreen: false,
+                    matched_rule: renamer.parse_icon(
+                        "kitty".to_string(),
+                        "kitty".to_string(),
+                        "zsh".to_string(),
+                        "~".to_string(),
+                        false,
+                        &config,
+                    ),
+                }],
+            }],
+            &config,
+        );
+
+        assert_eq!(actual, expected);
+
+        config.initial_title_in_class.push((
+            Regex::new("kitty").unwrap(),
+            vec![(Regex::new("(?i)zsh").unwrap(), "term3".to_string())],
+        ));
+
+        let renamer = Renamer::new(
+            Config {
+                cfg_path: None,
+                config: config.clone(),
+            },
+            Args {
+                verbose: false,
+                debug: false,
+                config: None,
+                dump: false,
+            },
+        );
+
+        let actual = renamer.generate_workspaces_string(
+            vec![AppWorkspace {
+                id: 1,
+                clients: vec![AppClient {
+                    initial_class: "kitty".to_string(),
+                    class: "kitty".to_string(),
+                    initial_title: "zsh".to_string(),
+                    title: "~".to_string(),
+                    is_active: false,
+                    is_fullscreen: false,
+                    matched_rule: renamer.parse_icon(
+                        "kitty".to_string(),
+                        "kitty".to_string(),
+                        "zsh".to_string(),
+                        "~".to_string(),
+                        false,
+                        &config,
+                    ),
+                }],
+            }],
+            &config,
+        );
+
+        let expected = [(1, "term3".to_string())].into_iter().collect();
+
+        assert_eq!(actual, expected);
+
+        config.initial_title_in_initial_class.push((
+            Regex::new("kitty").unwrap(),
+            vec![(Regex::new("(?i)zsh").unwrap(), "term4".to_string())],
+        ));
+
+        let renamer = Renamer::new(
+            Config {
+                cfg_path: None,
+                config: config.clone(),
+            },
+            Args {
+                verbose: false,
+                debug: false,
+                config: None,
+                dump: false,
+            },
+        );
+
+        let actual = renamer.generate_workspaces_string(
+            vec![AppWorkspace {
+                id: 1,
+                clients: vec![AppClient {
+                    initial_class: "kitty".to_string(),
+                    class: "kitty".to_string(),
+                    initial_title: "zsh".to_string(),
+                    title: "~".to_string(),
+                    is_active: false,
+                    is_fullscreen: false,
+                    matched_rule: renamer.parse_icon(
+                        "kitty".to_string(),
+                        "kitty".to_string(),
+                        "zsh".to_string(),
+                        "~".to_string(),
+                        false,
+                        &config,
+                    ),
+                }],
+            }],
+            &config,
+        );
+
+        let expected = [(1, "term4".to_string())].into_iter().collect();
 
         assert_eq!(actual, expected);
     }

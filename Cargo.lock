@@ -329,8 +329,7 @@ dependencies = [
 [[package]]
 name = "hyprland"
 version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "915d3cd66e1f0c4f5960bf64d5ee8457f29de82756b34b19a05ca714d5e312ac"
+source = "git+https://github.com/cyrinux/hyprland-rs.git?branch=feat/add-initial-class-title#ac39ff791f4f5d2b9bd1f41d344a0393b2a5e16c"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -369,8 +368,7 @@ dependencies = [
 [[package]]
 name = "hyprland-macros"
 version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d6c35c4399e9db5eb8272c5379eb5dccab14ac27a21487301c523fa644b4c04"
+source = "git+https://github.com/cyrinux/hyprland-rs.git?branch=feat/add-initial-class-title#ac39ff791f4f5d2b9bd1f41d344a0393b2a5e16c"
 dependencies = [
  "quote",
  "syn 2.0.18",
@@ -525,9 +523,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.17.1"
+version = "1.17.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7e5500299e16ebb147ae15a00a942af264cf3688f47923b8fc2cd5858f23ad3"
+checksum = "9670a07f94779e00908f3e686eab508878ebb390ba6e604d3a284c00e8d0487b"
 
 [[package]]
 name = "parking_lot"
