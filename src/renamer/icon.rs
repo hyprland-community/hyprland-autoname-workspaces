@@ -24,6 +24,14 @@ impl IconConfig {
             ActiveClass(_, icon) | ActiveTitle(_, icon) => icon.to_string(),
         }
     }
+
+    pub fn rule(&self) -> Rule {
+        match &self {
+            Title(rule, _) | Class(rule, _) => rule.to_string(),
+            ActiveClass(rule, _) | ActiveTitle(rule, _) => rule.to_string(),
+            _ => unreachable!(),
+        }
+    }
 }
 
 impl Renamer {
@@ -81,9 +89,12 @@ impl Renamer {
         let icon_default = self
             .find_icon("DEFAULT", "", false, config)
             .unwrap_or(IconConfig::Default("no icon".to_string()));
-        let icon_default_active = self
-            .find_icon("DEFAULT", "", true, config)
-            .unwrap_or(IconConfig::ActiveDefault("no icon".to_string()));
+
+        let icon_default_active = self.find_icon("DEFAULT", "", true, config).unwrap_or({
+            self.find_icon("DEFAULT", "", false, config)
+                .map(|i| IconConfig::ActiveClass(i.rule(), i.icon()))
+                .unwrap_or(IconConfig::ActiveDefault("no icon".to_string()))
+        });
 
         if is_active {
             icon_active.unwrap_or(match icon {

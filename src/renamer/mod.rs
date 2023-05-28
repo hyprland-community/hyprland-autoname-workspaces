@@ -1374,4 +1374,88 @@ mod tests {
 
         assert_eq!(actual, expected);
     }
+
+    #[test]
+    fn test_no_default_class_active_fallback_to_class_default() {
+        let mut config = crate::config::read_config_file(None).unwrap();
+
+        config
+            .icons_active
+            .push((Regex::new("DEFAULT").unwrap(), "default active".to_string()));
+
+        println!("config => {:#?}", config);
+        let renamer = Renamer::new(
+            Config {
+                cfg_path: None,
+                config: config.clone(),
+            },
+            Args {
+                verbose: false,
+                debug: false,
+                config: None,
+                dump: false,
+            },
+        );
+
+        let expected = [(1, "default active".to_string())].into_iter().collect();
+
+        let actual = renamer.generate_workspaces_string(
+            vec![AppWorkspace {
+                id: 1,
+                clients: vec![AppClient {
+                    class: "kitty".to_string(),
+                    title: "~".to_string(),
+                    is_active: true,
+                    is_fullscreen: false,
+                    matched_rule: renamer.parse_icon(
+                        "kitty".to_string(),
+                        "~".to_string(),
+                        true,
+                        &config,
+                    ),
+                }],
+            }],
+            &config,
+        );
+
+        assert_eq!(actual, expected);
+
+        let config = crate::config::read_config_file(None).unwrap();
+
+        let renamer = Renamer::new(
+            Config {
+                cfg_path: None,
+                config: config.clone(),
+            },
+            Args {
+                verbose: false,
+                debug: false,
+                config: None,
+                dump: false,
+            },
+        );
+
+        let actual = renamer.generate_workspaces_string(
+            vec![AppWorkspace {
+                id: 1,
+                clients: vec![AppClient {
+                    class: "kitty".to_string(),
+                    title: "~".to_string(),
+                    is_active: true,
+                    is_fullscreen: false,
+                    matched_rule: renamer.parse_icon(
+                        "kitty".to_string(),
+                        "~".to_string(),
+                        true,
+                        &config,
+                    ),
+                }],
+            }],
+            &config,
+        );
+
+        let expected = [(1, "\u{f059} kitty".to_string())].into_iter().collect();
+
+        assert_eq!(actual, expected);
+    }
 }
