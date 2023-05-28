@@ -81,9 +81,15 @@ impl Renamer {
         let icon_default = self
             .find_icon("DEFAULT", "", false, config)
             .unwrap_or(IconConfig::Default("no icon".to_string()));
-        let icon_default_active = self
-            .find_icon("DEFAULT", "", true, config)
-            .unwrap_or(IconConfig::ActiveDefault("no icon".to_string()));
+
+        let icon_default_active = self.find_icon("DEFAULT", "", true, config).unwrap_or({
+            match icon_default.clone() {
+                IconConfig::Class(rule, icon) if rule == "DEFAULT" => {
+                    IconConfig::ActiveClass(rule, icon)
+                }
+                _ => IconConfig::ActiveDefault("no icon".to_string()),
+            }
+        });
 
         if is_active {
             icon_active.unwrap_or(match icon {
