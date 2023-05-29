@@ -60,7 +60,7 @@ impl Default for ConfigFormatRaw {
     }
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
 pub struct ConfigFormatRaw {
     #[serde(default)]
     pub dedup: bool,
@@ -142,7 +142,7 @@ impl Config {
             _ = create_default_config(&cfg_path);
         }
 
-        let config = read_config_file(Some(&cfg_path))?;
+        let config = read_config_file(Some(cfg_path.clone()))?;
 
         Ok(Config {
             config,
@@ -163,7 +163,7 @@ pub fn get_config_path(args: &Option<String>) -> Result<PathBuf, Box<dyn Error>>
     Ok(cfg_path)
 }
 
-pub fn read_config_file(cfg_path: Option<&PathBuf>) -> Result<ConfigFile, Box<dyn Error>> {
+pub fn read_config_file(cfg_path: Option<PathBuf>) -> Result<ConfigFile, Box<dyn Error>> {
     let config: ConfigFileRaw = match cfg_path {
         Some(path) => {
             let config_string = fs::read_to_string(path)?;
@@ -456,5 +456,18 @@ mod tests {
 
         assert!(regex_with_error_logging(valid_pattern).is_some());
         assert!(regex_with_error_logging(invalid_pattern).is_none());
+    }
+
+    #[test]
+    fn test_config_new_and_read_again_then_compare_format() {
+        let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
+        let config = Config::new(cfg_path.clone());
+        assert_eq!(config.is_ok(), true);
+        let config = config.unwrap().clone();
+        assert_eq!(config.cfg_path.clone(), Some(cfg_path.clone()));
+        let format = config.config.format.clone();
+        let config2 = read_config_file(Some(cfg_path.clone())).unwrap();
+        let format2 = config2.format.clone();
+        assert_eq!(format, format2);
     }
 }
