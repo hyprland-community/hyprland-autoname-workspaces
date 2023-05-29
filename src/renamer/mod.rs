@@ -34,6 +34,7 @@ pub struct AppClient {
     title: String,
     is_active: bool,
     is_fullscreen: bool,
+    is_dedup_inactive_fullscreen: bool,
     matched_rule: IconConfig,
 }
 
@@ -41,12 +42,17 @@ impl PartialEq for AppClient {
     fn eq(&self, other: &Self) -> bool {
         self.matched_rule == other.matched_rule
             && self.is_active == other.is_active
-            && self.is_fullscreen == other.is_fullscreen
+            && (self.is_dedup_inactive_fullscreen || self.is_fullscreen == other.is_fullscreen)
     }
 }
 
 impl AppClient {
-    fn new(client: Client, is_active: bool, matched_rule: IconConfig) -> Self {
+    fn new(
+        client: Client,
+        is_active: bool,
+        is_dedup_inactive_fullscreen: bool,
+        matched_rule: IconConfig,
+    ) -> Self {
         AppClient {
             initial_class: client.initial_class,
             class: client.class,
@@ -54,6 +60,7 @@ impl AppClient {
             title: client.title,
             is_active,
             is_fullscreen: client.fullscreen,
+            is_dedup_inactive_fullscreen,
             matched_rule,
         }
     }
@@ -288,6 +295,7 @@ mod tests {
             is_fullscreen: false,
             initial_title: "zsh".to_string(),
             matched_rule: IconConfig::Class("(kitty|alacritty)".to_string(), "term".to_string()),
+            is_dedup_inactive_fullscreen: false,
         };
 
         let client2 = AppClient {
@@ -298,6 +306,7 @@ mod tests {
             is_active: false,
             is_fullscreen: false,
             matched_rule: IconConfig::Class("(kitty|alacritty)".to_string(), "term".to_string()),
+            is_dedup_inactive_fullscreen: false,
         };
 
         let client3 = AppClient {
@@ -308,6 +317,7 @@ mod tests {
             is_active: true,
             is_fullscreen: false,
             matched_rule: IconConfig::Class("(kitty|alacritty)".to_string(), "term".to_string()),
+            is_dedup_inactive_fullscreen: false,
         };
 
         let client4 = AppClient {
@@ -318,6 +328,7 @@ mod tests {
             is_active: false,
             is_fullscreen: true,
             matched_rule: IconConfig::Class("(kitty|alacritty)".to_string(), "term".to_string()),
+            is_dedup_inactive_fullscreen: false,
         };
 
         let client5 = AppClient {
@@ -328,6 +339,7 @@ mod tests {
             is_active: false,
             is_fullscreen: true,
             matched_rule: IconConfig::Class("(kitty|alacritty)".to_string(), "term".to_string()),
+            is_dedup_inactive_fullscreen: false,
         };
 
         let client6 = AppClient {
@@ -338,6 +350,7 @@ mod tests {
             is_active: false,
             is_fullscreen: false,
             matched_rule: IconConfig::Class("alacritty".to_string(), "term".to_string()),
+            is_dedup_inactive_fullscreen: false,
         };
 
         assert_eq!(client1 == client2, true);
@@ -391,6 +404,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -407,6 +421,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         initial_class: "alacritty".to_string(),
@@ -423,6 +438,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "alacritty".to_string(),
@@ -439,6 +455,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         initial_class: "alacritty".to_string(),
@@ -455,6 +472,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                 ],
             }],
@@ -609,6 +627,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -625,6 +644,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "alacritty".to_string(),
@@ -641,6 +661,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "alacritty".to_string(),
@@ -657,6 +678,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         initial_class: "alacritty".to_string(),
@@ -673,6 +695,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                 ],
             }],
@@ -733,6 +756,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -749,6 +773,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -765,6 +790,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         initial_class: "kitty".to_string(),
@@ -781,6 +807,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -797,6 +824,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                 ],
             }],
@@ -850,6 +878,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         initial_class: "kitty".to_string(),
@@ -866,6 +895,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -882,6 +912,7 @@ mod tests {
                             true,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -898,6 +929,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -914,6 +946,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                 ],
             }],
@@ -968,6 +1001,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -984,6 +1018,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1000,6 +1035,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1016,6 +1052,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         initial_class: "kitty".to_string(),
@@ -1032,6 +1069,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                 ],
             }],
@@ -1086,6 +1124,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1102,6 +1141,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1118,6 +1158,7 @@ mod tests {
                             true,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1134,6 +1175,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1150,6 +1192,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                 ],
             }],
@@ -1195,6 +1238,7 @@ mod tests {
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: IconConfig::Class("kitty".to_string(), "term".to_string()),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         initial_class: "kitty".to_string(),
@@ -1204,6 +1248,7 @@ mod tests {
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: IconConfig::Class("kitty".to_string(), "term".to_string()),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         initial_class: "kitty".to_string(),
@@ -1213,6 +1258,7 @@ mod tests {
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: IconConfig::Class("kitty".to_string(), "term".to_string()),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         initial_class: "kitty".to_string(),
@@ -1222,6 +1268,7 @@ mod tests {
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: IconConfig::Class("kitty".to_string(), "term".to_string()),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         initial_class: "kitty".to_string(),
@@ -1231,6 +1278,7 @@ mod tests {
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: IconConfig::Class("kitty".to_string(), "term".to_string()),
+                        is_dedup_inactive_fullscreen: false,
                     },
                 ],
             }],
@@ -1286,6 +1334,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1302,6 +1351,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         initial_class: "kitty".to_string(),
@@ -1318,6 +1368,7 @@ mod tests {
                             true,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         initial_class: "kitty".to_string(),
@@ -1334,6 +1385,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1350,6 +1402,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                 ],
             }],
@@ -1405,6 +1458,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1421,6 +1475,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1437,6 +1492,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1453,6 +1509,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1469,6 +1526,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                 ],
             }],
@@ -1527,6 +1585,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1543,6 +1602,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         initial_class: "kitty".to_string(),
@@ -1559,6 +1619,7 @@ mod tests {
                             true,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1575,6 +1636,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         initial_class: "kitty".to_string(),
@@ -1591,6 +1653,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                 ],
             }],
@@ -1656,6 +1719,7 @@ mod tests {
                             true,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "alacritty".to_string(),
@@ -1672,6 +1736,7 @@ mod tests {
                             true,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "qute".to_string(),
@@ -1688,6 +1753,7 @@ mod tests {
                             true,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                 ],
             }],
@@ -1787,6 +1853,7 @@ mod tests {
                         true,
                         &config,
                     ),
+                    is_dedup_inactive_fullscreen: false,
                 }],
             }],
             &config,
@@ -1827,6 +1894,7 @@ mod tests {
                         true,
                         &config,
                     ),
+                    is_dedup_inactive_fullscreen: false,
                 }],
             }],
             &config,

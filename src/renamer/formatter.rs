@@ -45,7 +45,8 @@ impl Renamer {
         let config_format = &config.format;
         let client = client.clone();
 
-        let is_dedup = config.format.dedup && (counter > 1);
+        let is_dedup = config_format.dedup && (counter > 1);
+        let is_dedup_inactive_fullscreen = config_format.dedup_inactive_fullscreen;
 
         let counter_sup = to_superscript(counter);
         let prev_counter = (counter - 1).to_string();
@@ -91,7 +92,10 @@ impl Renamer {
             println!("client: {:?}\nformatter vars => {:#?}", client, vars);
         }
 
-        match (client.is_fullscreen, is_dedup) {
+        let is_grouped =
+            client.is_fullscreen && (client.is_active || !is_dedup_inactive_fullscreen);
+
+        match (is_grouped, is_dedup) {
             (true, true) => formatter(fmt_client_dup_fullscreen, &vars),
             (false, true) => formatter(fmt_client_dup, &vars),
             (true, false) => formatter(fmt_client_fullscreen, &vars),
