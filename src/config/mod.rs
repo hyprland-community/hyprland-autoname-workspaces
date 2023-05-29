@@ -62,10 +62,10 @@ impl Default for ConfigFormatRaw {
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct ConfigFormatRaw {
-    #[serde(default, alias = "dedup")]
-    pub dedup_active: bool,
     #[serde(default)]
-    pub dedup_inactive: bool,
+    pub dedup: bool,
+    #[serde(default)]
+    pub dedup_inactive_fullscreen: bool,
     #[serde(default = "default_delim_formatter")]
     pub delim: String,
     #[serde(default = "default_workspace_formatter")]
@@ -164,8 +164,8 @@ pub fn create_default_config(cfg_path: &PathBuf) -> Result<&'static str, Box<dyn
 # [format]
 # Deduplicate icons if enable.
 # A superscripted counter will be added.
-# dedup_active = false
-# dedup_inactive = false # dedup more
+# dedup = false
+# dedup_inactive_fullscreen = false # dedup more
 # window delimiter
 # delim = " "
 

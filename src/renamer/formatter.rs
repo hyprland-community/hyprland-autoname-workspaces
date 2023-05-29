@@ -26,7 +26,7 @@ impl Renamer {
             .iter()
             .map(|workspace| {
                 let mut counted =
-                    generate_counted_clients(workspace.clients.clone(), config.format.dedup_active);
+                    generate_counted_clients(workspace.clients.clone(), config.format.dedup);
 
                 let workspace_output = counted
                     .iter_mut()
@@ -45,8 +45,8 @@ impl Renamer {
         let config_format = &config.format;
         let client = client.clone();
 
-        let is_dedup_active = config_format.dedup_active && (counter > 1);
-        let is_dedup_inactive = config_format.dedup_inactive;
+        let is_dedup_active = config_format.dedup && (counter > 1);
+        let is_dedup_inactive = config_format.dedup_inactive_fullscreen;
 
         let counter_sup = to_superscript(counter);
         let prev_counter = (counter - 1).to_string();

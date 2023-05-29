@@ -32,7 +32,7 @@ pub struct AppClient {
     title: String,
     is_active: bool,
     is_fullscreen: bool,
-    is_dedup_inactive: bool,
+    is_dedup_inactive_fullscreen: bool,
     matched_rule: IconConfig,
 }
 
@@ -40,7 +40,7 @@ impl PartialEq for AppClient {
     fn eq(&self, other: &Self) -> bool {
         self.matched_rule == other.matched_rule
             && self.is_active == other.is_active
-            && (self.is_dedup_inactive || self.is_fullscreen == other.is_fullscreen)
+            && (self.is_dedup_inactive_fullscreen || self.is_fullscreen == other.is_fullscreen)
     }
 }
 
@@ -51,7 +51,7 @@ impl AppClient {
             title: client.title,
             is_active,
             is_fullscreen: client.fullscreen,
-            is_dedup_inactive: more_dedup,
+            is_dedup_inactive_fullscreen: more_dedup,
             matched_rule,
         }
     }
@@ -116,7 +116,7 @@ impl Renamer {
                 .push(AppClient::new(
                     client.clone(),
                     is_active,
-                    config.format.dedup_inactive,
+                    config.format.dedup_inactive_fullscreen,
                     self.parse_icon(client.class, client.title, is_active, config),
                 ));
         }
@@ -278,7 +278,7 @@ mod tests {
             is_active: false,
             is_fullscreen: false,
             matched_rule: IconConfig::Class("(kitty|alacritty)".to_string(), "term".to_string()),
-            is_dedup_inactive: false,
+            is_dedup_inactive_fullscreen: false,
         };
 
         let client2 = AppClient {
@@ -287,7 +287,7 @@ mod tests {
             is_active: false,
             is_fullscreen: false,
             matched_rule: IconConfig::Class("(kitty|alacritty)".to_string(), "term".to_string()),
-            is_dedup_inactive: false,
+            is_dedup_inactive_fullscreen: false,
         };
 
         let client3 = AppClient {
@@ -296,7 +296,7 @@ mod tests {
             is_active: true,
             is_fullscreen: false,
             matched_rule: IconConfig::Class("(kitty|alacritty)".to_string(), "term".to_string()),
-            is_dedup_inactive: false,
+            is_dedup_inactive_fullscreen: false,
         };
 
         let client4 = AppClient {
@@ -305,7 +305,7 @@ mod tests {
             is_active: false,
             is_fullscreen: true,
             matched_rule: IconConfig::Class("(kitty|alacritty)".to_string(), "term".to_string()),
-            is_dedup_inactive: false,
+            is_dedup_inactive_fullscreen: false,
         };
 
         let client5 = AppClient {
@@ -314,7 +314,7 @@ mod tests {
             is_active: false,
             is_fullscreen: true,
             matched_rule: IconConfig::Class("(kitty|alacritty)".to_string(), "term".to_string()),
-            is_dedup_inactive: false,
+            is_dedup_inactive_fullscreen: false,
         };
 
         let client6 = AppClient {
@@ -323,7 +323,7 @@ mod tests {
             is_active: false,
             is_fullscreen: false,
             matched_rule: IconConfig::Class("alacritty".to_string(), "term".to_string()),
-            is_dedup_inactive: false,
+            is_dedup_inactive_fullscreen: false,
         };
 
         assert_eq!(client1 == client2, true);
@@ -340,7 +340,7 @@ mod tests {
             .icons
             .push((Regex::new("(kitty|alacritty)").unwrap(), "term".to_string()));
 
-        config.format.dedup_active = true;
+        config.format.dedup = true;
         config.format.client_dup = "{icon}{counter}".to_string();
 
         let renamer = Renamer::new(
@@ -373,7 +373,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -386,7 +386,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "alacritty".to_string(),
@@ -399,7 +399,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "alacritty".to_string(),
@@ -412,7 +412,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "alacritty".to_string(),
@@ -425,7 +425,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                 ],
             }],
@@ -446,7 +446,7 @@ mod tests {
             .icons
             .push((Regex::new("alacritty").unwrap(), "term".to_string()));
 
-        config.format.dedup_active = true;
+        config.format.dedup = true;
         config.format.client_dup = "{icon}{counter}".to_string();
 
         let renamer = Renamer::new(
@@ -479,7 +479,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -492,7 +492,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "alacritty".to_string(),
@@ -505,7 +505,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "alacritty".to_string(),
@@ -518,7 +518,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "alacritty".to_string(),
@@ -531,7 +531,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                 ],
             }],
@@ -588,7 +588,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -601,7 +601,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -614,7 +614,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -627,7 +627,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -640,7 +640,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                 ],
             }],
@@ -690,7 +690,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -703,7 +703,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -716,7 +716,7 @@ mod tests {
                             true,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -729,7 +729,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -742,7 +742,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                 ],
             }],
@@ -793,7 +793,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -806,7 +806,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -819,7 +819,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -832,7 +832,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -845,7 +845,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                 ],
             }],
@@ -896,7 +896,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -909,7 +909,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -922,7 +922,7 @@ mod tests {
                             true,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -935,7 +935,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -948,7 +948,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                 ],
             }],
@@ -964,7 +964,7 @@ mod tests {
         config
             .icons
             .push((Regex::new("kitty").unwrap(), "term".to_string()));
-        config.format.dedup_active = true;
+        config.format.dedup = true;
         config.format.client_dup = "{icon}{counter}".to_string();
 
         let renamer = Renamer::new(
@@ -992,7 +992,7 @@ mod tests {
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: IconConfig::Class("kitty".to_string(), "term".to_string()),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1000,7 +1000,7 @@ mod tests {
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: IconConfig::Class("kitty".to_string(), "term".to_string()),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1008,7 +1008,7 @@ mod tests {
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: IconConfig::Class("kitty".to_string(), "term".to_string()),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1016,7 +1016,7 @@ mod tests {
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: IconConfig::Class("kitty".to_string(), "term".to_string()),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1024,7 +1024,7 @@ mod tests {
                         is_active: false,
                         is_fullscreen: false,
                         matched_rule: IconConfig::Class("kitty".to_string(), "term".to_string()),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                 ],
             }],
@@ -1041,7 +1041,7 @@ mod tests {
             .icons
             .push((Regex::new("kitty").unwrap(), "term".to_string()));
 
-        config.format.dedup_active = true;
+        config.format.dedup = true;
         config.format.client_dup = "{icon}{counter}".to_string();
         config.format.client_active = "*{icon}*".to_string();
         config.format.client_dup_active = "{icon}{counter_unfocused}".to_string();
@@ -1076,7 +1076,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1089,7 +1089,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1102,7 +1102,7 @@ mod tests {
                             true,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1115,7 +1115,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1128,7 +1128,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                 ],
             }],
@@ -1145,7 +1145,7 @@ mod tests {
             .icons
             .push((Regex::new("kitty").unwrap(), "term".to_string()));
 
-        config.format.dedup_active = true;
+        config.format.dedup = true;
         config.format.client_dup = "{icon}{counter}".to_string();
         config.format.client_dup_fullscreen =
             "[{icon}]{delim}{icon}{counter_unfocused_sup}".to_string();
@@ -1180,7 +1180,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1193,7 +1193,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1206,7 +1206,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1219,7 +1219,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1232,7 +1232,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                 ],
             }],
@@ -1248,7 +1248,7 @@ mod tests {
         config
             .icons
             .push((Regex::new("kitty").unwrap(), "term".to_string()));
-        config.format.dedup_active = true;
+        config.format.dedup = true;
         config.format.client = "{icon}".to_string();
         config.format.client_active = "*{icon}*".to_string();
         config.format.client_fullscreen = "[{icon}]".to_string();
@@ -1287,7 +1287,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1300,7 +1300,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1313,7 +1313,7 @@ mod tests {
                             true,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1326,7 +1326,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "kitty".to_string(),
@@ -1339,7 +1339,7 @@ mod tests {
                             false,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                 ],
             }],
@@ -1401,7 +1401,7 @@ mod tests {
                             true,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "alacritty".to_string(),
@@ -1414,7 +1414,7 @@ mod tests {
                             true,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         class: "qute".to_string(),
@@ -1427,7 +1427,7 @@ mod tests {
                             true,
                             &config,
                         ),
-                        is_dedup_inactive: false,
+                        is_dedup_inactive_fullscreen: false,
                     },
                 ],
             }],
@@ -1475,7 +1475,7 @@ mod tests {
                         true,
                         &config,
                     ),
-                    is_dedup_inactive: false,
+                    is_dedup_inactive_fullscreen: false,
                 }],
             }],
             &config,
@@ -1512,13 +1512,204 @@ mod tests {
                         true,
                         &config,
                     ),
-                    is_dedup_inactive: false,
+                    is_dedup_inactive_fullscreen: false,
                 }],
             }],
             &config,
         );
 
         let expected = [(1, "\u{f059} kitty".to_string())].into_iter().collect();
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_dedup_inactive_fullscreen() {
+        let mut config = crate::config::read_config_file(None).unwrap();
+
+        config
+            .icons
+            .push((Regex::new("kitty").unwrap(), "term".to_string()));
+
+        config.format.client_dup = "{icon}{counter}".to_string();
+        config.format.dedup = true;
+        config.format.dedup_inactive_fullscreen = true;
+        config.format.client = "{icon}".to_string();
+        config.format.client_active = "*{icon}*".to_string();
+        config.format.client_fullscreen = "[{icon}]".to_string();
+        config.format.client_dup_fullscreen =
+            "[{icon}]{delim}{icon}{counter_unfocused}".to_string();
+        config.format.client_dup_active = "*{icon}*{delim}{icon}{counter_unfocused}".to_string();
+
+        let mut renamer = Renamer::new(
+            Config {
+                cfg_path: None,
+                config: config.clone(),
+            },
+            Args {
+                verbose: false,
+                debug: false,
+                config: None,
+                dump: false,
+            },
+        );
+
+        let expected = [(1, "*term*".to_string()), (2, "term3".to_string())]
+            .into_iter()
+            .collect();
+
+        let actual = renamer.generate_workspaces_string(
+            vec![
+                AppWorkspace {
+                    id: 1,
+                    clients: vec![AppClient {
+                        class: "kitty".to_string(),
+                        title: "~".to_string(),
+                        is_active: true,
+                        is_fullscreen: false,
+                        matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "~".to_string(),
+                            true,
+                            &config,
+                        ),
+                        is_dedup_inactive_fullscreen: false,
+                    }],
+                },
+                AppWorkspace {
+                    id: 2,
+                    clients: vec![
+                        AppClient {
+                            class: "kitty".to_string(),
+                            title: "~".to_string(),
+                            is_active: false,
+                            is_fullscreen: true,
+                            matched_rule: renamer.parse_icon(
+                                "kitty".to_string(),
+                                "~".to_string(),
+                                false,
+                                &config,
+                            ),
+                            is_dedup_inactive_fullscreen: false,
+                        },
+                        AppClient {
+                            class: "kitty".to_string(),
+                            title: "~".to_string(),
+                            is_active: false,
+                            is_fullscreen: true,
+                            matched_rule: renamer.parse_icon(
+                                "kitty".to_string(),
+                                "~".to_string(),
+                                false,
+                                &config,
+                            ),
+                            is_dedup_inactive_fullscreen: false,
+                        },
+                        AppClient {
+                            class: "kitty".to_string(),
+                            title: "~".to_string(),
+                            is_active: false,
+                            is_fullscreen: true,
+                            matched_rule: renamer.parse_icon(
+                                "kitty".to_string(),
+                                "~".to_string(),
+                                true,
+                                &config,
+                            ),
+                            is_dedup_inactive_fullscreen: false,
+                        },
+                    ],
+                },
+            ],
+            &config,
+        );
+
+        assert_eq!(actual, expected);
+
+        config.format.dedup_inactive_fullscreen = false;
+
+        renamer = Renamer::new(
+            Config {
+                cfg_path: None,
+                config: config.clone(),
+            },
+            Args {
+                verbose: false,
+                debug: false,
+                config: None,
+                dump: false,
+            },
+        );
+
+        let expected = [(1, "*term*".to_string()), (2, "[term] term2".to_string())]
+            .into_iter()
+            .collect();
+
+        let actual = renamer.generate_workspaces_string(
+            vec![
+                AppWorkspace {
+                    id: 1,
+                    clients: vec![AppClient {
+                        class: "kitty".to_string(),
+                        title: "~".to_string(),
+                        is_active: true,
+                        is_fullscreen: false,
+                        matched_rule: renamer.parse_icon(
+                            "kitty".to_string(),
+                            "~".to_string(),
+                            true,
+                            &config,
+                        ),
+                        is_dedup_inactive_fullscreen: false,
+                    }],
+                },
+                AppWorkspace {
+                    id: 2,
+                    clients: vec![
+                        AppClient {
+                            class: "kitty".to_string(),
+                            title: "~".to_string(),
+                            is_active: false,
+                            is_fullscreen: true,
+                            matched_rule: renamer.parse_icon(
+                                "kitty".to_string(),
+                                "~".to_string(),
+                                false,
+                                &config,
+                            ),
+                            is_dedup_inactive_fullscreen: false,
+                        },
+                        AppClient {
+                            class: "kitty".to_string(),
+                            title: "~".to_string(),
+                            is_active: false,
+                            is_fullscreen: true,
+                            matched_rule: renamer.parse_icon(
+                                "kitty".to_string(),
+                                "~".to_string(),
+                                false,
+                                &config,
+                            ),
+                            is_dedup_inactive_fullscreen: false,
+                        },
+                        AppClient {
+                            class: "kitty".to_string(),
+                            title: "~".to_string(),
+                            is_active: false,
+                            is_fullscreen: true,
+                            matched_rule: renamer.parse_icon(
+                                "kitty".to_string(),
+                                "~".to_string(),
+                                true,
+                                &config,
+                            ),
+                            is_dedup_inactive_fullscreen: false,
+                        },
+                    ],
+                },
+            ],
+            &config,
+        );
 
         assert_eq!(actual, expected);
     }
