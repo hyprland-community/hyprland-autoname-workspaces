@@ -13,7 +13,6 @@ build-dev:
 
 .PHONY: build
 build:
-	cargo update
 	cargo build --locked --release
 
 .PHONY: test
