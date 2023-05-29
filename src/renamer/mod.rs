@@ -45,13 +45,18 @@ impl PartialEq for AppClient {
 }
 
 impl AppClient {
-    fn new(client: Client, is_active: bool, more_dedup: bool, matched_rule: IconConfig) -> Self {
+    fn new(
+        client: Client,
+        is_active: bool,
+        is_dedup_inactive_fullscreen: bool,
+        matched_rule: IconConfig,
+    ) -> Self {
         AppClient {
             class: client.class,
             title: client.title,
             is_active,
             is_fullscreen: client.fullscreen,
-            is_dedup_inactive_fullscreen: more_dedup,
+            is_dedup_inactive_fullscreen,
             matched_rule,
         }
     }
