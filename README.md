@@ -38,6 +38,8 @@ $ hyprland-autoname-workspaces
 
 ## Configuration
 
+_For all parameters, check the `config.toml.example` in this repository._
+
 The config file can be specified using the `-c <CONFIG>` option, otherwise it defaults to `~/.config/hyprland-autoname-workspaces/config.toml`. If you specify a path that doesn't exist, a default configuration file will be generated.
 
 _You can use regex everywhere, and its case sensitive by default_
@@ -49,7 +51,7 @@ In icons value, you can use the placeholders `{class}` and `{title}`.
 Example:
 
 ```
-[icons]
+[class]
 DEFAULT = "{class}: {title}"
 ...
 ```
@@ -69,7 +71,9 @@ Example:
 "[Ss]team" = "^$" # will match and exclude all Steam class with empty title (some popups)
 ```
 
-- You can match on title with `[title.classname]` and `[title_active.class]` with `"a word in the title" = "icons"`.
+- You can match on title with `[title_in_class.classname]` and `[title_in_class_active.class]` with `"a word in the title" = "icons"`.
+
+_Hint_: There is also `title_in_initial_class`, `initial_title_in_class`, `initial_title_in_initial_class` and so on.
 
 Example:
 
@@ -94,6 +98,7 @@ google = "<span color='blue'>{icon}</span>"
 
 ```
 dedup = true
+dedup_inactive_fullscreen = true
 ...
 [title."(xterm|(?i)kitty|alacritty)"]
 "(?i)neomutt" = "mail"
@@ -120,6 +125,7 @@ clients:
 ```
 [format]
 dedup = true
+dedup_inactive_fullscreen = true
 delim = " " # NARROW NO-BREAK SPACE
 workspace = "<span color='red'>{id}:</span>{delim}{clients}"
 workspace_empty = "<span color='red'>{id}</span>"
