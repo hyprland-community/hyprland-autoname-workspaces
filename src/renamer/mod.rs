@@ -115,6 +115,8 @@ impl Renamer {
             .map(|&i| (i, Vec::new()))
             .collect::<HashMap<i32, Vec<AppClient>>>();
 
+        let is_dedup_inactive_fullscreen = config.format.dedup_inactive_fullscreen;
+
         for client in clients {
             let workspace_id = client.workspace.id;
             self.known_workspaces.lock()?.insert(workspace_id);
@@ -125,6 +127,7 @@ impl Renamer {
                 .push(AppClient::new(
                     client.clone(),
                     is_active,
+                    is_dedup_inactive_fullscreen,
                     self.parse_icon(
                         client.initial_class,
                         client.class,
@@ -539,6 +542,7 @@ mod tests {
                             false,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         initial_class: "alacritty".to_string(),
@@ -555,6 +559,7 @@ mod tests {
                             true,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
                         initial_class: "kitty".to_string(),
@@ -571,6 +576,7 @@ mod tests {
                             true,
                             &config,
                         ),
+                        is_dedup_inactive_fullscreen: false,
                     },
                 ],
             }],
@@ -1804,6 +1810,7 @@ mod tests {
                         false,
                         &config,
                     ),
+                    is_dedup_inactive_fullscreen: false,
                 }],
             }],
             &config,
@@ -1948,6 +1955,7 @@ mod tests {
                     initial_title: "zsh".to_string(),
                     is_active: false,
                     is_fullscreen: false,
+                    is_dedup_inactive_fullscreen: false,
                     matched_rule: renamer.parse_icon(
                         "kitty".to_string(),
                         "kitty".to_string(),
@@ -1999,6 +2007,7 @@ mod tests {
                         false,
                         &config,
                     ),
+                    is_dedup_inactive_fullscreen: false,
                 }],
             }],
             &config,
@@ -2044,6 +2053,7 @@ mod tests {
                         false,
                         &config,
                     ),
+                    is_dedup_inactive_fullscreen: false,
                 }],
             }],
             &config,
