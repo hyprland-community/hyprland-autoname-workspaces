@@ -14,18 +14,18 @@ This app automatically rename workspaces with icons of started applications - te
 
 You have to set the config file with your prefered rules based on `class` and `title`. Regex are supported.
 
-## FAQ, tips and tricks
+## FAQ, tips and tricks ❓
 
 https://github.com/hyprland-community/hyprland-autoname-workspaces/wiki/FAQ
 
 ## Install
 
-### AUR
+### AUR 📦
 
 Available as AUR package under the program name `hyprland-autoname-workspaces-git`.
 You can then use the service `systemctl --user enable --now hyprland-autoname-workspaces.service`.
 
-### Cargo
+### Cargo 📦
 
 ```bash
 $ cargo install --locked hyprland-autoname-workspaces
