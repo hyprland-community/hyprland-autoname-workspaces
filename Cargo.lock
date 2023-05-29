@@ -329,7 +329,7 @@ dependencies = [
 [[package]]
 name = "hyprland"
 version = "0.3.3"
-source = "git+https://github.com/cyrinux/hyprland-rs.git?branch=feat/add-initial-class-title#ac39ff791f4f5d2b9bd1f41d344a0393b2a5e16c"
+source = "git+https://github.com/hyprland-community/hyprland-rs.git#ac79017e2e5d6cabb8697769fe266de6d01a23bf"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -368,7 +368,7 @@ dependencies = [
 [[package]]
 name = "hyprland-macros"
 version = "0.3.3"
-source = "git+https://github.com/cyrinux/hyprland-rs.git?branch=feat/add-initial-class-title#ac39ff791f4f5d2b9bd1f41d344a0393b2a5e16c"
+source = "git+https://github.com/hyprland-community/hyprland-rs.git#ac79017e2e5d6cabb8697769fe266de6d01a23bf"
 dependencies = [
  "quote",
  "syn 2.0.18",
