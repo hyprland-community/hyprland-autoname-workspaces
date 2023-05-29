@@ -102,7 +102,7 @@ pub struct ConfigFileRaw {
     pub title_in_class_active: HashMap<String, HashMap<String, String>>,
     #[serde(default)]
     pub title_in_initial_class: HashMap<String, HashMap<String, String>>,
-    #[serde(default, alias = "title_active_icons")]
+    #[serde(default)]
     pub title_in_initial_class_active: HashMap<String, HashMap<String, String>>,
     #[serde(default)]
     pub initial_title_in_class: HashMap<String, HashMap<String, String>>,
@@ -110,7 +110,7 @@ pub struct ConfigFileRaw {
     pub initial_title_in_class_active: HashMap<String, HashMap<String, String>>,
     #[serde(default)]
     pub initial_title_in_initial_class: HashMap<String, HashMap<String, String>>,
-    #[serde(default, alias = "title_active_icons")]
+    #[serde(default)]
     pub initial_title_in_initial_class_active: HashMap<String, HashMap<String, String>>,
     #[serde(default)]
     pub exclude: HashMap<String, String>,

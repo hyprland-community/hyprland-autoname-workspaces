@@ -63,6 +63,27 @@ impl IconConfig {
     }
 }
 
+macro_rules! find_icon_config {
+    ($list:expr, $class:expr, $title:expr, $is_active:expr, $enum_variant_active:ident, $enum_variant:ident) => {
+        find_title_in_class_helper($list, $class, $title).map(|(rule, icon)| {
+            if $is_active {
+                IconConfig::$enum_variant_active(rule, icon)
+            } else {
+                IconConfig::$enum_variant(rule, icon)
+            }
+        })
+    };
+    ($list:expr, $class:expr, $is_active:expr, $enum_variant_active:ident, $enum_variant:ident) => {
+        find_class_helper($list, $class).map(|(rule, icon)| {
+            if $is_active {
+                IconConfig::$enum_variant_active(rule, icon)
+            } else {
+                IconConfig::$enum_variant(rule, icon)
+            }
+        })
+    };
+}
+
 impl Renamer {
     fn find_icon(
         &self,
@@ -100,132 +121,54 @@ impl Renamer {
             )
         };
 
-        list_initial_title_in_initial_class
-            .iter()
-            .find(|(re_class, _)| re_class.is_match(initial_class))
-            .and_then(|(_, title_icon)| {
-                title_icon
-                    .iter()
-                    .find(|(rule, _)| rule.is_match(initial_title))
-                    .map(|(rule, icon)| {
-                        if is_active {
-                            IconConfig::ActiveInitialTitleInInitialClass(
-                                rule.to_string(),
-                                icon.to_string(),
-                            )
-                        } else {
-                            IconConfig::InitialTitleInInitialClass(
-                                rule.to_string(),
-                                icon.to_string(),
-                            )
-                        }
-                    })
-            })
+        find_icon_config!(
+            list_initial_title_in_initial_class,
+            initial_class,
+            initial_title,
+            is_active,
+            ActiveInitialTitleInInitialClass,
+            InitialTitleInInitialClass
+        )
+        .or_else(|| {
+            find_icon_config!(
+                list_initial_title_in_class,
+                class,
+                initial_title,
+                is_active,
+                ActiveInitialTitleInClass,
+                InitialTitleInClass
+            )
             .or_else(|| {
-                list_initial_title_in_class
-                    .iter()
-                    .find(|(re_class, _)| re_class.is_match(class))
-                    .and_then(|(_, title_icon)| {
-                        title_icon
-                            .iter()
-                            .find(|(rule, _)| rule.is_match(initial_title))
-                            .map(|(rule, icon)| {
-                                if is_active {
-                                    IconConfig::ActiveInitialTitleInClass(
-                                        rule.to_string(),
-                                        icon.to_string(),
-                                    )
-                                } else {
-                                    IconConfig::InitialTitleInClass(
-                                        rule.to_string(),
-                                        icon.to_string(),
-                                    )
-                                }
-                            })
-                    })
+                find_icon_config!(
+                    list_title_in_initial_class,
+                    initial_class,
+                    title,
+                    is_active,
+                    ActiveTitleInInitialClass,
+                    TitleInInitialClass
+                )
+                .or_else(|| {
+                    find_icon_config!(
+                        list_title_in_class,
+                        class,
+                        title,
+                        is_active,
+                        ActiveTitleInClass,
+                        TitleInClass
+                    )
                     .or_else(|| {
-                        list_title_in_initial_class
-                            .iter()
-                            .find(|(re_class, _)| re_class.is_match(initial_class))
-                            .and_then(|(_, title_icon)| {
-                                title_icon
-                                    .iter()
-                                    .find(|(rule, _)| rule.is_match(title))
-                                    .map(|(rule, icon)| {
-                                        if is_active {
-                                            IconConfig::ActiveTitleInInitialClass(
-                                                rule.to_string(),
-                                                icon.to_string(),
-                                            )
-                                        } else {
-                                            IconConfig::TitleInInitialClass(
-                                                rule.to_string(),
-                                                icon.to_string(),
-                                            )
-                                        }
-                                    })
-                            })
-                            .or_else(|| {
-                                list_title_in_class
-                                    .iter()
-                                    .find(|(re_class, _)| re_class.is_match(class))
-                                    .and_then(|(_, title_icon)| {
-                                        title_icon
-                                            .iter()
-                                            .find(|(rule, _)| rule.is_match(title))
-                                            .map(|(rule, icon)| {
-                                                if is_active {
-                                                    IconConfig::ActiveTitleInClass(
-                                                        rule.to_string(),
-                                                        icon.to_string(),
-                                                    )
-                                                } else {
-                                                    IconConfig::TitleInClass(
-                                                        rule.to_string(),
-                                                        icon.to_string(),
-                                                    )
-                                                }
-                                            })
-                                    })
-                                    .or_else(|| {
-                                        list_initial_class
-                                            .iter()
-                                            .find(|(rule, _)| rule.is_match(initial_class))
-                                            .map(|(rule, icon)| {
-                                                if is_active {
-                                                    IconConfig::ActiveInitialClass(
-                                                        rule.to_string(),
-                                                        icon.to_string(),
-                                                    )
-                                                } else {
-                                                    IconConfig::InitialClass(
-                                                        rule.to_string(),
-                                                        icon.to_string(),
-                                                    )
-                                                }
-                                            })
-                                    })
-                                    .or_else(|| {
-                                        list_class
-                                            .iter()
-                                            .find(|(rule, _)| rule.is_match(class))
-                                            .map(|(rule, icon)| {
-                                                if is_active {
-                                                    IconConfig::ActiveClass(
-                                                        rule.to_string(),
-                                                        icon.to_string(),
-                                                    )
-                                                } else {
-                                                    IconConfig::Class(
-                                                        rule.to_string(),
-                                                        icon.to_string(),
-                                                    )
-                                                }
-                                            })
-                                    })
-                            })
+                        find_icon_config!(
+                            list_initial_class,
+                            class,
+                            is_active,
+                            ActiveInitialClass,
+                            InitialClass
+                        )
                     })
+                    .or_else(|| find_icon_config!(list_class, class, is_active, ActiveClass, Class))
+                })
             })
+        })
     }
 
     pub fn parse_icon(
@@ -273,4 +216,25 @@ impl Renamer {
             })
         }
     }
+}
+
+fn find_title_in_class_helper(
+    list: &[(regex::Regex, Vec<(regex::Regex, Icon)>)],
+    class: &str,
+    title: &str,
+) -> Option<(Rule, Icon)> {
+    list.iter()
+        .find(|(re_class, _)| re_class.is_match(class))
+        .and_then(|(_, title_icon)| {
+            title_icon
+                .iter()
+                .find(|(rule, _)| rule.is_match(title))
+                .map(|(rule, icon)| (rule.to_string(), icon.to_string()))
+        })
+}
+
+fn find_class_helper(list: &[(regex::Regex, Icon)], class: &str) -> Option<(Rule, Icon)> {
+    list.iter()
+        .find(|(rule, _)| rule.is_match(class))
+        .map(|(rule, icon)| (rule.to_string(), icon.to_string()))
 }
