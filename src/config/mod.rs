@@ -88,14 +88,30 @@ pub struct ConfigFormatRaw {
 
 #[derive(Deserialize, Default)]
 pub struct ConfigFileRaw {
-    #[serde(default = "default_icons")]
-    pub icons: HashMap<String, String>,
-    #[serde(default, alias = "active_icons")]
-    pub icons_active: HashMap<String, String>,
-    #[serde(default, alias = "title_icons", alias = "icons_title")]
-    pub title: HashMap<String, HashMap<String, String>>,
+    #[serde(default = "default_icons", alias = "icons")]
+    pub class: HashMap<String, String>,
+    #[serde(default, alias = "active_icons", alias = "icons_active")]
+    pub class_active: HashMap<String, String>,
+    #[serde(default)]
+    pub initial_class: HashMap<String, String>,
+    #[serde(default)]
+    pub initial_class_active: HashMap<String, String>,
+    #[serde(default, alias = "title_icons")]
+    pub title_in_class: HashMap<String, HashMap<String, String>>,
     #[serde(default, alias = "title_active_icons")]
-    pub title_active: HashMap<String, HashMap<String, String>>,
+    pub title_in_class_active: HashMap<String, HashMap<String, String>>,
+    #[serde(default)]
+    pub title_in_initial_class: HashMap<String, HashMap<String, String>>,
+    #[serde(default)]
+    pub title_in_initial_class_active: HashMap<String, HashMap<String, String>>,
+    #[serde(default)]
+    pub initial_title_in_class: HashMap<String, HashMap<String, String>>,
+    #[serde(default)]
+    pub initial_title_in_class_active: HashMap<String, HashMap<String, String>>,
+    #[serde(default)]
+    pub initial_title_in_initial_class: HashMap<String, HashMap<String, String>>,
+    #[serde(default)]
+    pub initial_title_in_initial_class_active: HashMap<String, HashMap<String, String>>,
     #[serde(default)]
     pub exclude: HashMap<String, String>,
     #[serde(default)]
@@ -104,10 +120,18 @@ pub struct ConfigFileRaw {
 
 #[derive(Default, Debug, Clone)]
 pub struct ConfigFile {
-    pub icons: Vec<(Regex, String)>,
-    pub icons_active: Vec<(Regex, String)>,
-    pub title: Vec<(Regex, Vec<(Regex, String)>)>,
-    pub title_active: Vec<(Regex, Vec<(Regex, String)>)>,
+    pub class: Vec<(Regex, String)>,
+    pub class_active: Vec<(Regex, String)>,
+    pub initial_class: Vec<(Regex, String)>,
+    pub initial_class_active: Vec<(Regex, String)>,
+    pub title_in_class: Vec<(Regex, Vec<(Regex, String)>)>,
+    pub title_in_class_active: Vec<(Regex, Vec<(Regex, String)>)>,
+    pub title_in_initial_class: Vec<(Regex, Vec<(Regex, String)>)>,
+    pub title_in_initial_class_active: Vec<(Regex, Vec<(Regex, String)>)>,
+    pub initial_title_in_class: Vec<(Regex, Vec<(Regex, String)>)>,
+    pub initial_title_in_class_active: Vec<(Regex, Vec<(Regex, String)>)>,
+    pub initial_title_in_initial_class: Vec<(Regex, Vec<(Regex, String)>)>,
+    pub initial_title_in_initial_class_active: Vec<(Regex, Vec<(Regex, String)>)>,
     pub exclude: Vec<(Regex, Regex)>,
     pub format: ConfigFormatRaw,
 }
@@ -149,10 +173,24 @@ pub fn read_config_file(cfg_path: Option<&PathBuf>) -> Result<ConfigFile, Box<dy
     };
 
     Ok(ConfigFile {
-        icons: generate_icon_config(config.icons),
-        icons_active: generate_icon_config(config.icons_active),
-        title: generate_title_config(config.title),
-        title_active: generate_title_config(config.title_active),
+        class: generate_icon_config(config.class),
+        class_active: generate_icon_config(config.class_active),
+        title_in_class: generate_title_config(config.title_in_class),
+        title_in_class_active: generate_title_config(config.title_in_class_active),
+        title_in_initial_class: generate_title_config(config.title_in_initial_class),
+        title_in_initial_class_active: generate_title_config(config.title_in_initial_class_active),
+        initial_class: generate_icon_config(config.initial_class.clone()),
+        initial_class_active: generate_icon_config(config.initial_class_active.clone()),
+        initial_title_in_class: generate_title_config(config.initial_title_in_class.clone()),
+        initial_title_in_class_active: generate_title_config(
+            config.initial_title_in_class_active.clone(),
+        ),
+        initial_title_in_initial_class: generate_title_config(
+            config.initial_title_in_initial_class.clone(),
+        ),
+        initial_title_in_initial_class_active: generate_title_config(
+            config.initial_title_in_initial_class_active.clone(),
+        ),
         exclude: generate_exclude_config(config.exclude),
         format: config.format,
     })
@@ -185,7 +223,7 @@ pub fn create_default_config(cfg_path: &PathBuf) -> Result<&'static str, Box<dyn
 # client_dup_fullscreen = "[{icon}]{delim}{icon}{counter_unfocused}"
 # client_dup_active = "*{icon}*{delim}{icon}{counter_unfocused}"
 
-[icons]
+[class]
 # Add your icons mapping
 # use double quote the key and the value
 # take class name from 'hyprctl clients'
@@ -194,15 +232,38 @@ pub fn create_default_config(cfg_path: &PathBuf) -> Result<&'static str, Box<dyn
 "[Ff]irefox" = "browser"
 "(?i)waydroid.*" = "droid"
 
-[icons_active]
+[class_active]
 DEFAULT = "*{icon}*"
 "(?i)ExampleOneTerm" = "<span foreground='red'>{icon}</span>"
 
-[title."(?i)kitty"]
+# [initial_class]
+# "DEFAULT" = " {class}: {title}"
+# "(?i)Kitty" = "term"
+
+# [initial_class_active]
+# "(?i)Kitty" = "*TERM*"
+
+[title_in_class."(?i)kitty"]
 "(?i)neomutt" = "neomutt"
 
-[title_active."(?i)firefox"]
+[title_in_class_active."(?i)firefox"]
 "(?i)twitch" = "<span color='purple'>{icon}</span>"
+
+# [title_in_initial_class."(?i)kitty"]
+# "(?i)neomutt" = "neomutt"
+
+# [initial_title_in_class."(?i)kitty"]
+# "(?i)neomutt" = "neomutt"
+
+# [initial_title_in_initial_class."(?i)kitty"]
+# "(?i)neomutt" = "neomutt"
+
+# [initial_title."(?i)kitty"]
+# "zsh" = "Zsh"
+
+# [initial_title_active."(?i)kitty"]
+# "zsh" = "*Zsh*"
+
 
 # Add your applications that need to be exclude
 # The key is the class, the value is the title.

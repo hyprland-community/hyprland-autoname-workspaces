@@ -10,18 +10,40 @@ client_dup = "{icon}{counter_sup}{delim}"
 client_dup_fullscreen = "[{icon}]{delim}{icon}{counter_unfocused_sup}"
 client_fullscreen = "[{icon}]{delim}"
 
-[icons_active]
+[class_active]
 DEFAULT="{icon}"
 "(?i)firefox" = "<span color='orange'> {class}</span>"
 
-[title."(firefox|chrom.*)"]
+# [initial_class]
+# "DEFAULT" = " {class}: {title}"
+# "(?i)Kitty" = "term"
+
+# [initial_class_active]
+# "(?i)Kitty" = "*TERM*"
+
+[initial_title_in_class."kitty"]
+"zsh" = "Zsh"
+
+[title_in_class."(firefox|chrom.*)"]
 "(?i)youtube" = "ꟳ"
 "(?i)twitch" = "ꟳ"
 
 [title_active."(firefox|chrom.*)"]
 "(?i)twitch" = "<span color='purple'>{icon}</span>"
 
-[icons]
+# [title_in_initial_class."(?i)kitty"]
+# "(?i)neomutt" = "neomutt"
+
+# [initial_title_in_initial_class."(?i)kitty"]
+# "(?i)neomutt" = "neomutt"
+
+# [initial_title."(?i)kitty"]
+# "zsh" = "Zsh"
+
+# [initial_title_active."(?i)kitty"]
+# "zsh" = "*Zsh*"
+
+[class]
 DEFAULT = ""
 "(?i)firefox" = "<span color='orange'> </span>"
 "(?i)kitty" = ""
@@ -102,4 +124,3 @@ work = ""
 xplr = ""
 nemo = ""
 zoom = ""
-
