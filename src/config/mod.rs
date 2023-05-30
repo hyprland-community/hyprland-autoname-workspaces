@@ -145,14 +145,14 @@ pub struct ConfigFile {
 impl Config {
     pub fn new(
         cfg_path: PathBuf,
-        dump: bool,
+        dump_config: bool,
         migrate_config: bool,
     ) -> Result<Config, Box<dyn Error>> {
         if !cfg_path.exists() {
             _ = create_default_config(&cfg_path);
         }
 
-        let config = read_config_file(Some(cfg_path.clone()), dump, migrate_config)?;
+        let config = read_config_file(Some(cfg_path.clone()), dump_config, migrate_config)?;
 
         Ok(Config {
             config,
@@ -240,7 +240,7 @@ fn migrate_config_file(
     let last_version = Version::parse(VERSION)?;
     let need_migrate = actual_version < last_version;
     if need_migrate {
-        println!("Config in version {:?} need to be updated in {:?}, run: hyprland-autoname-workspace --migrate-config", actual_version.to_string(), last_version.to_string());
+        println!("Config in version {:?} need to be updated in version {:?}, run: hyprland-autoname-workspaces --migrate-config", actual_version.to_string(), last_version.to_string());
     }
     Ok(if need_migrate && migrate_config {
         config

@@ -17,7 +17,7 @@ clap = { version = "4.1.1", features = ["derive"] }
 # hyprland = { version = "0.3.3", features = ["silent"] }
 hyprland = { git = "https://github.com/hyprland-community/hyprland-rs.git", features = ["silent"] }
 signal-hook = "0.3.14"
-toml = { version = "0.5.10", features = ["indexmap", "preserve_order"] }
+toml = { version = "0.5.10", features = ["indexmap","preserve_order"] }
 xdg = "2.4.1"
 inotify = "0.10.0"
 serde = "1.0.152"
