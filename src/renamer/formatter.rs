@@ -165,3 +165,36 @@ pub fn to_superscript(number: i32) -> String {
 
     number.to_string().chars().map(|c| m[&c]).collect()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::renamer::IconConfig::*;
+
+    #[test]
+    fn test_app_workspace_new() {
+        let client = AppClient {
+            class: String::from("Class"),
+            initial_class: String::from("Class"),
+            title: String::from("Title"),
+            initial_title: String::from("Title"),
+            is_active: false,
+            is_fullscreen: false,
+            matched_rule: Inactive(Default(String::from("DefaultIcon"))),
+            is_dedup_inactive_fullscreen: false,
+        };
+
+        let workspace = AppWorkspace::new(1, vec![client]);
+
+        assert_eq!(workspace.id, 1);
+        assert_eq!(workspace.clients.len(), 1);
+        assert_eq!(workspace.clients[0].class, "Class");
+        assert_eq!(workspace.clients[0].title, "Title");
+        assert_eq!(workspace.clients[0].is_active, false);
+        assert_eq!(workspace.clients[0].is_fullscreen, false);
+        match &workspace.clients[0].matched_rule {
+            Inactive(Default(icon)) => assert_eq!(icon, "DefaultIcon"),
+            _ => panic!("Unexpected IconConfig value"),
+        };
+    }
+}
