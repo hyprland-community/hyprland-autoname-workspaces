@@ -187,11 +187,12 @@ pub fn read_config_file(
         None => toml::from_str("").map_err(|e| format!("Unable to parse: {e:?}"))?,
     };
 
-    let actual_version = Version::parse(&config.version)?;
+    let default_version = Version::parse("1.0.0")?;
+    let actual_version = Version::parse(&config.version).unwrap_or(default_version);
     let last_version = Version::parse(VERSION)?;
     let need_migrate = actual_version < last_version;
     if need_migrate {
-        println!("Config in version {:?} need to be updated in {:?}, run: hyprland-autoname-workspace --migrate-config", actual_version, last_version);
+        println!("Config in version {:?} need to be updated in {:?}, run: hyprland-autoname-workspace --migrate-config", actual_version.to_string(), last_version.to_string());
     }
 
     if need_migrate && migrate_config {
