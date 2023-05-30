@@ -1,4 +1,5 @@
 use crate::renamer::IconConfig::*;
+use crate::renamer::IconStatus::*;
 use crate::renamer::{ConfigFile, Renamer};
 
 type Rule = String;
@@ -50,13 +51,13 @@ pub enum IconStatus {
 impl IconStatus {
     pub fn icon(&self) -> Icon {
         match self {
-            IconStatus::Active(config) | IconStatus::Inactive(config) => config.icon(),
+            Active(config) | Inactive(config) => config.icon(),
         }
     }
 
     pub fn rule(&self) -> Rule {
         match self {
-            IconStatus::Active(config) | IconStatus::Inactive(config) => config.rule(),
+            Active(config) | Inactive(config) => config.rule(),
         }
     }
 }
@@ -65,18 +66,18 @@ macro_rules! find_icon_config {
     ($list:expr, $class:expr, $title:expr, $is_active:expr, $enum_variant:ident) => {
         find_title_in_class_helper($list, $class, $title).map(|(rule, icon)| {
             if $is_active {
-                IconStatus::Active(IconConfig::$enum_variant(rule, icon))
+                Active(IconConfig::$enum_variant(rule, icon))
             } else {
-                IconStatus::Inactive(IconConfig::$enum_variant(rule, icon))
+                Inactive(IconConfig::$enum_variant(rule, icon))
             }
         })
     };
     ($list:expr, $class:expr, $is_active:expr, $enum_variant:ident) => {
         find_class_helper($list, $class).map(|(rule, icon)| {
             if $is_active {
-                IconStatus::Active(IconConfig::$enum_variant(rule, icon))
+                Active(IconConfig::$enum_variant(rule, icon))
             } else {
-                IconStatus::Inactive(IconConfig::$enum_variant(rule, icon))
+                Inactive(IconConfig::$enum_variant(rule, icon))
             }
         })
     };
@@ -175,18 +176,14 @@ impl Renamer {
 
         let icon_default = self
             .find_icon("DEFAULT", "DEFAULT", "", "", false, config)
-            .unwrap_or(IconStatus::Inactive(IconConfig::Default(
-                "no icon".to_string(),
-            )));
+            .unwrap_or(Inactive(IconConfig::Default("no icon".to_string())));
 
         let icon_default_active = self
             .find_icon("DEFAULT", "DEFAULT", "", "", true, config)
             .unwrap_or({
                 self.find_icon("DEFAULT", "DEFAULT", "", "", false, config)
-                    .map(|i| IconStatus::Active(IconConfig::Class(i.rule(), i.icon())))
-                    .unwrap_or(IconStatus::Active(IconConfig::Default(
-                        "no icon".to_string(),
-                    )))
+                    .map(|i| Active(IconConfig::Class(i.rule(), i.icon())))
+                    .unwrap_or(Active(IconConfig::Default("no icon".to_string())))
             });
 
         if is_active {
