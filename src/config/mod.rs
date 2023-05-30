@@ -1,13 +1,14 @@
 use regex::Regex;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
+use std::process;
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Clone, Debug)]
 pub struct Config {
     pub config: ConfigFile,
     pub cfg_path: Option<PathBuf>,
@@ -60,7 +61,7 @@ impl Default for ConfigFormatRaw {
     }
 }
 
-#[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct ConfigFormatRaw {
     #[serde(default)]
     pub dedup: bool,
@@ -86,7 +87,7 @@ pub struct ConfigFormatRaw {
     pub client_dup_fullscreen: String,
 }
 
-#[derive(Deserialize, Default)]
+#[derive(Deserialize, Serialize, Default)]
 pub struct ConfigFileRaw {
     #[serde(default = "default_class", alias = "icons")]
     pub class: HashMap<String, String>,
@@ -137,12 +138,12 @@ pub struct ConfigFile {
 }
 
 impl Config {
-    pub fn new(cfg_path: PathBuf) -> Result<Config, Box<dyn Error>> {
+    pub fn new(cfg_path: PathBuf, dump: bool) -> Result<Config, Box<dyn Error>> {
         if !cfg_path.exists() {
             _ = create_default_config(&cfg_path);
         }
 
-        let config = read_config_file(Some(cfg_path.clone()))?;
+        let config = read_config_file(Some(cfg_path.clone()), dump)?;
 
         Ok(Config {
             config,
@@ -151,19 +152,10 @@ impl Config {
     }
 }
 
-pub fn get_config_path(args: &Option<String>) -> Result<PathBuf, Box<dyn Error>> {
-    let cfg_path = match args {
-        Some(path) => PathBuf::from(path),
-        _ => {
-            let xdg_dirs = xdg::BaseDirectories::with_prefix("hyprland-autoname-workspaces")?;
-            xdg_dirs.place_config_file("config.toml")?
-        }
-    };
-
-    Ok(cfg_path)
-}
-
-pub fn read_config_file(cfg_path: Option<PathBuf>) -> Result<ConfigFile, Box<dyn Error>> {
+pub fn read_config_file(
+    cfg_path: Option<PathBuf>,
+    dump: bool,
+) -> Result<ConfigFile, Box<dyn Error>> {
     let config: ConfigFileRaw = match cfg_path {
         Some(path) => {
             let config_string = fs::read_to_string(path)?;
@@ -171,6 +163,11 @@ pub fn read_config_file(cfg_path: Option<PathBuf>) -> Result<ConfigFile, Box<dyn
         }
         None => toml::from_str("").map_err(|e| format!("Unable to parse: {e:?}"))?,
     };
+
+    if dump {
+        println!("{}", serde_json::to_string_pretty(&config)?);
+        process::exit(0);
+    }
 
     Ok(ConfigFile {
         class: generate_icon_config(config.class),
@@ -194,6 +191,18 @@ pub fn read_config_file(cfg_path: Option<PathBuf>) -> Result<ConfigFile, Box<dyn
         exclude: generate_exclude_config(config.exclude),
         format: config.format,
     })
+}
+
+pub fn get_config_path(args: &Option<String>) -> Result<PathBuf, Box<dyn Error>> {
+    let cfg_path = match args {
+        Some(path) => PathBuf::from(path),
+        _ => {
+            let xdg_dirs = xdg::BaseDirectories::with_prefix("hyprland-autoname-workspaces")?;
+            xdg_dirs.place_config_file("config.toml")?
+        }
+    };
+
+    Ok(cfg_path)
 }
 
 pub fn create_default_config(cfg_path: &PathBuf) -> Result<&'static str, Box<dyn Error + 'static>> {

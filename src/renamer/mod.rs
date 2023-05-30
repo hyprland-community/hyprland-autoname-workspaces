@@ -196,7 +196,7 @@ impl Renamer {
                     println!("Reloading config !");
                     // Clojure to force quick release of lock
                     {
-                        match Config::new(cfg_path.clone()) {
+                        match Config::new(cfg_path.clone(), false) {
                             Ok(config) => self.cfg.lock()?.config = config.config,
                             Err(err) => println!("Unable to reload config: {err:?}"),
                         }
