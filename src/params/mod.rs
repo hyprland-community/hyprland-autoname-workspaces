@@ -9,6 +9,8 @@ pub struct Args {
     pub debug: bool,
     #[arg(long)]
     pub dump: bool,
+    #[arg(long)]
+    pub migrate_config: bool,
     #[arg(short, long, default_value = None)]
     pub config: Option<String>,
 }

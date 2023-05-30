@@ -8,6 +8,8 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::process;
 
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 #[derive(Default, Clone, Debug)]
 pub struct Config {
     pub config: ConfigFile,
@@ -54,6 +56,10 @@ fn default_class() -> HashMap<String, String> {
     HashMap::from([("DEFAULT".to_string(), " {class}".to_string())])
 }
 
+fn default_version() -> String {
+    VERSION.to_string()
+}
+
 // Nested serde default doesnt work.
 impl Default for ConfigFormatRaw {
     fn default() -> Self {
@@ -87,8 +93,10 @@ pub struct ConfigFormatRaw {
     pub client_dup_fullscreen: String,
 }
 
-#[derive(Deserialize, Serialize, Default)]
+#[derive(Deserialize, Serialize)]
 pub struct ConfigFileRaw {
+    #[serde(default = "default_version")]
+    pub version: String,
     #[serde(default = "default_class", alias = "icons")]
     pub class: HashMap<String, String>,
     #[serde(default, alias = "active_icons", alias = "icons_active")]
@@ -138,12 +146,16 @@ pub struct ConfigFile {
 }
 
 impl Config {
-    pub fn new(cfg_path: PathBuf, dump: bool) -> Result<Config, Box<dyn Error>> {
+    pub fn new(
+        cfg_path: PathBuf,
+        dump: bool,
+        migrate_config: bool,
+    ) -> Result<Config, Box<dyn Error>> {
         if !cfg_path.exists() {
             _ = create_default_config(&cfg_path);
         }
 
-        let config = read_config_file(Some(cfg_path.clone()), dump)?;
+        let config = read_config_file(Some(cfg_path.clone()), dump, migrate_config)?;
 
         Ok(Config {
             config,
@@ -152,17 +164,37 @@ impl Config {
     }
 }
 
+impl ConfigFileRaw {
+    pub fn migrate(&mut self, cfg_path: &Option<PathBuf>) -> Result<(), Box<dyn Error>> {
+        self.version = VERSION.to_string();
+        let config_updated = toml::to_string(&self)?;
+        if let Some(path) = cfg_path {
+            let config_file = &mut File::create(path)?;
+            write!(config_file, "{config_updated}")?;
+            println!("Config file successfully migrated in {path:?}");
+        }
+        Ok(())
+    }
+}
+
 pub fn read_config_file(
     cfg_path: Option<PathBuf>,
     dump: bool,
+    migrate_config: bool,
 ) -> Result<ConfigFile, Box<dyn Error>> {
-    let config: ConfigFileRaw = match cfg_path {
+    let mut config: ConfigFileRaw = match &cfg_path {
         Some(path) => {
             let config_string = fs::read_to_string(path)?;
             toml::from_str(&config_string).map_err(|e| format!("Unable to parse: {e:?}"))?
         }
         None => toml::from_str("").map_err(|e| format!("Unable to parse: {e:?}"))?,
     };
+
+    if migrate_config {
+        config
+            .migrate(&cfg_path)
+            .map_err(|e| format!("Unable to migrate config {e:?}"))?;
+    }
 
     if dump {
         println!("{}", serde_json::to_string_pretty(&config)?);
@@ -172,12 +204,12 @@ pub fn read_config_file(
     Ok(ConfigFile {
         class: generate_icon_config(config.class),
         class_active: generate_icon_config(config.class_active),
+        initial_class: generate_icon_config(config.initial_class.clone()),
+        initial_class_active: generate_icon_config(config.initial_class_active.clone()),
         title_in_class: generate_title_config(config.title_in_class),
         title_in_class_active: generate_title_config(config.title_in_class_active),
         title_in_initial_class: generate_title_config(config.title_in_initial_class),
         title_in_initial_class_active: generate_title_config(config.title_in_initial_class_active),
-        initial_class: generate_icon_config(config.initial_class.clone()),
-        initial_class_active: generate_icon_config(config.initial_class_active.clone()),
         initial_title_in_class: generate_title_config(config.initial_title_in_class.clone()),
         initial_title_in_class_active: generate_title_config(
             config.initial_title_in_class_active.clone(),
@@ -274,7 +306,6 @@ DEFAULT = "*{icon}*"
 
 # [initial_title_active."(?i)kitty"]
 # "zsh" = "*Zsh*"
-
 
 # Add your applications that need to be exclude
 # The key is the class, the value is the title.
@@ -472,12 +503,12 @@ mod tests {
     #[test]
     fn test_config_new_and_read_again_then_compare_format() {
         let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
-        let config = Config::new(cfg_path.clone(), false);
+        let config = Config::new(cfg_path.clone(), false, false);
         assert_eq!(config.is_ok(), true);
         let config = config.unwrap().clone();
         assert_eq!(config.cfg_path.clone(), Some(cfg_path.clone()));
         let format = config.config.format.clone();
-        let config2 = read_config_file(Some(cfg_path.clone()), false).unwrap();
+        let config2 = read_config_file(Some(cfg_path.clone()), false, false).unwrap();
         let format2 = config2.format.clone();
         assert_eq!(format, format2);
     }
