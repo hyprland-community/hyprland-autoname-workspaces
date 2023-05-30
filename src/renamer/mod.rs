@@ -13,7 +13,7 @@ use hyprland::event_listener::EventListenerMutable as EventListener;
 use hyprland::prelude::*;
 use hyprland::shared::Address;
 use hyprland::shared::WorkspaceType;
-use icon::IconConfig;
+use icon::{IconConfig, IconStatus};
 use inotify::{Inotify, WatchMask};
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
@@ -35,7 +35,7 @@ pub struct AppClient {
     is_active: bool,
     is_fullscreen: bool,
     is_dedup_inactive_fullscreen: bool,
-    matched_rule: IconConfig,
+    matched_rule: IconStatus,
 }
 
 impl PartialEq for AppClient {
@@ -51,7 +51,7 @@ impl AppClient {
         client: Client,
         is_active: bool,
         is_dedup_inactive_fullscreen: bool,
-        matched_rule: IconConfig,
+        matched_rule: IconStatus,
     ) -> Self {
         AppClient {
             initial_class: client.initial_class,
@@ -275,18 +275,6 @@ mod tests {
     use regex::Regex;
 
     use super::*;
-    // use std::path::PathBuf;
-
-    // use std::sync::Once;
-
-    // static INIT: Once = Once::new();
-
-    // pub fn initialize() {
-    //     INIT.call_once(|| {
-    //         let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
-    //         _ = crate::config::create_default_config(&cfg_path);
-    //     });
-    // }
 
     #[test]
     fn test_app_client_partial_eq() {
@@ -297,7 +285,10 @@ mod tests {
             is_active: false,
             is_fullscreen: false,
             initial_title: "zsh".to_string(),
-            matched_rule: IconConfig::Class("(kitty|alacritty)".to_string(), "term".to_string()),
+            matched_rule: IconStatus::Inactive(IconConfig::Class(
+                "(kitty|alacritty)".to_string(),
+                "term".to_string(),
+            )),
             is_dedup_inactive_fullscreen: false,
         };
 
@@ -308,7 +299,10 @@ mod tests {
             initial_title: "zsh".to_string(),
             is_active: false,
             is_fullscreen: false,
-            matched_rule: IconConfig::Class("(kitty|alacritty)".to_string(), "term".to_string()),
+            matched_rule: IconStatus::Inactive(IconConfig::Class(
+                "(kitty|alacritty)".to_string(),
+                "term".to_string(),
+            )),
             is_dedup_inactive_fullscreen: false,
         };
 
@@ -319,7 +313,10 @@ mod tests {
             initial_title: "zsh".to_string(),
             is_active: true,
             is_fullscreen: false,
-            matched_rule: IconConfig::Class("(kitty|alacritty)".to_string(), "term".to_string()),
+            matched_rule: IconStatus::Active(IconConfig::Class(
+                "(kitty|alacritty)".to_string(),
+                "term".to_string(),
+            )),
             is_dedup_inactive_fullscreen: false,
         };
 
@@ -330,7 +327,10 @@ mod tests {
             initial_title: "zsh".to_string(),
             is_active: false,
             is_fullscreen: true,
-            matched_rule: IconConfig::Class("(kitty|alacritty)".to_string(), "term".to_string()),
+            matched_rule: IconStatus::Inactive(IconConfig::Class(
+                "(kitty|alacritty)".to_string(),
+                "term".to_string(),
+            )),
             is_dedup_inactive_fullscreen: false,
         };
 
@@ -341,7 +341,10 @@ mod tests {
             initial_title: "zsh".to_string(),
             is_active: false,
             is_fullscreen: true,
-            matched_rule: IconConfig::Class("(kitty|alacritty)".to_string(), "term".to_string()),
+            matched_rule: IconStatus::Inactive(IconConfig::Class(
+                "(kitty|alacritty)".to_string(),
+                "term".to_string(),
+            )),
             is_dedup_inactive_fullscreen: false,
         };
 
@@ -352,7 +355,10 @@ mod tests {
             initial_title: "zsh".to_string(),
             is_active: false,
             is_fullscreen: false,
-            matched_rule: IconConfig::Class("alacritty".to_string(), "term".to_string()),
+            matched_rule: IconStatus::Inactive(IconConfig::Class(
+                "alacritty".to_string(),
+                "term".to_string(),
+            )),
             is_dedup_inactive_fullscreen: false,
         };
 
@@ -1243,7 +1249,10 @@ mod tests {
                         initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
-                        matched_rule: IconConfig::Class("kitty".to_string(), "term".to_string()),
+                        matched_rule: IconStatus::Inactive(IconConfig::Class(
+                            "kitty".to_string(),
+                            "term".to_string(),
+                        )),
                         is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
@@ -1253,7 +1262,10 @@ mod tests {
                         initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
-                        matched_rule: IconConfig::Class("kitty".to_string(), "term".to_string()),
+                        matched_rule: IconStatus::Inactive(IconConfig::Class(
+                            "kitty".to_string(),
+                            "term".to_string(),
+                        )),
                         is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
@@ -1263,7 +1275,10 @@ mod tests {
                         initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
-                        matched_rule: IconConfig::Class("kitty".to_string(), "term".to_string()),
+                        matched_rule: IconStatus::Inactive(IconConfig::Class(
+                            "kitty".to_string(),
+                            "term".to_string(),
+                        )),
                         is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
@@ -1273,7 +1288,10 @@ mod tests {
                         initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
-                        matched_rule: IconConfig::Class("kitty".to_string(), "term".to_string()),
+                        matched_rule: IconStatus::Inactive(IconConfig::Class(
+                            "kitty".to_string(),
+                            "term".to_string(),
+                        )),
                         is_dedup_inactive_fullscreen: false,
                     },
                     AppClient {
@@ -1283,7 +1301,10 @@ mod tests {
                         initial_title: "kitty".to_string(),
                         is_active: false,
                         is_fullscreen: false,
-                        matched_rule: IconConfig::Class("kitty".to_string(), "term".to_string()),
+                        matched_rule: IconStatus::Inactive(IconConfig::Class(
+                            "kitty".to_string(),
+                            "term".to_string(),
+                        )),
                         is_dedup_inactive_fullscreen: false,
                     },
                 ],

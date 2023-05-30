@@ -8,19 +8,12 @@ type Class = String;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum IconConfig {
-    ActiveClass(Rule, Icon),
-    ActiveInitialClass(Rule, Icon),
-    ActiveTitleInInitialClass(Rule, Icon),
-    ActiveInitialTitleInClass(Rule, Icon),
-    ActiveInitialTitleInInitialClass(Rule, Icon),
-    ActiveTitleInClass(Rule, Icon),
     Class(Rule, Icon),
     InitialClass(Rule, Icon),
     TitleInClass(Rule, Icon),
     TitleInInitialClass(Rule, Icon),
     InitialTitleInClass(Rule, Icon),
     InitialTitleInInitialClass(Rule, Icon),
-    ActiveDefault(Icon),
     Default(Icon),
 }
 
@@ -37,39 +30,53 @@ impl IconConfig {
 
     pub fn get(&self) -> (Rule, Icon) {
         match &self {
-            Default(icon) | ActiveDefault(icon) => ("DEFAULT".to_string(), icon.to_string()),
+            Default(icon) => ("DEFAULT".to_string(), icon.to_string()),
             Class(rule, icon)
             | InitialClass(rule, icon)
             | TitleInClass(rule, icon)
             | TitleInInitialClass(rule, icon)
             | InitialTitleInClass(rule, icon)
-            | InitialTitleInInitialClass(rule, icon)
-            | ActiveClass(rule, icon)
-            | ActiveInitialClass(rule, icon)
-            | ActiveTitleInInitialClass(rule, icon)
-            | ActiveInitialTitleInInitialClass(rule, icon)
-            | ActiveInitialTitleInClass(rule, icon)
-            | ActiveTitleInClass(rule, icon) => (rule.to_string(), icon.to_string()),
+            | InitialTitleInInitialClass(rule, icon) => (rule.to_string(), icon.to_string()),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum IconStatus {
+    Active(IconConfig),
+    Inactive(IconConfig),
+}
+
+impl IconStatus {
+    pub fn icon(&self) -> Icon {
+        match self {
+            IconStatus::Active(config) | IconStatus::Inactive(config) => config.icon(),
+        }
+    }
+
+    pub fn rule(&self) -> Rule {
+        match self {
+            IconStatus::Active(config) | IconStatus::Inactive(config) => config.rule(),
         }
     }
 }
 
 macro_rules! find_icon_config {
-    ($list:expr, $class:expr, $title:expr, $is_active:expr, $enum_variant_active:ident, $enum_variant:ident) => {
+    ($list:expr, $class:expr, $title:expr, $is_active:expr, $enum_variant:ident) => {
         find_title_in_class_helper($list, $class, $title).map(|(rule, icon)| {
             if $is_active {
-                IconConfig::$enum_variant_active(rule, icon)
+                IconStatus::Active(IconConfig::$enum_variant(rule, icon))
             } else {
-                IconConfig::$enum_variant(rule, icon)
+                IconStatus::Inactive(IconConfig::$enum_variant(rule, icon))
             }
         })
     };
-    ($list:expr, $class:expr, $is_active:expr, $enum_variant_active:ident, $enum_variant:ident) => {
+    ($list:expr, $class:expr, $is_active:expr, $enum_variant:ident) => {
         find_class_helper($list, $class).map(|(rule, icon)| {
             if $is_active {
-                IconConfig::$enum_variant_active(rule, icon)
+                IconStatus::Active(IconConfig::$enum_variant(rule, icon))
             } else {
-                IconConfig::$enum_variant(rule, icon)
+                IconStatus::Inactive(IconConfig::$enum_variant(rule, icon))
             }
         })
     };
@@ -84,7 +91,7 @@ impl Renamer {
         title: &str,
         is_active: bool,
         config: &ConfigFile,
-    ) -> Option<IconConfig> {
+    ) -> Option<IconStatus> {
         let (
             list_initial_title_in_initial_class,
             list_initial_title_in_class,
@@ -117,7 +124,6 @@ impl Renamer {
             initial_class,
             initial_title,
             is_active,
-            ActiveInitialTitleInInitialClass,
             InitialTitleInInitialClass
         )
         .or_else(|| {
@@ -126,7 +132,6 @@ impl Renamer {
                 class,
                 initial_title,
                 is_active,
-                ActiveInitialTitleInClass,
                 InitialTitleInClass
             )
             .or_else(|| {
@@ -135,28 +140,14 @@ impl Renamer {
                     initial_class,
                     title,
                     is_active,
-                    ActiveTitleInInitialClass,
                     TitleInInitialClass
                 )
                 .or_else(|| {
-                    find_icon_config!(
-                        list_title_in_class,
-                        class,
-                        title,
-                        is_active,
-                        ActiveTitleInClass,
-                        TitleInClass
-                    )
-                    .or_else(|| {
-                        find_icon_config!(
-                            list_initial_class,
-                            class,
-                            is_active,
-                            ActiveInitialClass,
-                            InitialClass
-                        )
-                    })
-                    .or_else(|| find_icon_config!(list_class, class, is_active, ActiveClass, Class))
+                    find_icon_config!(list_title_in_class, class, title, is_active, TitleInClass)
+                        .or_else(|| {
+                            find_icon_config!(list_initial_class, class, is_active, InitialClass)
+                        })
+                        .or_else(|| find_icon_config!(list_class, class, is_active, Class))
                 })
             })
         })
@@ -170,7 +161,7 @@ impl Renamer {
         title: Title,
         is_active: bool,
         config: &ConfigFile,
-    ) -> IconConfig {
+    ) -> IconStatus {
         let icon = self.find_icon(
             &initial_class,
             &class,
@@ -181,16 +172,21 @@ impl Renamer {
         );
         let icon_active =
             self.find_icon(&initial_class, &class, &initial_title, &title, true, config);
+
         let icon_default = self
             .find_icon("DEFAULT", "DEFAULT", "", "", false, config)
-            .unwrap_or(IconConfig::Default("no icon".to_string()));
+            .unwrap_or(IconStatus::Inactive(IconConfig::Default(
+                "no icon".to_string(),
+            )));
 
         let icon_default_active = self
             .find_icon("DEFAULT", "DEFAULT", "", "", true, config)
             .unwrap_or({
                 self.find_icon("DEFAULT", "DEFAULT", "", "", false, config)
-                    .map(|i| IconConfig::ActiveClass(i.rule(), i.icon()))
-                    .unwrap_or(IconConfig::ActiveDefault("no icon".to_string()))
+                    .map(|i| IconStatus::Active(IconConfig::Class(i.rule(), i.icon())))
+                    .unwrap_or(IconStatus::Active(IconConfig::Default(
+                        "no icon".to_string(),
+                    )))
             });
 
         if is_active {
