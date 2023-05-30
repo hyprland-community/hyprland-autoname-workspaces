@@ -49,7 +49,7 @@ fn default_workspace_formatter() -> String {
     "{id}:{delim}{clients}".to_string()
 }
 
-fn default_icons() -> HashMap<String, String> {
+fn default_class() -> HashMap<String, String> {
     HashMap::from([("DEFAULT".to_string(), " {class}".to_string())])
 }
 
@@ -88,7 +88,7 @@ pub struct ConfigFormatRaw {
 
 #[derive(Deserialize, Default)]
 pub struct ConfigFileRaw {
-    #[serde(default = "default_icons", alias = "icons")]
+    #[serde(default = "default_class", alias = "icons")]
     pub class: HashMap<String, String>,
     #[serde(default, alias = "active_icons", alias = "icons_active")]
     pub class_active: HashMap<String, String>,
