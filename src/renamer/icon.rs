@@ -26,39 +26,30 @@ pub enum IconConfig {
 
 impl IconConfig {
     pub fn icon(&self) -> Icon {
-        match &self {
-            Default(icon)
-            | ActiveDefault(icon)
-            | Class(_, icon)
-            | InitialClass(_, icon)
-            | TitleInClass(_, icon)
-            | TitleInInitialClass(_, icon)
-            | InitialTitleInClass(_, icon)
-            | InitialTitleInInitialClass(_, icon)
-            | ActiveClass(_, icon)
-            | ActiveInitialClass(_, icon)
-            | ActiveTitleInInitialClass(_, icon)
-            | ActiveInitialTitleInInitialClass(_, icon)
-            | ActiveInitialTitleInClass(_, icon)
-            | ActiveTitleInClass(_, icon) => icon.to_string(),
-        }
+        let (_, icon) = self.get();
+        icon
     }
 
     pub fn rule(&self) -> Rule {
+        let (rule, _) = self.get();
+        rule
+    }
+
+    pub fn get(&self) -> (Rule, Icon) {
         match &self {
-            Class(rule, _)
-            | InitialClass(rule, _)
-            | TitleInClass(rule, _)
-            | TitleInInitialClass(rule, _)
-            | InitialTitleInClass(rule, _)
-            | InitialTitleInInitialClass(rule, _)
-            | ActiveClass(rule, _)
-            | ActiveInitialClass(rule, _)
-            | ActiveTitleInInitialClass(rule, _)
-            | ActiveInitialTitleInInitialClass(rule, _)
-            | ActiveInitialTitleInClass(rule, _)
-            | ActiveTitleInClass(rule, _) => rule.to_string(),
-            _ => unreachable!(),
+            Default(icon) | ActiveDefault(icon) => ("DEFAULT".to_string(), icon.to_string()),
+            Class(rule, icon)
+            | InitialClass(rule, icon)
+            | TitleInClass(rule, icon)
+            | TitleInInitialClass(rule, icon)
+            | InitialTitleInClass(rule, icon)
+            | InitialTitleInInitialClass(rule, icon)
+            | ActiveClass(rule, icon)
+            | ActiveInitialClass(rule, icon)
+            | ActiveTitleInInitialClass(rule, icon)
+            | ActiveInitialTitleInInitialClass(rule, icon)
+            | ActiveInitialTitleInClass(rule, icon)
+            | ActiveTitleInClass(rule, icon) => (rule.to_string(), icon.to_string()),
         }
     }
 }
