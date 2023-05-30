@@ -187,19 +187,7 @@ pub fn read_config_file(
         None => toml::from_str("").map_err(|e| format!("Unable to parse: {e:?}"))?,
     };
 
-    let default_version = Version::parse("1.0.0")?;
-    let actual_version = Version::parse(&config.version).unwrap_or(default_version);
-    let last_version = Version::parse(VERSION)?;
-    let need_migrate = actual_version < last_version;
-    if need_migrate {
-        println!("Config in version {:?} need to be updated in {:?}, run: hyprland-autoname-workspace --migrate-config", actual_version.to_string(), last_version.to_string());
-    }
-
-    if need_migrate && migrate_config {
-        config
-            .migrate(&cfg_path)
-            .map_err(|e| format!("Unable to migrate config {e:?}"))?;
-    }
+    migrate_config_file(&mut config, migrate_config, cfg_path)?;
 
     if dump_config {
         println!("{}", serde_json::to_string_pretty(&config)?);
@@ -240,6 +228,25 @@ pub fn get_config_path(args: &Option<String>) -> Result<PathBuf, Box<dyn Error>>
     };
 
     Ok(cfg_path)
+}
+
+fn migrate_config_file(
+    config: &mut ConfigFileRaw,
+    migrate_config: bool,
+    cfg_path: Option<PathBuf>,
+) -> Result<(), Box<dyn Error>> {
+    let default_version = Version::parse("1.0.0")?;
+    let actual_version = Version::parse(&config.version).unwrap_or(default_version);
+    let last_version = Version::parse(VERSION)?;
+    let need_migrate = actual_version < last_version;
+    if need_migrate {
+        println!("Config in version {:?} need to be updated in {:?}, run: hyprland-autoname-workspace --migrate-config", actual_version.to_string(), last_version.to_string());
+    }
+    Ok(if need_migrate && migrate_config {
+        config
+            .migrate(&cfg_path)
+            .map_err(|e| format!("Unable to migrate config {e:?}"))?;
+    })
 }
 
 pub fn create_default_config(cfg_path: &PathBuf) -> Result<&'static str, Box<dyn Error + 'static>> {
