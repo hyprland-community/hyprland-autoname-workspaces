@@ -238,11 +238,12 @@ fn migrate_config_file(
     if need_migrate {
         println!("Config in version {:?} need to be updated in version {:?}, run: hyprland-autoname-workspaces --migrate-config", actual_version.to_string(), last_version.to_string());
     }
-    Ok(if need_migrate && migrate_config {
+    if need_migrate && migrate_config {
         config
             .migrate(&cfg_path)
             .map_err(|e| format!("Unable to migrate config {e:?}"))?;
-    })
+    };
+    Ok(())
 }
 
 pub fn create_default_config(cfg_path: &PathBuf) -> Result<&'static str, Box<dyn Error + 'static>> {
