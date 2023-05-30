@@ -152,10 +152,8 @@ impl Config {
             _ = create_default_config(&cfg_path);
         }
 
-        let config = read_config_file(Some(cfg_path.clone()), dump_config, migrate_config)?;
-
         Ok(Config {
-            config,
+            config: read_config_file(Some(cfg_path.clone()), dump_config, migrate_config)?,
             cfg_path: Some(cfg_path),
         })
     }
@@ -195,25 +193,23 @@ pub fn read_config_file(
     }
 
     Ok(ConfigFile {
-        class: generate_icon_config(config.class),
-        class_active: generate_icon_config(config.class_active),
-        initial_class: generate_icon_config(config.initial_class.clone()),
-        initial_class_active: generate_icon_config(config.initial_class_active.clone()),
-        title_in_class: generate_title_config(config.title_in_class),
-        title_in_class_active: generate_title_config(config.title_in_class_active),
-        title_in_initial_class: generate_title_config(config.title_in_initial_class),
-        title_in_initial_class_active: generate_title_config(config.title_in_initial_class_active),
-        initial_title_in_class: generate_title_config(config.initial_title_in_class.clone()),
-        initial_title_in_class_active: generate_title_config(
-            config.initial_title_in_class_active.clone(),
-        ),
+        class: generate_icon_config(&config.class),
+        class_active: generate_icon_config(&config.class_active),
+        initial_class: generate_icon_config(&config.initial_class),
+        initial_class_active: generate_icon_config(&config.initial_class_active),
+        title_in_class: generate_title_config(&config.title_in_class),
+        title_in_class_active: generate_title_config(&config.title_in_class_active),
+        title_in_initial_class: generate_title_config(&config.title_in_initial_class),
+        title_in_initial_class_active: generate_title_config(&config.title_in_initial_class_active),
+        initial_title_in_class: generate_title_config(&config.initial_title_in_class),
+        initial_title_in_class_active: generate_title_config(&config.initial_title_in_class_active),
         initial_title_in_initial_class: generate_title_config(
-            config.initial_title_in_initial_class.clone(),
+            &config.initial_title_in_initial_class,
         ),
         initial_title_in_initial_class_active: generate_title_config(
-            config.initial_title_in_initial_class_active.clone(),
+            &config.initial_title_in_initial_class_active,
         ),
-        exclude: generate_exclude_config(config.exclude),
+        exclude: generate_exclude_config(&config.exclude),
         format: config.format,
     })
 }
@@ -388,7 +384,7 @@ fn regex_with_error_logging(pattern: &str) -> Option<Regex> {
 /// let title_icons = generate_title_config(title_icons_map);
 /// ```
 fn generate_title_config(
-    icons: HashMap<String, HashMap<String, String>>,
+    icons: &HashMap<String, HashMap<String, String>>,
 ) -> Vec<(Regex, Vec<(Regex, String)>)> {
     icons
         .iter()
@@ -423,7 +419,7 @@ fn generate_title_config(
 /// ```
 /// let icons_config = generate_icon_config(icons_map);
 /// ```
-fn generate_icon_config(icons: HashMap<String, String>) -> Vec<(Regex, String)> {
+fn generate_icon_config(icons: &HashMap<String, String>) -> Vec<(Regex, String)> {
     icons
         .iter()
         .filter_map(|(class, icon)| {
@@ -447,7 +443,7 @@ fn generate_icon_config(icons: HashMap<String, String>) -> Vec<(Regex, String)> 
 /// ```
 /// let exclude_config = generate_exclude_config(exclude_map);
 /// ```
-fn generate_exclude_config(icons: HashMap<String, String>) -> Vec<(Regex, Regex)> {
+fn generate_exclude_config(icons: &HashMap<String, String>) -> Vec<(Regex, Regex)> {
     icons
         .iter()
         .filter_map(|(class, title)| {
@@ -470,7 +466,7 @@ mod tests {
         inner_map.insert("Title1".to_string(), "Icon1".to_string());
         title_icons_map.insert("Class1".to_string(), inner_map);
 
-        let title_config = generate_title_config(title_icons_map);
+        let title_config = generate_title_config(&title_icons_map);
 
         assert_eq!(title_config.len(), 1);
         assert!(title_config[0].0.is_match("Class1"));
@@ -481,10 +477,10 @@ mod tests {
 
     #[test]
     fn test_generate_icon_config() {
-        let mut icons_map: HashMap<String, String> = HashMap::new();
-        icons_map.insert("Class1".to_string(), "Icon1".to_string());
+        let mut list_class: HashMap<String, String> = HashMap::new();
+        list_class.insert("Class1".to_string(), "Icon1".to_string());
 
-        let icons_config = generate_icon_config(icons_map);
+        let icons_config = generate_icon_config(&list_class);
 
         assert_eq!(icons_config.len(), 1);
         assert!(icons_config[0].0.is_match("Class1"));
@@ -493,10 +489,10 @@ mod tests {
 
     #[test]
     fn test_generate_exclude_config() {
-        let mut exclude_map: HashMap<String, String> = HashMap::new();
-        exclude_map.insert("Class1".to_string(), "Title1".to_string());
+        let mut list_exclude: HashMap<String, String> = HashMap::new();
+        list_exclude.insert("Class1".to_string(), "Title1".to_string());
 
-        let exclude_config = generate_exclude_config(exclude_map);
+        let exclude_config = generate_exclude_config(&list_exclude);
 
         assert_eq!(exclude_config.len(), 1);
         assert!(exclude_config[0].0.is_match("Class1"));
