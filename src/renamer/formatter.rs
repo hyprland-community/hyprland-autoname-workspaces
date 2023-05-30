@@ -70,7 +70,7 @@ impl Renamer {
         ]);
 
         let icon = match (client.is_active, client.matched_rule.clone()) {
-            (true, c @ Active(_) | c @ Inactive(_)) => {
+            (true, c @ Inactive(_)) => {
                 vars.insert("default_icon".to_string(), c.icon());
                 formatter(
                     &fmt_client_active.replace("{icon}", "{default_icon}"),
