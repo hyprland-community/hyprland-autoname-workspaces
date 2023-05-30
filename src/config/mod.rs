@@ -1,4 +1,5 @@
 use regex::Regex;
+use semver::Version;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::error::Error;
@@ -56,10 +57,6 @@ fn default_class() -> HashMap<String, String> {
     HashMap::from([("DEFAULT".to_string(), " {class}".to_string())])
 }
 
-fn default_version() -> String {
-    VERSION.to_string()
-}
-
 // Nested serde default doesnt work.
 impl Default for ConfigFormatRaw {
     fn default() -> Self {
@@ -95,7 +92,7 @@ pub struct ConfigFormatRaw {
 
 #[derive(Deserialize, Serialize)]
 pub struct ConfigFileRaw {
-    #[serde(default = "default_version")]
+    #[serde(default)]
     pub version: String,
     #[serde(default = "default_class", alias = "icons")]
     pub class: HashMap<String, String>,
@@ -179,7 +176,7 @@ impl ConfigFileRaw {
 
 pub fn read_config_file(
     cfg_path: Option<PathBuf>,
-    dump: bool,
+    dump_config: bool,
     migrate_config: bool,
 ) -> Result<ConfigFile, Box<dyn Error>> {
     let mut config: ConfigFileRaw = match &cfg_path {
@@ -190,13 +187,20 @@ pub fn read_config_file(
         None => toml::from_str("").map_err(|e| format!("Unable to parse: {e:?}"))?,
     };
 
-    if migrate_config {
+    let actual_version = Version::parse(&config.version)?;
+    let last_version = Version::parse(VERSION)?;
+    let need_migrate = actual_version < last_version;
+    if need_migrate {
+        println!("Config in version {:?} need to be updated in {:?}, run: hyprland-autoname-workspace --migrate-config", actual_version, last_version);
+    }
+
+    if need_migrate && migrate_config {
         config
             .migrate(&cfg_path)
             .map_err(|e| format!("Unable to migrate config {e:?}"))?;
     }
 
-    if dump {
+    if dump_config {
         println!("{}", serde_json::to_string_pretty(&config)?);
         process::exit(0);
     }
