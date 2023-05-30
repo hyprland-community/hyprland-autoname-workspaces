@@ -1,5 +1,5 @@
 use crate::renamer::ConfigFile;
-use crate::renamer::IconConfig::*;
+use crate::renamer::IconStatus::*;
 use crate::{AppClient, Renamer};
 use std::collections::HashMap;
 use strfmt::strfmt;
@@ -70,7 +70,7 @@ impl Renamer {
         ]);
 
         let icon = match (client.is_active, client.matched_rule.clone()) {
-            (true, c @ Class(_, _) | c @ Title(_, _)) => {
+            (true, c @ Inactive(_)) => {
                 vars.insert("default_icon".to_string(), c.icon());
                 formatter(
                     &fmt_client_active.replace("{icon}", "{default_icon}"),
