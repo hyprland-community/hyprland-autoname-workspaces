@@ -470,12 +470,12 @@ mod tests {
     #[test]
     fn test_config_new_and_read_again_then_compare_format() {
         let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
-        let config = Config::new(cfg_path.clone());
+        let config = Config::new(cfg_path.clone(), false);
         assert_eq!(config.is_ok(), true);
         let config = config.unwrap().clone();
         assert_eq!(config.cfg_path.clone(), Some(cfg_path.clone()));
         let format = config.config.format.clone();
-        let config2 = read_config_file(Some(cfg_path.clone())).unwrap();
+        let config2 = read_config_file(Some(cfg_path.clone()), false).unwrap();
         let format2 = config2.format.clone();
         assert_eq!(format, format2);
     }
