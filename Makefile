@@ -15,6 +15,11 @@ build-dev:
 build:
 	cargo build --locked --release
 
+.PHONY: release
+release:
+	cargo bump --git-tag
+	git push origin --follow-tags --signed=yes
+
 .PHONY: test
 test:
 	cargo test --locked
