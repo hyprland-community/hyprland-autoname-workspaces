@@ -254,6 +254,8 @@ DEFAULT = "*{icon}*"
 
 [title_in_class."(?i)kitty"]
 "(?i)neomutt" = "neomutt"
+# regex captures support is supported
+# "emerge: (.+?/.+?)-.*" = "{match1}"
 
 [title_in_class_active."(?i)firefox"]
 "(?i)twitch" = "<span color='purple'>{icon}</span>"
