@@ -2,7 +2,6 @@ use crate::renamer::ConfigFile;
 use crate::renamer::IconStatus::*;
 use crate::{AppClient, Renamer};
 use std::collections::HashMap;
-use std::hash::Hash;
 use strfmt::strfmt;
 
 pub struct AppWorkspace {
@@ -72,7 +71,7 @@ impl Renamer {
 
         // get regex captures and merge them with vars
         if let Some(re_captures) = client.matched_rule.captures() {
-            vars = merge(&vars, &re_captures);
+            merge_vars(&mut vars, re_captures);
         };
 
         let icon = match (client.is_active, client.matched_rule.clone()) {
@@ -153,18 +152,8 @@ pub fn generate_counted_clients(
     }
 }
 
-fn merge<K: Hash + Eq + Clone, V: Clone>(
-    first_context: &HashMap<K, V>,
-    second_context: &HashMap<K, V>,
-) -> HashMap<K, V> {
-    let mut new_context = HashMap::new();
-    for (key, value) in first_context.iter() {
-        new_context.insert(key.clone(), value.clone());
-    }
-    for (key, value) in second_context.iter() {
-        new_context.insert(key.clone(), value.clone());
-    }
-    new_context
+fn merge_vars(map1: &mut HashMap<String, String>, map2: HashMap<String, String>) {
+    map1.extend(map2);
 }
 
 pub fn to_superscript(number: i32) -> String {
