@@ -355,7 +355,7 @@ mod tests {
 
     #[test]
     fn test_dedup_kitty_and_alacritty_if_one_regex() {
-        let mut config = crate::config::read_config_file(None).unwrap();
+        let mut config = crate::config::read_config_file(None, false).unwrap();
         config
             .class
             .push((Regex::new("(kitty|alacritty)").unwrap(), "term".to_string()));
@@ -477,7 +477,7 @@ mod tests {
 
     #[test]
     fn test_parse_icon_initial_title_and_initial_title_active() {
-        let mut config = crate::config::read_config_file(None).unwrap();
+        let mut config = crate::config::read_config_file(None, false).unwrap();
         config
             .class
             .push((Regex::new("kitty").unwrap(), "term".to_string()));
@@ -577,7 +577,7 @@ mod tests {
 
     #[test]
     fn test_dedup_kitty_and_alacritty_if_two_regex() {
-        let mut config = crate::config::read_config_file(None).unwrap();
+        let mut config = crate::config::read_config_file(None, false).unwrap();
         config
             .class
             .push((Regex::new("kitty").unwrap(), "term".to_string()));
@@ -711,7 +711,7 @@ mod tests {
 
     #[test]
     fn test_no_dedup_no_focus_no_fullscreen_one_workspace() {
-        let mut config = crate::config::read_config_file(None).unwrap();
+        let mut config = crate::config::read_config_file(None, false).unwrap();
         config
             .class
             .push((Regex::new("kitty").unwrap(), "term".to_string()));
@@ -832,7 +832,7 @@ mod tests {
 
     #[test]
     fn test_no_dedup_focus_no_fullscreen_one_workspace_middle() {
-        let mut config = crate::config::read_config_file(None).unwrap();
+        let mut config = crate::config::read_config_file(None, false).unwrap();
         config
             .class
             .push((Regex::new("kitty").unwrap(), "term".to_string()));
@@ -954,7 +954,7 @@ mod tests {
 
     #[test]
     fn test_no_dedup_no_focus_fullscreen_one_workspace_middle() {
-        let mut config = crate::config::read_config_file(None).unwrap();
+        let mut config = crate::config::read_config_file(None, false).unwrap();
         config
             .class
             .push((Regex::new("kitty").unwrap(), "term".to_string()));
@@ -1077,7 +1077,7 @@ mod tests {
 
     #[test]
     fn test_no_dedup_focus_fullscreen_one_workspace_middle() {
-        let mut config = crate::config::read_config_file(None).unwrap();
+        let mut config = crate::config::read_config_file(None, false).unwrap();
         config
             .class
             .push((Regex::new("kitty").unwrap(), "term".to_string()));
@@ -1200,7 +1200,7 @@ mod tests {
 
     #[test]
     fn test_dedup_no_focus_no_fullscreen_one_workspace() {
-        let mut config = crate::config::read_config_file(None).unwrap();
+        let mut config = crate::config::read_config_file(None, false).unwrap();
         config
             .class
             .push((Regex::new("kitty").unwrap(), "term".to_string()));
@@ -1286,7 +1286,7 @@ mod tests {
 
     #[test]
     fn test_dedup_focus_no_fullscreen_one_workspace_middle() {
-        let mut config = crate::config::read_config_file(None).unwrap();
+        let mut config = crate::config::read_config_file(None, false).unwrap();
         config
             .class
             .push((Regex::new("kitty").unwrap(), "term".to_string()));
@@ -1410,7 +1410,7 @@ mod tests {
 
     #[test]
     fn test_dedup_no_focus_fullscreen_one_workspace_middle() {
-        let mut config = crate::config::read_config_file(None).unwrap();
+        let mut config = crate::config::read_config_file(None, false).unwrap();
         config
             .class
             .push((Regex::new("kitty").unwrap(), "term".to_string()));
@@ -1534,7 +1534,7 @@ mod tests {
 
     #[test]
     fn test_dedup_focus_fullscreen_one_workspace_middle() {
-        let mut config = crate::config::read_config_file(None).unwrap();
+        let mut config = crate::config::read_config_file(None, false).unwrap();
         config
             .class
             .push((Regex::new("kitty").unwrap(), "term".to_string()));
@@ -1661,7 +1661,7 @@ mod tests {
 
     #[test]
     fn test_default_active_icon() {
-        let mut config = crate::config::read_config_file(None).unwrap();
+        let mut config = crate::config::read_config_file(None, false).unwrap();
         config
             .class
             .push((Regex::new("kitty").unwrap(), "k".to_string()));
@@ -1761,7 +1761,7 @@ mod tests {
 
     #[test]
     fn test_no_class_but_title_icon() {
-        let mut config = crate::config::read_config_file(None).unwrap();
+        let mut config = crate::config::read_config_file(None, false).unwrap();
         config.title_in_class.push((
             Regex::new("^$").unwrap(),
             vec![(Regex::new("(?i)spotify").unwrap(), "spotify".to_string())],
@@ -1811,7 +1811,7 @@ mod tests {
 
     #[test]
     fn test_no_default_class_active_fallback_to_class_default() {
-        let mut config = crate::config::read_config_file(None).unwrap();
+        let mut config = crate::config::read_config_file(None, false).unwrap();
 
         config
             .class_active
@@ -1858,7 +1858,7 @@ mod tests {
 
         assert_eq!(actual, expected);
 
-        let config = crate::config::read_config_file(None).unwrap();
+        let config = crate::config::read_config_file(None, false).unwrap();
 
         let renamer = Renamer::new(
             Config {
@@ -1904,7 +1904,7 @@ mod tests {
 
     #[test]
     fn test_initial_title_in_initial_class_combos() {
-        let mut config = crate::config::read_config_file(None).unwrap();
+        let mut config = crate::config::read_config_file(None, false).unwrap();
 
         config
             .class
