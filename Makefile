@@ -9,7 +9,7 @@ SHARE_DIR = $(DESTDIR)$(PREFIX)/share
 .PHONY: build-dev
 build-dev:
 	cargo update
-	cargo build
+	cargo build --features dev
 
 .PHONY: build
 build:
