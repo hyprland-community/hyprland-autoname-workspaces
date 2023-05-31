@@ -6,7 +6,7 @@
 ![](https://img.shields.io/aur/version/hyprland-autoname-workspaces-git)
 ![](https://img.shields.io/crates/v/hyprland-autoname-workspaces)
 [![Discord](https://img.shields.io/discord/1055990214411169892?label=discord)](https://discord.gg/zzWqvcKRMy)
-[![coverage](https://github.com/hyprland-community/hyprland-autoname-workspaces/actions/workflows/coverage.yml/badge.svg?branch=main)](https://github.com/hyprland-community/hyprland-autoname-workspaces/actions/workflows/coverage.yml)
+[![codecov](https://codecov.io/gh/hyprland-community/hyprland-autoname-workspaces/branch/main/graph/badge.svg?token=NYY5DRMLM4)](https://codecov.io/gh/hyprland-community/hyprland-autoname-workspaces)
 
 🕹️This is a toy for Hyprland.
 
