@@ -25,10 +25,10 @@ pub struct Renamer {
     args: Args,
 }
 
-#[derive(Clone, Debug, Eq)]
+#[derive(Eq, Clone, Debug)]
 pub struct AppClient {
-    initial_class: String,
     class: String,
+    initial_class: String,
     initial_title: String,
     title: String,
     is_active: bool,
@@ -2064,6 +2064,20 @@ mod tests {
                 "test {match1}".to_string(),
             )],
         ));
+        config.title_in_class.push((
+            Regex::new("(?i)foot").unwrap(),
+            vec![(
+                Regex::new("pacman: (.+?/.+?)-(.*)").unwrap(),
+                "test {match1} test2 {match2}".to_string(),
+            )],
+        ));
+        config.title_in_class_active.push((
+            Regex::new("(?i)foot").unwrap(),
+            vec![(
+                Regex::new("pacman: (.+?/.+?)-(.*)").unwrap(),
+                "*#test{match1}#between#{match2}endtest#*".to_string(),
+            )],
+        ));
 
         config.format.client_active = "*{icon}*".to_string();
 
@@ -2080,11 +2094,11 @@ mod tests {
             },
         );
 
-        let expected = [(1, "test (13 of 20) dev-lang/rust".to_string())]
+        let mut expected = [(1, "test (13 of 20) dev-lang/rust".to_string())]
             .into_iter()
             .collect();
 
-        let actual = renamer.generate_workspaces_string(
+        let mut actual = renamer.generate_workspaces_string(
             vec![AppWorkspace {
                 id: 1,
                 clients: vec![AppClient {
@@ -2100,6 +2114,39 @@ mod tests {
                         "zsh".to_string(),
                         "emerge: (13 of 20) dev-lang/rust-1.69.0-r1 Compile:".to_string(),
                         false,
+                        &config,
+                    ),
+                    is_dedup_inactive_fullscreen: false,
+                }],
+            }],
+            &config,
+        );
+
+        assert_eq!(actual, expected);
+
+        expected = [(
+            1,
+            "*#test(14 of 20) dev-lang/rust#between#1.69.0-r1 Compile:endtest#*".to_string(),
+        )]
+        .into_iter()
+        .collect();
+
+        actual = renamer.generate_workspaces_string(
+            vec![AppWorkspace {
+                id: 1,
+                clients: vec![AppClient {
+                    initial_class: "foot".to_string(),
+                    class: "foot".to_string(),
+                    initial_title: "zsh".to_string(),
+                    title: "pacman: (14 of 20) dev-lang/rust-1.69.0-r1 Compile:".to_string(),
+                    is_active: true,
+                    is_fullscreen: false,
+                    matched_rule: renamer.parse_icon(
+                        "foot".to_string(),
+                        "foot".to_string(),
+                        "zsh".to_string(),
+                        "pacman: (14 of 20) dev-lang/rust-1.69.0-r1 Compile:".to_string(),
+                        true,
                         &config,
                     ),
                     is_dedup_inactive_fullscreen: false,

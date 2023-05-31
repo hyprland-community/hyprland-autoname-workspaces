@@ -1,15 +1,14 @@
-use std::collections::HashMap;
-
 use crate::renamer::IconConfig::*;
 use crate::renamer::IconStatus::*;
 use crate::renamer::{ConfigFile, Renamer};
+use std::collections::HashMap;
 
 type Rule = String;
 type Icon = String;
 type Title = String;
 type Class = String;
 type Captures = Option<HashMap<String, String>>;
-type IconMatch = Option<(Rule, Icon, Option<HashMap<String, String>>)>;
+type IconMatch = Option<(Rule, Icon, Captures)>;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum IconConfig {
