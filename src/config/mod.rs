@@ -10,6 +10,7 @@ use std::path::PathBuf;
 use std::process;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
+const BIN_NAME: &str = env!("CARGO_BIN_NAME");
 
 #[derive(Default, Clone, Debug)]
 pub struct Config {
@@ -218,7 +219,7 @@ pub fn get_config_path(args: &Option<String>) -> Result<PathBuf, Box<dyn Error>>
     let cfg_path = match args {
         Some(path) => PathBuf::from(path),
         _ => {
-            let xdg_dirs = xdg::BaseDirectories::with_prefix("hyprland-autoname-workspaces")?;
+            let xdg_dirs = xdg::BaseDirectories::with_prefix(BIN_NAME)?;
             xdg_dirs.place_config_file("config.toml")?
         }
     };
@@ -236,7 +237,7 @@ fn migrate_config_file(
     let last_version = Version::parse(VERSION)?;
     let need_migrate = actual_version < last_version;
     if need_migrate {
-        println!("Config in version {:?} need to be updated in version {:?}, run: hyprland-autoname-workspaces --migrate-config", actual_version.to_string(), last_version.to_string());
+        println!("Config in version {actual_version} need to be updated in version {last_version}, run: {BIN_NAME} --migrate-config");
     }
     if need_migrate && migrate_config {
         config
