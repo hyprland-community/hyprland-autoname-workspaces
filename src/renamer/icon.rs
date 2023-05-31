@@ -221,7 +221,6 @@ impl Renamer {
     }
 }
 
-// TODO: capture support to be done here
 fn find_title_in_class_helper(
     list: &[(regex::Regex, Vec<(regex::Regex, Icon)>)],
     class: &str,
@@ -235,24 +234,24 @@ fn find_title_in_class_helper(
                 .find(|(rule, _)| rule.is_match(title))
                 .map(|(rule, icon)| (rule, icon))
         })
-        .map(|(rule, icon)| {
-            let caps = rule.captures(title).unwrap();
-            // forge vars with cap1 = value, cap2 = value2
-            if caps.len() > 0 {
-                let x = caps
-                    .iter()
-                    .enumerate()
-                    .map(|(k, v)| {
-                        (
-                            format!("match{}", k),
-                            v.map_or("", |m| m.as_str()).to_string(),
-                        )
-                    })
-                    .collect();
-                (rule.to_string(), icon.to_string(), Some(x))
-            } else {
-                (rule.to_string(), icon.to_string(), None)
-            }
+        .map(|(rule, icon)| match rule.captures(title) {
+            Some(re_captures) => (
+                rule.to_string(),
+                icon.to_string(),
+                Some(
+                    re_captures
+                        .iter()
+                        .enumerate()
+                        .map(|(k, v)| {
+                            (
+                                format!("match{k}"),
+                                v.map_or("", |m| m.as_str()).to_string(),
+                            )
+                        })
+                        .collect(),
+                ),
+            ),
+            None => (rule.to_string(), icon.to_string(), None),
         })
 }
 
