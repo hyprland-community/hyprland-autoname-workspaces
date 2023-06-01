@@ -319,9 +319,7 @@ fn find_icon_helper(
 
 fn get_captures(title: Option<&str>, rule: &regex::Regex) -> Captures {
     match title {
-        Some(t) => match rule.captures(t) {
-            Some(re_captures) => Some(
-                re_captures
+        Some(t) => rule.captures(t).map(|re_captures| re_captures
                     .iter()
                     .enumerate()
                     .map(|(k, v)| {
@@ -330,10 +328,7 @@ fn get_captures(title: Option<&str>, rule: &regex::Regex) -> Captures {
                             v.map_or("", |m| m.as_str()).to_string(),
                         )
                     })
-                    .collect(),
-            ),
-            _ => None,
-        },
+                    .collect()),
         _ => None,
     }
 }
