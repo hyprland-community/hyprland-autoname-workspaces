@@ -69,6 +69,11 @@ impl Renamer {
             ("delim".to_string(), delim.to_string()),
         ]);
 
+        // get regex captures and merge them with vars
+        if let Some(re_captures) = client.matched_rule.captures() {
+            merge_vars(&mut vars, re_captures);
+        };
+
         let icon = match (client.is_active, client.matched_rule.clone()) {
             (true, c @ Inactive(_)) => {
                 vars.insert("default_icon".to_string(), c.icon());
@@ -145,6 +150,10 @@ pub fn generate_counted_clients(
     } else {
         clients.into_iter().map(|c| (c, 1)).collect()
     }
+}
+
+fn merge_vars(map1: &mut HashMap<String, String>, map2: HashMap<String, String>) {
+    map1.extend(map2);
 }
 
 pub fn to_superscript(number: i32) -> String {

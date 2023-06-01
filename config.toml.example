@@ -21,6 +21,10 @@ DEFAULT="{icon}"
 # [initial_class_active]
 # "(?i)Kitty" = "*TERM*"
 
+# regex captures support is supported
+[title_in_class."(?i)foot"]
+"emerge: (.+?/.+?)-.*" = "{match1}"
+
 [initial_title_in_class."kitty"]
 "zsh" = "Zsh"
 

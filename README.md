@@ -12,7 +12,7 @@
 
 This app automatically rename workspaces with icons of started applications - tested with _[waybar](https://aur.archlinux.org/packages/waybar-hyprland-git)_.
 
-You have to set the config file with your prefered rules based on `class` and `title`. Regex are supported.
+You have to set the config file with your prefered rules based on `class` and `title`. Regex (match and captures) are supported.
 
 ## FAQ, tips and tricks ❓
 
@@ -47,7 +47,7 @@ _You can use regex everywhere, and its case sensitive by default_
 
 Edit the mapping of applications with `class = "icon"` in the `[icons]` part.
 
-In icons value, you can use the placeholders `{class}` and `{title}`.
+In icons value, you can use the placeholders `{class}`, `{title}` and `{match1}`, `{match2}` if you use regex captures.
 
 Example:
 
@@ -122,6 +122,7 @@ clients:
 - counter_s, counter_unfocused_s, counter, counter_unfocused
 - class, iitle
 - delim
+- match1, match2, match3, matchN (for regex captures)
 
 ```
 [format]

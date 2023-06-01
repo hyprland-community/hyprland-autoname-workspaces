@@ -1,48 +1,59 @@
 use crate::renamer::IconConfig::*;
 use crate::renamer::IconStatus::*;
 use crate::renamer::{ConfigFile, Renamer};
+use std::collections::HashMap;
 
 type Rule = String;
 type Icon = String;
 type Title = String;
 type Class = String;
+type Captures = Option<HashMap<String, String>>;
+type IconMatch = Option<(Rule, Icon, Captures)>;
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum IconConfig {
     Class(Rule, Icon),
     InitialClass(Rule, Icon),
-    TitleInClass(Rule, Icon),
-    TitleInInitialClass(Rule, Icon),
-    InitialTitleInClass(Rule, Icon),
-    InitialTitleInInitialClass(Rule, Icon),
+    TitleInClass(Rule, Icon, Captures),
+    TitleInInitialClass(Rule, Icon, Captures),
+    InitialTitleInClass(Rule, Icon, Captures),
+    InitialTitleInInitialClass(Rule, Icon, Captures),
     Default(Icon),
 }
 
 impl IconConfig {
     pub fn icon(&self) -> Icon {
-        let (_, icon) = self.get();
+        let (_, icon, _) = self.get();
         icon
     }
 
     pub fn rule(&self) -> Rule {
-        let (rule, _) = self.get();
+        let (rule, _, _) = self.get();
         rule
     }
 
-    pub fn get(&self) -> (Rule, Icon) {
+    pub fn captures(&self) -> Captures {
+        let (_, _, captures) = self.get();
+        captures
+    }
+
+    pub fn get(&self) -> (Rule, Icon, Captures) {
         match &self {
-            Default(icon) => ("DEFAULT".to_string(), icon.to_string()),
-            Class(rule, icon)
-            | InitialClass(rule, icon)
-            | TitleInClass(rule, icon)
-            | TitleInInitialClass(rule, icon)
-            | InitialTitleInClass(rule, icon)
-            | InitialTitleInInitialClass(rule, icon) => (rule.to_string(), icon.to_string()),
+            Default(icon) => ("DEFAULT".to_string(), icon.to_string(), None),
+            Class(rule, icon) | InitialClass(rule, icon) => {
+                (rule.to_string(), icon.to_string(), None)
+            }
+            TitleInClass(rule, icon, captures)
+            | TitleInInitialClass(rule, icon, captures)
+            | InitialTitleInClass(rule, icon, captures)
+            | InitialTitleInInitialClass(rule, icon, captures) => {
+                (rule.to_string(), icon.to_string(), captures.clone())
+            }
         }
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum IconStatus {
     Active(IconConfig),
     Inactive(IconConfig),
@@ -60,15 +71,21 @@ impl IconStatus {
             Active(config) | Inactive(config) => config.rule(),
         }
     }
+
+    pub fn captures(&self) -> Captures {
+        match self {
+            Active(config) | Inactive(config) => config.captures(),
+        }
+    }
 }
 
 macro_rules! find_icon_config {
     ($list:expr, $class:expr, $title:expr, $is_active:expr, $enum_variant:ident) => {
-        find_title_in_class_helper($list, $class, $title).map(|(rule, icon)| {
+        find_title_in_class_helper($list, $class, $title).map(|(rule, icon, captures)| {
             if $is_active {
-                Active($enum_variant(rule, icon))
+                Active($enum_variant(rule, icon, captures))
             } else {
-                Inactive($enum_variant(rule, icon))
+                Inactive($enum_variant(rule, icon, captures))
             }
         })
     };
@@ -171,6 +188,7 @@ impl Renamer {
             false,
             config,
         );
+
         let icon_active =
             self.find_icon(&initial_class, &class, &initial_title, &title, true, config);
 
@@ -206,14 +224,33 @@ fn find_title_in_class_helper(
     list: &[(regex::Regex, Vec<(regex::Regex, Icon)>)],
     class: &str,
     title: &str,
-) -> Option<(Rule, Icon)> {
+) -> IconMatch {
     list.iter()
         .find(|(re_class, _)| re_class.is_match(class))
         .and_then(|(_, title_icon)| {
             title_icon
                 .iter()
                 .find(|(rule, _)| rule.is_match(title))
-                .map(|(rule, icon)| (rule.to_string(), icon.to_string()))
+                .map(|(rule, icon)| (rule, icon))
+        })
+        .map(|(rule, icon)| match rule.captures(title) {
+            Some(re_captures) => (
+                rule.to_string(),
+                icon.to_string(),
+                Some(
+                    re_captures
+                        .iter()
+                        .enumerate()
+                        .map(|(k, v)| {
+                            (
+                                format!("match{k}"),
+                                v.map_or("", |m| m.as_str()).to_string(),
+                            )
+                        })
+                        .collect(),
+                ),
+            ),
+            None => (rule.to_string(), icon.to_string(), None),
         })
 }
 
