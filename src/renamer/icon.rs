@@ -259,47 +259,40 @@ fn find_icon_helper(
     initial_class: Option<&str>,
     initial_title: Option<&str>,
 ) -> Option<IconStatus> {
+    let the_class = match (class, initial_class) {
+        (Some(c), None) | (None, Some(c)) => c,
+        (_, _) => unreachable!(),
+    };
+
+    let the_title = match (title, initial_title) {
+        (Some(t), None) | (None, Some(t)) => t,
+        (_, _) => unreachable!(),
+    };
+
     match (list_class, list_title_in_class) {
-        (Some(list), None) => list
-            .iter()
-            .find(|(rule, _)| {
-                let the_class = match (class, initial_class) {
-                    (Some(c), None) | (None, Some(c)) => c,
-                    (_, _) => unreachable!(),
-                };
-                rule.is_match(the_class)
-            })
-            .map(|(rule, icon)| {
-                forge_icon_status(
-                    is_active,
-                    rule.to_string(),
-                    icon.to_string(),
-                    class,
-                    title,
-                    initial_class,
-                    initial_title,
-                    None,
-                )
-            }),
+        (Some(list), None) => {
+            list.iter()
+                .find(|(rule, _)| rule.is_match(the_class))
+                .map(|(rule, icon)| {
+                    forge_icon_status(
+                        is_active,
+                        rule.to_string(),
+                        icon.to_string(),
+                        class,
+                        title,
+                        initial_class,
+                        initial_title,
+                        None,
+                    )
+                })
+        }
         (None, Some(list)) => list
             .iter()
-            .find(|(re_class, _)| {
-                let the_class = match (class, initial_class) {
-                    (Some(c), None) | (None, Some(c)) => c,
-                    (_, _) => unreachable!(),
-                };
-                re_class.is_match(the_class)
-            })
+            .find(|(re_class, _)| re_class.is_match(the_class))
             .and_then(|(_, title_icon)| {
                 title_icon
                     .iter()
-                    .find(|(rule, _)| {
-                        let the_title = match (title, initial_title) {
-                            (Some(t), None) | (None, Some(t)) => t,
-                            (_, _) => unreachable!(),
-                        };
-                        rule.is_match(the_title)
-                    })
+                    .find(|(rule, _)| rule.is_match(the_title))
                     .map(|(rule, icon)| {
                         forge_icon_status(
                             is_active,
