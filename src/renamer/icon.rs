@@ -8,7 +8,8 @@ type Icon = String;
 type Title = String;
 type Class = String;
 type Captures = Option<HashMap<String, String>>;
-type IconMatch = Option<(Rule, Icon, Captures)>;
+type ListTitleInClass<'a> = Option<&'a [(regex::Regex, Vec<(regex::Regex, Icon)>)]>;
+type ListClass<'a> = Option<&'a [(regex::Regex, Icon)]>;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum IconConfig {
@@ -79,27 +80,6 @@ impl IconStatus {
     }
 }
 
-macro_rules! find_icon_config {
-    ($list:expr, $class:expr, $title:expr, $is_active:expr, $enum_variant:ident) => {
-        find_title_in_class_helper($list, $class, $title).map(|(rule, icon, captures)| {
-            if $is_active {
-                Active($enum_variant(rule, icon, captures))
-            } else {
-                Inactive($enum_variant(rule, icon, captures))
-            }
-        })
-    };
-    ($list:expr, $class:expr, $is_active:expr, $enum_variant:ident) => {
-        find_class_helper($list, $class).map(|(rule, icon)| {
-            if $is_active {
-                Active($enum_variant(rule, icon))
-            } else {
-                Inactive($enum_variant(rule, icon))
-            }
-        })
-    };
-}
-
 impl Renamer {
     fn find_icon(
         &self,
@@ -137,38 +117,60 @@ impl Renamer {
             )
         };
 
-        find_icon_config!(
-            list_initial_title_in_initial_class,
-            initial_class,
-            initial_title,
+        find_icon_helper(
             is_active,
-            InitialTitleInInitialClass
+            Some(list_initial_title_in_initial_class),
+            None,
+            None,
+            None,
+            Some(initial_class),
+            Some(initial_title),
         )
-        .or_else(|| {
-            find_icon_config!(
-                list_initial_title_in_class,
-                class,
-                initial_title,
-                is_active,
-                InitialTitleInClass
-            )
-            .or_else(|| {
-                find_icon_config!(
-                    list_title_in_initial_class,
-                    initial_class,
-                    title,
-                    is_active,
-                    TitleInInitialClass
-                )
-                .or_else(|| {
-                    find_icon_config!(list_title_in_class, class, title, is_active, TitleInClass)
-                        .or_else(|| {
-                            find_icon_config!(list_initial_class, class, is_active, InitialClass)
-                        })
-                        .or_else(|| find_icon_config!(list_class, class, is_active, Class))
-                })
-            })
-        })
+        .or(find_icon_helper(
+            is_active,
+            Some(list_initial_title_in_class),
+            None,
+            Some(class),
+            None,
+            None,
+            Some(initial_title),
+        )
+        .or(find_icon_helper(
+            is_active,
+            Some(list_title_in_initial_class),
+            None,
+            None,
+            Some(title),
+            Some(initial_class),
+            None,
+        )
+        .or(find_icon_helper(
+            is_active,
+            Some(list_title_in_class),
+            None,
+            Some(class),
+            Some(title),
+            None,
+            None,
+        )
+        .or(find_icon_helper(
+            is_active,
+            None,
+            Some(list_initial_class),
+            None,
+            None,
+            Some(class),
+            None,
+        ))
+        .or(find_icon_helper(
+            is_active,
+            None,
+            Some(list_class),
+            Some(class),
+            None,
+            None,
+            None,
+        )))))
     }
 
     pub fn parse_icon(
@@ -220,42 +222,109 @@ impl Renamer {
     }
 }
 
-fn find_title_in_class_helper(
-    list: &[(regex::Regex, Vec<(regex::Regex, Icon)>)],
-    class: &str,
-    title: &str,
-) -> IconMatch {
-    list.iter()
-        .find(|(re_class, _)| re_class.is_match(class))
-        .and_then(|(_, title_icon)| {
-            title_icon
-                .iter()
-                .find(|(rule, _)| rule.is_match(title))
-                .map(|(rule, icon)| (rule, icon))
-        })
-        .map(|(rule, icon)| match rule.captures(title) {
-            Some(re_captures) => (
-                rule.to_string(),
-                icon.to_string(),
-                Some(
-                    re_captures
-                        .iter()
-                        .enumerate()
-                        .map(|(k, v)| {
-                            (
-                                format!("match{k}"),
-                                v.map_or("", |m| m.as_str()).to_string(),
-                            )
-                        })
-                        .collect(),
-                ),
-            ),
-            None => (rule.to_string(), icon.to_string(), None),
-        })
+pub fn forge_icon_status(
+    is_active: bool,
+    rule: String,
+    icon: String,
+    class: Option<&str>,
+    title: Option<&str>,
+    initial_class: Option<&str>,
+    initial_title: Option<&str>,
+    captures: Captures,
+) -> IconStatus {
+    let icon = match (class, title, initial_class, initial_title, captures) {
+        (None, None, None, None, None) => Default(icon),
+        (Some(_), None, None, None, None) => Class(rule, icon),
+        (None, None, Some(_), None, None) => InitialClass(rule, icon),
+        (Some(_), Some(_), None, None, c) => TitleInClass(rule, icon, c),
+        (None, None, Some(_), Some(_), c) => InitialTitleInInitialClass(rule, icon, c),
+        (None, Some(_), Some(_), None, c) => TitleInInitialClass(rule, icon, c),
+        (Some(_), None, None, Some(_), c) => InitialTitleInClass(rule, icon, c),
+        (_, _, _, _, _) => Default(icon),
+    };
+
+    if is_active {
+        Active(icon)
+    } else {
+        Inactive(icon)
+    }
 }
 
-fn find_class_helper(list: &[(regex::Regex, Icon)], class: &str) -> Option<(Rule, Icon)> {
-    list.iter()
-        .find(|(rule, _)| rule.is_match(class))
-        .map(|(rule, icon)| (rule.to_string(), icon.to_string()))
+fn find_icon_helper(
+    is_active: bool,
+    list_title_in_class: ListTitleInClass,
+    list_class: ListClass,
+    class: Option<&str>,
+    title: Option<&str>,
+    initial_class: Option<&str>,
+    initial_title: Option<&str>,
+) -> Option<IconStatus> {
+    let the_class = match (class, initial_class) {
+        (Some(c), None) | (None, Some(c)) => c,
+        (_, _) => unreachable!(),
+    };
+
+    match (list_class, list_title_in_class) {
+        (Some(list), None) => {
+            list.iter()
+                .find(|(rule, _)| rule.is_match(the_class))
+                .map(|(rule, icon)| {
+                    forge_icon_status(
+                        is_active,
+                        rule.to_string(),
+                        icon.to_string(),
+                        class,
+                        title,
+                        initial_class,
+                        initial_title,
+                        None,
+                    )
+                })
+        }
+        (None, Some(list)) => {
+            let the_title = match (title, initial_title) {
+                (Some(t), None) | (None, Some(t)) => t,
+                (_, _) => unreachable!(),
+            };
+
+            list.iter()
+                .find(|(re_class, _)| re_class.is_match(the_class))
+                .and_then(|(_, title_icon)| {
+                    title_icon
+                        .iter()
+                        .find(|(rule, _)| rule.is_match(the_title))
+                        .map(|(rule, icon)| {
+                            forge_icon_status(
+                                is_active,
+                                rule.to_string(),
+                                icon.to_string(),
+                                class,
+                                title,
+                                initial_class,
+                                initial_title,
+                                get_captures(title, rule),
+                            )
+                        })
+                })
+        }
+        (_, _) => unreachable!(),
+    }
+}
+
+fn get_captures(title: Option<&str>, rule: &regex::Regex) -> Captures {
+    match title {
+        Some(t) => rule.captures(t).map(|re_captures| {
+            re_captures
+                .iter()
+                .enumerate()
+                .map(|(k, v)| {
+                    (
+                        format!("match{k}"),
+                        v.map_or("", |m| m.as_str()).to_string(),
+                    )
+                })
+                .collect()
+        }),
+        _ => None,
+    }
 }

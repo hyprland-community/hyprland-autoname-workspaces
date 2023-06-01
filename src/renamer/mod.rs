@@ -25,17 +25,16 @@ pub struct Renamer {
     args: Args,
 }
 
-#[derive(Eq, Clone, Debug)]
+#[derive(Clone, Eq, Debug)]
 pub struct AppClient {
     class: String,
-    //FIXME: clippy is trouble by the macro
-    // `find_icon_config!()`
-    // maybe we can try to remove it
+    title: String,
+    //FIXME: I can't understand why clippy
+    // see dead code, but for me, my code is not dead!
     #[allow(dead_code)]
     initial_class: String,
     #[allow(dead_code)]
     initial_title: String,
-    title: String,
     is_active: bool,
     is_fullscreen: bool,
     is_dedup_inactive_fullscreen: bool,

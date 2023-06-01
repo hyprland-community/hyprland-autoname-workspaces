@@ -94,7 +94,7 @@ impl Renamer {
         );
 
         if self.args.debug {
-            println!("client: {:?}\nformatter vars => {:#?}", client, vars);
+            println!("client: {client:#?}\nformatter vars => {vars:#?}");
         }
 
         let is_grouped =
