@@ -16,7 +16,7 @@ use std::{process, thread};
 fn main() {
     let args = Args::parse();
     let cfg_path = get_config_path(&args.config).expect("Can't get config path");
-    let cfg = Config::new(cfg_path, args.dump).expect("Unable to read config");
+    let cfg = Config::new(cfg_path, args.dump, args.migrate_config).expect("Unable to read config");
 
     let instance = SingleInstance::new("Hyprland-autoname-workspaces").unwrap();
     if !instance.is_single() {

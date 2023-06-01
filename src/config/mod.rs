@@ -1,4 +1,5 @@
 use regex::Regex;
+use semver::Version;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::error::Error;
@@ -7,6 +8,9 @@ use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 use std::process;
+
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+const BIN_NAME: &str = env!("CARGO_BIN_NAME");
 
 #[derive(Default, Clone, Debug)]
 pub struct Config {
@@ -87,8 +91,10 @@ pub struct ConfigFormatRaw {
     pub client_dup_fullscreen: String,
 }
 
-#[derive(Deserialize, Serialize, Default)]
+#[derive(Deserialize, Serialize)]
 pub struct ConfigFileRaw {
+    #[serde(default)]
+    pub version: String,
     #[serde(default = "default_class", alias = "icons")]
     pub class: HashMap<String, String>,
     #[serde(default, alias = "active_icons", alias = "icons_active")]
@@ -138,25 +144,41 @@ pub struct ConfigFile {
 }
 
 impl Config {
-    pub fn new(cfg_path: PathBuf, dump: bool) -> Result<Config, Box<dyn Error>> {
+    pub fn new(
+        cfg_path: PathBuf,
+        dump_config: bool,
+        migrate_config: bool,
+    ) -> Result<Config, Box<dyn Error>> {
         if !cfg_path.exists() {
             _ = create_default_config(&cfg_path);
         }
 
-        let config = read_config_file(Some(cfg_path.clone()), dump)?;
-
         Ok(Config {
-            config,
+            config: read_config_file(Some(cfg_path.clone()), dump_config, migrate_config)?,
             cfg_path: Some(cfg_path),
         })
     }
 }
 
+impl ConfigFileRaw {
+    pub fn migrate(&mut self, cfg_path: &Option<PathBuf>) -> Result<(), Box<dyn Error>> {
+        self.version = VERSION.to_string();
+        let config_updated = toml::to_string(&self)?;
+        if let Some(path) = cfg_path {
+            let config_file = &mut File::create(path)?;
+            write!(config_file, "{config_updated}")?;
+            println!("Config file successfully migrated in {path:?}");
+        }
+        Ok(())
+    }
+}
+
 pub fn read_config_file(
     cfg_path: Option<PathBuf>,
-    dump: bool,
+    dump_config: bool,
+    migrate_config: bool,
 ) -> Result<ConfigFile, Box<dyn Error>> {
-    let config: ConfigFileRaw = match cfg_path {
+    let mut config: ConfigFileRaw = match &cfg_path {
         Some(path) => {
             let config_string = fs::read_to_string(path)?;
             toml::from_str(&config_string).map_err(|e| format!("Unable to parse: {e:?}"))?
@@ -164,31 +186,31 @@ pub fn read_config_file(
         None => toml::from_str("").map_err(|e| format!("Unable to parse: {e:?}"))?,
     };
 
-    if dump {
+    migrate_config_file(&mut config, migrate_config, cfg_path)?;
+
+    if dump_config {
         println!("{}", serde_json::to_string_pretty(&config)?);
         process::exit(0);
     }
 
     Ok(ConfigFile {
-        class: generate_icon_config(config.class),
-        class_active: generate_icon_config(config.class_active),
-        title_in_class: generate_title_config(config.title_in_class),
-        title_in_class_active: generate_title_config(config.title_in_class_active),
-        title_in_initial_class: generate_title_config(config.title_in_initial_class),
-        title_in_initial_class_active: generate_title_config(config.title_in_initial_class_active),
-        initial_class: generate_icon_config(config.initial_class.clone()),
-        initial_class_active: generate_icon_config(config.initial_class_active.clone()),
-        initial_title_in_class: generate_title_config(config.initial_title_in_class.clone()),
-        initial_title_in_class_active: generate_title_config(
-            config.initial_title_in_class_active.clone(),
-        ),
+        class: generate_icon_config(&config.class),
+        class_active: generate_icon_config(&config.class_active),
+        initial_class: generate_icon_config(&config.initial_class),
+        initial_class_active: generate_icon_config(&config.initial_class_active),
+        title_in_class: generate_title_config(&config.title_in_class),
+        title_in_class_active: generate_title_config(&config.title_in_class_active),
+        title_in_initial_class: generate_title_config(&config.title_in_initial_class),
+        title_in_initial_class_active: generate_title_config(&config.title_in_initial_class_active),
+        initial_title_in_class: generate_title_config(&config.initial_title_in_class),
+        initial_title_in_class_active: generate_title_config(&config.initial_title_in_class_active),
         initial_title_in_initial_class: generate_title_config(
-            config.initial_title_in_initial_class.clone(),
+            &config.initial_title_in_initial_class,
         ),
         initial_title_in_initial_class_active: generate_title_config(
-            config.initial_title_in_initial_class_active.clone(),
+            &config.initial_title_in_initial_class_active,
         ),
-        exclude: generate_exclude_config(config.exclude),
+        exclude: generate_exclude_config(&config.exclude),
         format: config.format,
     })
 }
@@ -197,12 +219,32 @@ pub fn get_config_path(args: &Option<String>) -> Result<PathBuf, Box<dyn Error>>
     let cfg_path = match args {
         Some(path) => PathBuf::from(path),
         _ => {
-            let xdg_dirs = xdg::BaseDirectories::with_prefix("hyprland-autoname-workspaces")?;
+            let xdg_dirs = xdg::BaseDirectories::with_prefix(BIN_NAME)?;
             xdg_dirs.place_config_file("config.toml")?
         }
     };
 
     Ok(cfg_path)
+}
+
+fn migrate_config_file(
+    config: &mut ConfigFileRaw,
+    migrate_config: bool,
+    cfg_path: Option<PathBuf>,
+) -> Result<(), Box<dyn Error>> {
+    let default_version = Version::parse("1.0.0")?;
+    let actual_version = Version::parse(&config.version).unwrap_or(default_version);
+    let last_version = Version::parse(VERSION)?;
+    let need_migrate = actual_version < last_version;
+    if need_migrate {
+        println!("Config in version {actual_version} need to be updated in version {last_version}, run: {BIN_NAME} --migrate-config");
+    }
+    if need_migrate && migrate_config {
+        config
+            .migrate(&cfg_path)
+            .map_err(|e| format!("Unable to migrate config {e:?}"))?;
+    };
+    Ok(())
 }
 
 pub fn create_default_config(cfg_path: &PathBuf) -> Result<&'static str, Box<dyn Error + 'static>> {
@@ -275,7 +317,6 @@ DEFAULT = "*{icon}*"
 # [initial_title_active."(?i)kitty"]
 # "zsh" = "*Zsh*"
 
-
 # Add your applications that need to be exclude
 # The key is the class, the value is the title.
 # You can put an empty title to exclude based on
@@ -345,7 +386,7 @@ fn regex_with_error_logging(pattern: &str) -> Option<Regex> {
 /// let title_icons = generate_title_config(title_icons_map);
 /// ```
 fn generate_title_config(
-    icons: HashMap<String, HashMap<String, String>>,
+    icons: &HashMap<String, HashMap<String, String>>,
 ) -> Vec<(Regex, Vec<(Regex, String)>)> {
     icons
         .iter()
@@ -380,7 +421,7 @@ fn generate_title_config(
 /// ```
 /// let icons_config = generate_icon_config(icons_map);
 /// ```
-fn generate_icon_config(icons: HashMap<String, String>) -> Vec<(Regex, String)> {
+fn generate_icon_config(icons: &HashMap<String, String>) -> Vec<(Regex, String)> {
     icons
         .iter()
         .filter_map(|(class, icon)| {
@@ -404,7 +445,7 @@ fn generate_icon_config(icons: HashMap<String, String>) -> Vec<(Regex, String)> 
 /// ```
 /// let exclude_config = generate_exclude_config(exclude_map);
 /// ```
-fn generate_exclude_config(icons: HashMap<String, String>) -> Vec<(Regex, Regex)> {
+fn generate_exclude_config(icons: &HashMap<String, String>) -> Vec<(Regex, Regex)> {
     icons
         .iter()
         .filter_map(|(class, title)| {
@@ -427,7 +468,7 @@ mod tests {
         inner_map.insert("Title1".to_string(), "Icon1".to_string());
         title_icons_map.insert("Class1".to_string(), inner_map);
 
-        let title_config = generate_title_config(title_icons_map);
+        let title_config = generate_title_config(&title_icons_map);
 
         assert_eq!(title_config.len(), 1);
         assert!(title_config[0].0.is_match("Class1"));
@@ -438,10 +479,10 @@ mod tests {
 
     #[test]
     fn test_generate_icon_config() {
-        let mut icons_map: HashMap<String, String> = HashMap::new();
-        icons_map.insert("Class1".to_string(), "Icon1".to_string());
+        let mut list_class: HashMap<String, String> = HashMap::new();
+        list_class.insert("Class1".to_string(), "Icon1".to_string());
 
-        let icons_config = generate_icon_config(icons_map);
+        let icons_config = generate_icon_config(&list_class);
 
         assert_eq!(icons_config.len(), 1);
         assert!(icons_config[0].0.is_match("Class1"));
@@ -450,10 +491,10 @@ mod tests {
 
     #[test]
     fn test_generate_exclude_config() {
-        let mut exclude_map: HashMap<String, String> = HashMap::new();
-        exclude_map.insert("Class1".to_string(), "Title1".to_string());
+        let mut list_exclude: HashMap<String, String> = HashMap::new();
+        list_exclude.insert("Class1".to_string(), "Title1".to_string());
 
-        let exclude_config = generate_exclude_config(exclude_map);
+        let exclude_config = generate_exclude_config(&list_exclude);
 
         assert_eq!(exclude_config.len(), 1);
         assert!(exclude_config[0].0.is_match("Class1"));
@@ -472,12 +513,12 @@ mod tests {
     #[test]
     fn test_config_new_and_read_again_then_compare_format() {
         let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
-        let config = Config::new(cfg_path.clone(), false);
+        let config = Config::new(cfg_path.clone(), false, false);
         assert_eq!(config.is_ok(), true);
         let config = config.unwrap().clone();
         assert_eq!(config.cfg_path.clone(), Some(cfg_path.clone()));
         let format = config.config.format.clone();
-        let config2 = read_config_file(Some(cfg_path.clone()), false).unwrap();
+        let config2 = read_config_file(Some(cfg_path.clone()), false, false).unwrap();
         let format2 = config2.format.clone();
         assert_eq!(format, format2);
     }
