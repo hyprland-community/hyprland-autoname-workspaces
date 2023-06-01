@@ -2078,7 +2078,7 @@ mod tests {
 
     #[test]
     fn test_regex_capture_support() {
-        let mut config = crate::config::read_config_file(None, false).unwrap();
+        let mut config = crate::config::read_config_file(None, false, false).unwrap();
 
         config.title_in_class.push((
             Regex::new("(?i)foot").unwrap(),
@@ -2114,6 +2114,7 @@ mod tests {
                 debug: false,
                 config: None,
                 dump: false,
+                migrate_config: false,
             },
         );
 
