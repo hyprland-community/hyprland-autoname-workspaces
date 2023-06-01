@@ -25,15 +25,10 @@ pub struct Renamer {
     args: Args,
 }
 
-#[derive(Eq, Clone, Debug)]
+#[derive(Clone, Debug, Eq)]
 pub struct AppClient {
-    class: String,
-    //FIXME: clippy is trouble by the macro
-    // `find_icon_config!()`
-    // maybe we can try to remove it
-    #[allow(dead_code)]
     initial_class: String,
-    #[allow(dead_code)]
+    class: String,
     initial_title: String,
     title: String,
     is_active: bool,
