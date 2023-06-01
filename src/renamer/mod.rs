@@ -25,12 +25,16 @@ pub struct Renamer {
     args: Args,
 }
 
-#[derive(Clone, Debug, Eq)]
+#[derive(Clone, Eq, Debug)]
 pub struct AppClient {
-    initial_class: String,
     class: String,
-    initial_title: String,
     title: String,
+    //FIXME: I can't understand why clippy
+    // see dead code, but for me, my code is not dead!
+    #[allow(dead_code)]
+    initial_class: String,
+    #[allow(dead_code)]
+    initial_title: String,
     is_active: bool,
     is_fullscreen: bool,
     is_dedup_inactive_fullscreen: bool,

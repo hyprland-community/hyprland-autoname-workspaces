@@ -319,7 +319,6 @@ DEFAULT = "*{icon}*"
 # [initial_title_active."(?i)kitty"]
 # "zsh" = "*Zsh*"
 
-
 # Add your applications that need to be exclude
 # The key is the class, the value is the title.
 # You can put an empty title to exclude based on

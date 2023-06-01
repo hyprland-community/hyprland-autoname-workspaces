@@ -240,7 +240,7 @@ pub fn forge_icon_status(
         (None, None, Some(_), Some(_), c) => InitialTitleInInitialClass(rule, icon, c),
         (None, Some(_), Some(_), None, c) => TitleInInitialClass(rule, icon, c),
         (Some(_), None, None, Some(_), c) => InitialTitleInClass(rule, icon, c),
-        (_, _, _, _, _) => unreachable!(),
+        (_, _, _, _, _) => Default(icon),
     };
 
     if is_active {
@@ -264,11 +264,6 @@ fn find_icon_helper(
         (_, _) => unreachable!(),
     };
 
-    let the_title = match (title, initial_title) {
-        (Some(t), None) | (None, Some(t)) => t,
-        (_, _) => unreachable!(),
-    };
-
     match (list_class, list_title_in_class) {
         (Some(list), None) => {
             list.iter()
@@ -286,26 +281,32 @@ fn find_icon_helper(
                     )
                 })
         }
-        (None, Some(list)) => list
-            .iter()
-            .find(|(re_class, _)| re_class.is_match(the_class))
-            .and_then(|(_, title_icon)| {
-                title_icon
-                    .iter()
-                    .find(|(rule, _)| rule.is_match(the_title))
-                    .map(|(rule, icon)| {
-                        forge_icon_status(
-                            is_active,
-                            rule.to_string(),
-                            icon.to_string(),
-                            class,
-                            title,
-                            initial_class,
-                            initial_title,
-                            get_captures(title, rule),
-                        )
-                    })
-            }),
+        (None, Some(list)) => {
+            let the_title = match (title, initial_title) {
+                (Some(t), None) | (None, Some(t)) => t,
+                (_, _) => unreachable!(),
+            };
+
+            list.iter()
+                .find(|(re_class, _)| re_class.is_match(the_class))
+                .and_then(|(_, title_icon)| {
+                    title_icon
+                        .iter()
+                        .find(|(rule, _)| rule.is_match(the_title))
+                        .map(|(rule, icon)| {
+                            forge_icon_status(
+                                is_active,
+                                rule.to_string(),
+                                icon.to_string(),
+                                class,
+                                title,
+                                initial_class,
+                                initial_title,
+                                get_captures(title, rule),
+                            )
+                        })
+                })
+        }
         (_, _) => unreachable!(),
     }
 }
