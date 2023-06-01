@@ -8,7 +8,6 @@ type Icon = String;
 type Title = String;
 type Class = String;
 type Captures = Option<HashMap<String, String>>;
-type IconMatch = Option<(Rule, Icon, Captures)>;
 type ListTitleInClass<'a> = Option<&'a [(regex::Regex, Vec<(regex::Regex, Icon)>)]>;
 type ListClass<'a> = Option<&'a [(regex::Regex, Icon)]>;
 
@@ -231,22 +230,19 @@ pub fn forge_icon_status(
     title: Option<&str>,
     initial_class: Option<&str>,
     initial_title: Option<&str>,
-    captures: Option<Captures>,
+    captures: Captures,
 ) -> IconStatus {
     let icon = match (class, title, initial_class, initial_title, captures) {
         (None, None, None, None, None) => Default(icon),
         (Some(_), None, None, None, None) => Class(rule, icon),
         (None, None, Some(_), None, None) => InitialClass(rule, icon),
-        (Some(_), Some(_), None, None, Some(c)) => TitleInClass(rule, icon, c),
-        (Some(_), Some(_), None, None, None) => TitleInClass(rule, icon, None),
-        (None, None, Some(_), Some(_), Some(c)) => InitialTitleInInitialClass(rule, icon, c),
-        (None, None, Some(_), Some(_), None) => InitialTitleInInitialClass(rule, icon, None),
-        (None, Some(_), Some(_), None, Some(c)) => TitleInInitialClass(rule, icon, c),
-        (None, Some(_), Some(_), None, None) => TitleInInitialClass(rule, icon, None),
-        (Some(_), None, None, Some(_), Some(c)) => InitialTitleInClass(rule, icon, c),
-        (Some(_), None, None, Some(_), None) => InitialTitleInClass(rule, icon, None),
+        (Some(_), Some(_), None, None, c) => TitleInClass(rule, icon, c),
+        (None, None, Some(_), Some(_), c) => InitialTitleInInitialClass(rule, icon, c),
+        (None, Some(_), Some(_), None, c) => TitleInInitialClass(rule, icon, c),
+        (Some(_), None, None, Some(_), c) => InitialTitleInClass(rule, icon, c),
         (_, _, _, _, _) => unreachable!(),
     };
+
     if is_active {
         Active(icon)
     } else {
@@ -267,11 +263,11 @@ fn find_icon_helper(
         (Some(list), None) => list
             .iter()
             .find(|(rule, _)| {
-                let m = match (class, initial_class) {
-                    (Some(m), None) | (None, Some(m)) => m,
+                let the_class = match (class, initial_class) {
+                    (Some(c), None) | (None, Some(c)) => c,
                     (_, _) => unreachable!(),
                 };
-                rule.is_match(m)
+                rule.is_match(the_class)
             })
             .map(|(rule, icon)| {
                 forge_icon_status(
@@ -288,21 +284,21 @@ fn find_icon_helper(
         (None, Some(list)) => list
             .iter()
             .find(|(re_class, _)| {
-                let m = match (class, initial_class) {
-                    (Some(m), None) | (None, Some(m)) => m,
+                let the_class = match (class, initial_class) {
+                    (Some(c), None) | (None, Some(c)) => c,
                     (_, _) => unreachable!(),
                 };
-                re_class.is_match(m)
+                re_class.is_match(the_class)
             })
             .and_then(|(_, title_icon)| {
                 title_icon
                     .iter()
                     .find(|(rule, _)| {
-                        let m = match (title, initial_title) {
+                        let the_title = match (title, initial_title) {
                             (Some(t), None) | (None, Some(t)) => t,
                             (_, _) => unreachable!(),
                         };
-                        rule.is_match(m)
+                        rule.is_match(the_title)
                     })
                     .map(|(rule, icon)| {
                         forge_icon_status(
@@ -313,27 +309,31 @@ fn find_icon_helper(
                             title,
                             initial_class,
                             initial_title,
-                            match title {
-                                Some(t) => match rule.captures(t) {
-                                    Some(re_captures) => Some(Some(
-                                        re_captures
-                                            .iter()
-                                            .enumerate()
-                                            .map(|(k, v)| {
-                                                (
-                                                    format!("match{k}"),
-                                                    v.map_or("", |m| m.as_str()).to_string(),
-                                                )
-                                            })
-                                            .collect(),
-                                    )),
-                                    None => todo!(),
-                                },
-                                _ => None,
-                            },
+                            get_captures(title, rule),
                         )
                     })
             }),
         (_, _) => unreachable!(),
+    }
+}
+
+fn get_captures(title: Option<&str>, rule: &regex::Regex) -> Captures {
+    match title {
+        Some(t) => match rule.captures(t) {
+            Some(re_captures) => Some(
+                re_captures
+                    .iter()
+                    .enumerate()
+                    .map(|(k, v)| {
+                        (
+                            format!("match{k}"),
+                            v.map_or("", |m| m.as_str()).to_string(),
+                        )
+                    })
+                    .collect(),
+            ),
+            _ => None,
+        },
+        _ => None,
     }
 }
