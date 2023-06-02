@@ -170,7 +170,8 @@ impl Renamer {
             add_workspace_added_handler,
             add_workspace_moved_handler,
             add_workspace_change_handler,
-            add_fullscreen_state_change_handler
+            add_fullscreen_state_change_handler,
+            add_window_title_change_handler
         );
 
         let this = self.clone();
