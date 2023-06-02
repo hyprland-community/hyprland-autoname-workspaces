@@ -121,55 +121,67 @@ impl Renamer {
             is_active,
             Some(list_initial_title_in_initial_class),
             None,
-            None,
-            None,
-            Some(initial_class),
-            Some(initial_title),
+            IconParams {
+                class: None,
+                title: None,
+                initial_class: Some(initial_class),
+                initial_title: Some(initial_title),
+            },
         )
         .or(find_icon_helper(
             is_active,
             Some(list_initial_title_in_class),
             None,
-            Some(class),
-            None,
-            None,
-            Some(initial_title),
+            IconParams {
+                class: Some(class),
+                title: None,
+                initial_class: None,
+                initial_title: Some(initial_title),
+            },
         )
         .or(find_icon_helper(
             is_active,
             Some(list_title_in_initial_class),
             None,
-            None,
-            Some(title),
-            Some(initial_class),
-            None,
+            IconParams {
+                class: None,
+                title: Some(title),
+                initial_class: Some(initial_class),
+                initial_title: None,
+            },
         )
         .or(find_icon_helper(
             is_active,
             Some(list_title_in_class),
             None,
-            Some(class),
-            Some(title),
-            None,
-            None,
+            IconParams {
+                class: Some(class),
+                title: Some(title),
+                initial_class: None,
+                initial_title: None,
+            },
         )
         .or(find_icon_helper(
             is_active,
             None,
             Some(list_initial_class),
-            None,
-            None,
-            Some(class),
-            None,
+            IconParams {
+                class: None,
+                title: None,
+                initial_class: Some(initial_class),
+                initial_title: None,
+            },
         ))
         .or(find_icon_helper(
             is_active,
             None,
             Some(list_class),
-            Some(class),
-            None,
-            None,
-            None,
+            IconParams {
+                class: Some(class),
+                title: None,
+                initial_class: None,
+                initial_title: None,
+            },
         )))))
     }
 
@@ -222,17 +234,27 @@ impl Renamer {
     }
 }
 
+pub struct IconParams<'a> {
+    class: Option<&'a str>,
+    title: Option<&'a str>,
+    initial_class: Option<&'a str>,
+    initial_title: Option<&'a str>,
+}
+
 pub fn forge_icon_status(
     is_active: bool,
     rule: String,
     icon: String,
-    class: Option<&str>,
-    title: Option<&str>,
-    initial_class: Option<&str>,
-    initial_title: Option<&str>,
+    params: IconParams,
     captures: Captures,
 ) -> IconStatus {
-    let icon = match (class, title, initial_class, initial_title, captures) {
+    let icon = match (
+        params.class,
+        params.title,
+        params.initial_class,
+        params.initial_title,
+        captures,
+    ) {
         (None, None, None, None, None) => Default(icon),
         (Some(_), None, None, None, None) => Class(rule, icon),
         (None, None, Some(_), None, None) => InitialClass(rule, icon),
@@ -254,12 +276,9 @@ fn find_icon_helper(
     is_active: bool,
     list_title_in_class: ListTitleInClass,
     list_class: ListClass,
-    class: Option<&str>,
-    title: Option<&str>,
-    initial_class: Option<&str>,
-    initial_title: Option<&str>,
+    params: IconParams,
 ) -> Option<IconStatus> {
-    let the_class = match (class, initial_class) {
+    let the_class = match (params.class, params.initial_class) {
         (Some(c), None) | (None, Some(c)) => c,
         (_, _) => unreachable!(),
     };
@@ -269,20 +288,11 @@ fn find_icon_helper(
             list.iter()
                 .find(|(rule, _)| rule.is_match(the_class))
                 .map(|(rule, icon)| {
-                    forge_icon_status(
-                        is_active,
-                        rule.to_string(),
-                        icon.to_string(),
-                        class,
-                        title,
-                        initial_class,
-                        initial_title,
-                        None,
-                    )
+                    forge_icon_status(is_active, rule.to_string(), icon.to_string(), params, None)
                 })
         }
         (None, Some(list)) => {
-            let the_title = match (title, initial_title) {
+            let the_title = match (params.title, params.initial_title) {
                 (Some(t), None) | (None, Some(t)) => t,
                 (_, _) => unreachable!(),
             };
@@ -298,11 +308,8 @@ fn find_icon_helper(
                                 is_active,
                                 rule.to_string(),
                                 icon.to_string(),
-                                class,
-                                title,
-                                initial_class,
-                                initial_title,
-                                get_captures(title, rule),
+                                params,
+                                get_captures(Some(the_title), rule),
                             )
                         })
                 })
