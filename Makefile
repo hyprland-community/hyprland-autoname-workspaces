@@ -47,12 +47,14 @@ install:
 	install -Dm755 -t "$(BIN_DIR)/" "target/release/$(BIN)"
 	install -Dm644 -t "$(LIB_DIR)/systemd/user" "$(BIN).service"
 	install -Dm644 -t "$(SHARE_DIR)/licenses/$(BIN)/" LICENSE.md
+	install -Dm644 -t "$(SHARE_DIR)/$(BIN)/examples/" config.toml.example
+	install -Dm755 -t "$(SHARE_DIR)/$(BIN)/examples/" contrib/generate_icons.py
 
 .PHONY: dist
 dist: clean build
 	mkdir -p dist
 	cp "target/release/$(BIN)" .
-	tar -czvf "dist/$(BIN)-$(VERSION)-linux-x86_64.tar.gz" "$(BIN)" "$(BIN).service" LICENSE.md README.md Makefile
+	tar -czvf "dist/$(BIN)-$(VERSION)-linux-x86_64.tar.gz" "$(BIN)" "$(BIN).service" config.toml.example LICENSE.md README.md Makefile contrib/generate_icons.py
 	git archive -o "dist/$(BIN)-$(VERSION).tar.gz" --format tar.gz --prefix "$(BIN)-$(VERSION)/" "$(VERSION)"
 	for f in dist/*.tar.gz; do gpg --detach-sign --armor "$$f"; done
 	rm -f "dist/$(BIN)-$(VERSION).tar.gz" "$(BIN)"
