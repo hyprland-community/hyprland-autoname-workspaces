@@ -114,6 +114,7 @@ workspace:
 
 - client
 - id (or id_long)
+- name (use value from `[workspaces_name]` mapping)
 - delim
 
 clients:

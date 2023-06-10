@@ -98,9 +98,9 @@ impl Renamer {
         let workspaces_strings = self.generate_workspaces_string(workspaces, config);
 
         // Render the workspaces
-        workspaces_strings
-            .iter()
-            .for_each(|(&id, clients)| rename_cmd(id, clients, &config.format));
+        workspaces_strings.iter().for_each(|(&id, clients)| {
+            rename_cmd(id, clients, &config.format, &config.workspaces_name)
+        });
 
         Ok(())
     }
@@ -152,7 +152,7 @@ impl Renamer {
         self.known_workspaces
             .lock()?
             .iter()
-            .for_each(|&id| rename_cmd(id, "", &config.format));
+            .for_each(|&id| rename_cmd(id, "", &config.format, &config.workspaces_name));
 
         Ok(())
     }
@@ -224,24 +224,31 @@ impl Renamer {
 }
 
 fn rename_empty_workspace(config: &ConfigFile) {
-    let config_format = &config.format;
-
     _ = Workspace::get_active().map(|workspace| {
         if workspace.windows == 0 {
-            rename_cmd(workspace.id, "", config_format);
+            rename_cmd(workspace.id, "", &config.format, &config.workspaces_name);
         }
     });
 }
 
-fn rename_cmd(id: i32, clients: &str, config_format: &ConfigFormatRaw) {
+fn rename_cmd(
+    id: i32,
+    clients: &str,
+    config_format: &ConfigFormatRaw,
+    workspaces_name: &[(String, String)],
+) {
     let workspace_fmt = &config_format.workspace.to_string();
     let workspace_empty_fmt = &config_format.workspace_empty.to_string();
     let id_two_digits = format!("{:02}", id);
+    let workspace_name = get_workspace_name(id, workspaces_name);
+
     let mut vars = HashMap::from([
         ("id".to_string(), id.to_string()),
         ("id_long".to_string(), id_two_digits),
+        ("name".to_string(), workspace_name.to_string()),
         ("delim".to_string(), config_format.delim.to_string()),
     ]);
+
     vars.insert("clients".to_string(), clients.to_string());
     let workspace = if !clients.is_empty() {
         formatter(workspace_fmt, &vars)
@@ -250,6 +257,21 @@ fn rename_cmd(id: i32, clients: &str, config_format: &ConfigFormatRaw) {
     };
 
     let _ = hyprland::dispatch!(RenameWorkspace, id, Some(workspace.trim()));
+}
+
+fn get_workspace_name(id: i32, workspaces_name: &[(String, String)]) -> String {
+    let default_workspace_name = id.to_string();
+    workspaces_name
+        .iter()
+        .find_map(|(x, name)| {
+            if x.eq(&id.to_string()) {
+                Some(name)
+            } else {
+                None
+            }
+        })
+        .unwrap_or(&default_workspace_name)
+        .to_string()
 }
 
 fn get_filtered_clients(config: &ConfigFile) -> Vec<Client> {
@@ -2178,6 +2200,34 @@ mod tests {
             }],
             &config,
         );
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_workspaces_name_config() {
+        let mut config = crate::config::read_config_file(None, false, false).unwrap();
+
+        config
+            .workspaces_name
+            .push(("0".to_string(), "zero".to_string()));
+
+        config
+            .workspaces_name
+            .push(("1".to_string(), "one".to_string()));
+
+        let expected = "zero".to_string();
+        let actual = get_workspace_name(0, &config.workspaces_name);
+
+        assert_eq!(actual, expected);
+
+        let expected = "one".to_string();
+        let actual = get_workspace_name(1, &config.workspaces_name);
+
+        assert_eq!(actual, expected);
+
+        let expected = "3".to_string();
+        let actual = get_workspace_name(3, &config.workspaces_name);
 
         assert_eq!(actual, expected);
     }

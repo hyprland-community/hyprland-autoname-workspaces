@@ -4,8 +4,8 @@ dedup_inactive_fullscreen = false
 delim = " "
 client = "{icon}{delim}"
 client_active = "<span color='red'>{icon}</span>"
-workspace = "<b><span color='red'>{id}:</span></b>{delim}{clients}"
-workspace_empty = "<b><span color='yellow'>{id}:</span></b>{delim}{clients}"
+workspace = "<b><span color='red'>{id}-{name}:</span></b>{delim}{clients}"
+workspace_empty = "<b><span color='yellow'>{id}-{name}:</span></b>{delim}{clients}"
 client_dup = "{icon}{counter_sup}{delim}"
 client_dup_fullscreen = "[{icon}]{delim}{icon}{counter_unfocused_sup}"
 client_fullscreen = "[{icon}]{delim}"
@@ -46,6 +46,19 @@ DEFAULT="{icon}"
 
 # [initial_title_active."(?i)kitty"]
 # "zsh" = "*Zsh*"
+
+[workspaces_name]
+0 = "zero"
+1 = "one"
+2 = "two"
+3 = "three"
+4 = "four"
+5 = "five"
+6 = "six"
+7 = "seven"
+8 = "eight"
+9 = "nine"
+10 = "ten"
 
 [class]
 DEFAULT = ""
