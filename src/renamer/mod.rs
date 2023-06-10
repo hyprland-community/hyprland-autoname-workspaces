@@ -193,7 +193,7 @@ impl Renamer {
                     // Watch for modify events.
                     let mut notify = Inotify::init()?;
 
-                    notify.add_watch(cfg_path, WatchMask::MODIFY)?;
+                    notify.watches().add(cfg_path, WatchMask::MODIFY)?;
                     let mut buffer = [0; 1024];
                     notify.read_events_blocking(&mut buffer)?.last();
 
