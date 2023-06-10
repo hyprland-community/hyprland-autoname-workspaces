@@ -97,10 +97,12 @@ impl Renamer {
         // Generate workspace strings
         let workspaces_strings = self.generate_workspaces_string(workspaces, config);
 
+        let workspaces_name = &config.workspaces_name;
+
         // Render the workspaces
         workspaces_strings
             .iter()
-            .for_each(|(&id, clients)| rename_cmd(id, clients, &config.format));
+            .for_each(|(&id, clients)| rename_cmd(id, clients, &config.format, workspaces_name));
 
         Ok(())
     }
@@ -152,7 +154,7 @@ impl Renamer {
         self.known_workspaces
             .lock()?
             .iter()
-            .for_each(|&id| rename_cmd(id, "", &config.format));
+            .for_each(|&id| rename_cmd(id, "", &config.format, &config.workspaces_name));
 
         Ok(())
     }
@@ -225,23 +227,43 @@ impl Renamer {
 
 fn rename_empty_workspace(config: &ConfigFile) {
     let config_format = &config.format;
+    let config_workspaces_name = &config.workspaces_name;
 
     _ = Workspace::get_active().map(|workspace| {
         if workspace.windows == 0 {
-            rename_cmd(workspace.id, "", config_format);
+            rename_cmd(workspace.id, "", config_format, config_workspaces_name);
         }
     });
 }
 
-fn rename_cmd(id: i32, clients: &str, config_format: &ConfigFormatRaw) {
+fn rename_cmd(
+    id: i32,
+    clients: &str,
+    config_format: &ConfigFormatRaw,
+    workspaces_name: &[(String, String)],
+) {
     let workspace_fmt = &config_format.workspace.to_string();
     let workspace_empty_fmt = &config_format.workspace_empty.to_string();
     let id_two_digits = format!("{:02}", id);
+    let default_workspace_name = &id.to_string();
+    let workspace_name = workspaces_name
+        .iter()
+        .find_map(|(x, name)| {
+            if x.eq(&id.to_string()) {
+                Some(name)
+            } else {
+                None
+            }
+        })
+        .unwrap_or(default_workspace_name);
+
     let mut vars = HashMap::from([
         ("id".to_string(), id.to_string()),
         ("id_long".to_string(), id_two_digits),
+        ("name".to_string(), workspace_name.to_string()),
         ("delim".to_string(), config_format.delim.to_string()),
     ]);
+
     vars.insert("clients".to_string(), clients.to_string());
     let workspace = if !clients.is_empty() {
         formatter(workspace_fmt, &vars)

@@ -103,6 +103,8 @@ pub struct ConfigFileRaw {
     pub initial_class: HashMap<String, String>,
     #[serde(default)]
     pub initial_class_active: HashMap<String, String>,
+    #[serde(default)]
+    pub workspaces_name: HashMap<String, String>,
     #[serde(default, alias = "title_icons")]
     pub title_in_class: HashMap<String, HashMap<String, String>>,
     #[serde(default, alias = "title_active_icons")]
@@ -129,6 +131,7 @@ pub struct ConfigFileRaw {
 pub struct ConfigFile {
     pub class: Vec<(Regex, String)>,
     pub class_active: Vec<(Regex, String)>,
+    pub workspaces_name: Vec<(String, String)>,
     pub initial_class: Vec<(Regex, String)>,
     pub initial_class_active: Vec<(Regex, String)>,
     pub title_in_class: Vec<(Regex, Vec<(Regex, String)>)>,
@@ -196,6 +199,7 @@ pub fn read_config_file(
     Ok(ConfigFile {
         class: generate_icon_config(&config.class),
         class_active: generate_icon_config(&config.class_active),
+        workspaces_name: generate_workspaces_name_config(&config.workspaces_name),
         initial_class: generate_icon_config(&config.initial_class),
         initial_class_active: generate_icon_config(&config.initial_class_active),
         title_in_class: generate_title_config(&config.title_in_class),
@@ -329,6 +333,20 @@ DEFAULT = "*{icon}*"
 aProgram = "^$" # will match null title for aProgram
 "[Ss]team" = "Friends List.*"
 "[Ss]team" = "^$" # will match all Steam window with null title (some popup)
+
+[workspaces_name]
+0 = "zero"
+1 = "one"
+2 = "two"
+3 = "three"
+4 = "four"
+5 = "five"
+6 = "six"
+7 = "seven"
+8 = "eight"
+9 = "nine"
+10 = "ten"
+
 "#
     .trim();
 
@@ -454,6 +472,22 @@ fn generate_exclude_config(icons: &HashMap<String, String>) -> Vec<(Regex, Regex
             regex_with_error_logging(class).and_then(|re_class| {
                 regex_with_error_logging(title).map(|re_title| (re_class, re_title))
             })
+        })
+        .collect()
+}
+
+/// Generates the workspaces id to name mapping
+fn generate_workspaces_name_config(
+    workspaces_name: &HashMap<String, String>,
+) -> Vec<(String, String)> {
+    workspaces_name
+        .iter()
+        .filter_map(|(id, name)| {
+            if id.parse::<i32>().is_ok() {
+                Some((id.to_string(), name.to_string()))
+            } else {
+                None
+            }
         })
         .collect()
 }
