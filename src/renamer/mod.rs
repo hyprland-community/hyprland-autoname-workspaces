@@ -245,7 +245,7 @@ fn rename_cmd(
     let mut vars = HashMap::from([
         ("id".to_string(), id.to_string()),
         ("id_long".to_string(), id_two_digits),
-        ("name".to_string(), workspace_name.to_string()),
+        ("name".to_string(), workspace_name),
         ("delim".to_string(), config_format.delim.to_string()),
     ]);
 
