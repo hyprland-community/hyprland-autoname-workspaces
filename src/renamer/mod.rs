@@ -279,6 +279,7 @@ fn get_filtered_clients(config: &ConfigFile) -> Vec<Client> {
     let config_exclude = &config.exclude;
 
     binding
+        .filter(|client| client.pid > 0)
         .filter(|client| {
             !config_exclude.iter().any(|(class, title)| {
                 class.is_match(&client.class) && (title.is_match(&client.title))
