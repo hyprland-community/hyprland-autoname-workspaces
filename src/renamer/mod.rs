@@ -1849,6 +1849,57 @@ mod tests {
     }
 
     #[test]
+    fn test_class_with_exclam_mark() {
+        let mut config = crate::config::read_config_file(None, false, false).unwrap();
+
+        config
+            .class
+            .push((Regex::new("osu!").unwrap(), "osu".to_string()));
+
+        let renamer = Renamer::new(
+            Config {
+                cfg_path: None,
+                config: config.clone(),
+            },
+            Args {
+                verbose: false,
+                debug: false,
+                config: None,
+                dump: false,
+                migrate_config: false,
+            },
+        );
+
+        let expected = [(1, "osu".to_string())].into_iter().collect();
+
+        let actual = renamer.generate_workspaces_string(
+            vec![AppWorkspace {
+                id: 1,
+                clients: vec![AppClient {
+                    initial_class: "osu!".to_string(),
+                    class: "osu!".to_string(),
+                    title: "osu!".to_string(),
+                    initial_title: "osu!".to_string(),
+                    is_active: false,
+                    is_fullscreen: false,
+                    matched_rule: renamer.parse_icon(
+                        "osu!".to_string(),
+                        "osu!".to_string(),
+                        "osu!".to_string(),
+                        "osu!".to_string(),
+                        false,
+                        &config,
+                    ),
+                    is_dedup_inactive_fullscreen: false,
+                }],
+            }],
+            &config,
+        );
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
     fn test_no_default_class_active_fallback_to_class_default() {
         let mut config = crate::config::read_config_file(None, false, false).unwrap();
 
