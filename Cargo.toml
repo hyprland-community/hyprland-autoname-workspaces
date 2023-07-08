@@ -14,8 +14,8 @@ repository = "https://github.com/hyprland-community/hyprland-autoname-workspaces
 [dependencies]
 regex = "1"
 clap = { version = "4.1.1", features = ["derive"] }
-hyprland = { version = "0.3.6", features = ["silent"] }
-# hyprland = { git = "https://github.com/hyprland-community/hyprland-rs.git", features = ["silent"] }
+# hyprland = { version = "0.3.6", features = ["silent"] }
+hyprland = { git = "https://github.com/cyrinux/hyprland-rs.git", branch="fix/screencast-and-minimize-events-ordering", features = ["silent"] }
 signal-hook = "0.3.14"
 toml = { version = "0.5.10", features = ["indexmap", "preserve_order"] }
 xdg = "2.4.1"

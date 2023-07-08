@@ -361,8 +361,7 @@ dependencies = [
 [[package]]
 name = "hyprland"
 version = "0.3.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e1ad6d46999ad1ff56d123f5683f05d2e8c0145d3ac7941e678cd6ab8889c59"
+source = "git+https://github.com/cyrinux/hyprland-rs.git?branch=fix/screencast-and-minimize-events-ordering#c65ec47d96c6051fa0a023199059b18a3d814e4a"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -401,9 +400,8 @@ dependencies = [
 
 [[package]]
 name = "hyprland-macros"
-version = "0.3.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c941d3d52e979612af8cb94e8de49000c7fada2014a7791d173ab41339f4e4eb"
+version = "0.3.6"
+source = "git+https://github.com/cyrinux/hyprland-rs.git?branch=fix/screencast-and-minimize-events-ordering#c65ec47d96c6051fa0a023199059b18a3d814e4a"
 dependencies = [
  "quote",
  "syn 2.0.23",
@@ -650,9 +648,9 @@ dependencies = [
 
 [[package]]
 name = "regex-automata"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e9aaecc05d5c4b5f7da074b9a0d1a0867e71fd36e7fc0482d8bcfe8e8fc56290"
+checksum = "83d3daa6976cffb758ec878f108ba0e062a45b2d6ca3a2cca965338855476caf"
 dependencies = [
  "aho-corasick",
  "memchr",
