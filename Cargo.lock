@@ -360,8 +360,9 @@ dependencies = [
 
 [[package]]
 name = "hyprland"
-version = "0.3.6"
-source = "git+https://github.com/cyrinux/hyprland-rs.git?branch=fix/screencast-and-minimize-events-ordering#c65ec47d96c6051fa0a023199059b18a3d814e4a"
+version = "0.3.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba8d1950a715141bd665f1552f185e7bf545c988e9378f335d2a4fc01a20e360"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -382,7 +383,7 @@ dependencies = [
 
 [[package]]
 name = "hyprland-autoname-workspaces"
-version = "1.1.3"
+version = "1.1.4"
 dependencies = [
  "clap",
  "hyprland",
@@ -400,8 +401,9 @@ dependencies = [
 
 [[package]]
 name = "hyprland-macros"
-version = "0.3.6"
-source = "git+https://github.com/cyrinux/hyprland-rs.git?branch=fix/screencast-and-minimize-events-ordering#c65ec47d96c6051fa0a023199059b18a3d814e4a"
+version = "0.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c941d3d52e979612af8cb94e8de49000c7fada2014a7791d173ab41339f4e4eb"
 dependencies = [
  "quote",
  "syn 2.0.23",
