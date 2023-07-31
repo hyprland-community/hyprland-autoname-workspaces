@@ -254,7 +254,7 @@ fn migrate_config_file(
 pub fn create_default_config(cfg_path: &PathBuf) -> Result<&'static str, Box<dyn Error + 'static>> {
     // TODO: maybe we should dump the config from the default values of the struct?
     let default_config = r#"
-version = "1.1.5"
+version = "1.1.6"
 
 # [format]
 # Deduplicate icons if enable.
@@ -551,7 +551,6 @@ mod tests {
     fn test_config_new_and_read_again_then_compare_format() {
         let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
         let config = Config::new(cfg_path.clone(), false, false);
-        println!("{:#?}", config);
         assert_eq!(config.is_ok(), true);
         let config = config.unwrap().clone();
         assert_eq!(config.cfg_path.clone(), Some(cfg_path.clone()));
