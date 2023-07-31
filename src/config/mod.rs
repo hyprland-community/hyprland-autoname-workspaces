@@ -332,7 +332,7 @@ DEFAULT = "*{icon}*"
 "(?i)fcitx" = ".*" # will match all title for fcitx
 "(?i)TestApp" = "" # will match all title for TestApp
 aProgram = "^$" # will match null title for aProgram
-"[Ss]team" = "Friends List.*"
+# "[Ss]team" = "Friends List.*"
 "[Ss]team" = "^$" # will match all Steam window with null title (some popup)
 
 [workspaces_name]
@@ -551,6 +551,7 @@ mod tests {
     fn test_config_new_and_read_again_then_compare_format() {
         let cfg_path = PathBuf::from("/tmp/hyprland-autoname-workspaces-test.toml");
         let config = Config::new(cfg_path.clone(), false, false);
+        println!("{:#?}", config);
         assert_eq!(config.is_ok(), true);
         let config = config.unwrap().clone();
         assert_eq!(config.cfg_path.clone(), Some(cfg_path.clone()));
