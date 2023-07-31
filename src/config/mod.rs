@@ -332,8 +332,7 @@ DEFAULT = "*{icon}*"
 "(?i)fcitx" = ".*" # will match all title for fcitx
 "(?i)TestApp" = "" # will match all title for TestApp
 aProgram = "^$" # will match null title for aProgram
-# "[Ss]team" = "Friends List.*"
-"[Ss]team" = "^$" # will match all Steam window with null title (some popup)
+"[Ss]team" = "^(Friends List.*)?$" # will match Steam friends list plus all popups (empty titles)
 
 [workspaces_name]
 0 = "zero"
