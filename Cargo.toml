@@ -13,7 +13,7 @@ repository = "https://github.com/hyprland-community/hyprland-autoname-workspaces
 
 [dependencies]
 regex = "1"
-clap = { version = "4.1.1", features = ["derive"] }
+clap = { version = "4.3.19", features = ["derive"] }
 hyprland = { version = "0.3.8", features = ["silent"] }
 signal-hook = "0.3.14"
 toml = { version = "0.5.10", features = ["indexmap", "preserve_order"] }
