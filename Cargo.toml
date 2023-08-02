@@ -18,7 +18,7 @@ hyprland = { version = "0.3.8", features = ["silent"] }
 signal-hook = "0.3.14"
 toml = { version = "0.5.10", features = ["indexmap", "preserve_order"] }
 xdg = "2.4.1"
-inotify = "0.10.0"
+inotify = "0.10.2"
 serde = "1.0.152"
 strfmt = "0.2.4"
 serde_json = "1.0.96"
