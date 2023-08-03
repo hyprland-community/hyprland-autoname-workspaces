@@ -254,7 +254,7 @@ fn migrate_config_file(
 pub fn create_default_config(cfg_path: &PathBuf) -> Result<&'static str, Box<dyn Error + 'static>> {
     // TODO: maybe we should dump the config from the default values of the struct?
     let default_config = r#"
-version = "1.1.5"
+version = "1.1.6"
 
 # [format]
 # Deduplicate icons if enable.
@@ -332,8 +332,7 @@ DEFAULT = "*{icon}*"
 "(?i)fcitx" = ".*" # will match all title for fcitx
 "(?i)TestApp" = "" # will match all title for TestApp
 aProgram = "^$" # will match null title for aProgram
-"[Ss]team" = "Friends List.*"
-"[Ss]team" = "^$" # will match all Steam window with null title (some popup)
+"[Ss]team" = "^(Friends List.*)?$" # will match Steam friends list plus all popups (empty titles)
 
 [workspaces_name]
 0 = "zero"
