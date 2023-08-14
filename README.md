@@ -22,7 +22,7 @@ https://github.com/hyprland-community/hyprland-autoname-workspaces/wiki/FAQ
 
 ### AUR 📦
 
-Available as AUR package under the program name `hyprland-autoname-workspaces-git`.
+Available as AUR package under the program name [`hyprland-autoname-workspaces-git`](https://aur.archlinux.org/packages/hyprland-autoname-workspaces-git).
 You can then use the service `systemctl --user enable --now hyprland-autoname-workspaces.service`.
 
 ### Cargo 📦
