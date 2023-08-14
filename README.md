@@ -25,6 +25,15 @@ https://github.com/hyprland-community/hyprland-autoname-workspaces/wiki/FAQ
 Available as AUR package under the program name `hyprland-autoname-workspaces-git`.
 You can then use the service `systemctl --user enable --now hyprland-autoname-workspaces.service`.
 
+### Nix 📦
+
+Available in nixpkgs as [`hyprland-autoname-workspaces`](https://search.nixos.org/packages?channel=unstable&show=hyprland-autoname-workspaces).
+You can add it to your `systemPackages` or try it without installing it with `nix run`.
+
+```bash
+$ nix run nixpkgs#hyprland-autoname-workspaces
+```
+
 ### Cargo 📦
 
 ```bash
