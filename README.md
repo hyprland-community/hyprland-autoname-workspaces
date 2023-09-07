@@ -50,6 +50,7 @@ $ hyprland-autoname-workspaces
 
 First, you have to set your `waybar` for example, with the good module `hyprland/workspaces`. The module `wlr/workspaces` is deprecated.
 You have to use `hyprland/workspaces` module with as config `"format" = "{name}"`.
+
 ```
 "hyprland/workspaces": {
     "format": "{name}",
