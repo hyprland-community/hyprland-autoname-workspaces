@@ -48,6 +48,9 @@ $ hyprland-autoname-workspaces
 
 ## Configuration
 
+First, you have to set your `waybar` for example, with the good module `hyprland/workspaces`. The module `wlr/workspaces` is deprecated.
+You have to use `hyprland/workspaces` module with as config `format = {name}`.
+
 _For all parameters, check the `config.toml.example` in this repository._
 
 The config file can be specified using the `-c <CONFIG>` option, otherwise it defaults to `~/.config/hyprland-autoname-workspaces/config.toml`. If you specify a path that doesn't exist, a default configuration file will be generated.
