@@ -254,7 +254,7 @@ fn migrate_config_file(
 pub fn create_default_config(cfg_path: &PathBuf) -> Result<&'static str, Box<dyn Error + 'static>> {
     // TODO: maybe we should dump the config from the default values of the struct?
     let default_config = r#"
-version = "1.1.6"
+version = "1.1.10"
 
 # [format]
 # Deduplicate icons if enable.
