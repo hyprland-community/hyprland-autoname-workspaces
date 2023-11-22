@@ -35,7 +35,7 @@ fn main() {
     let final_renamer = renamer.clone();
 
     thread::spawn(move || {
-        for _ in signals.forever() {
+        if signals.forever().next().is_some() {
             match final_renamer.reset_workspaces(cfg.config) {
                 Err(_) => println!("Workspaces name can't be cleared"),
                 Ok(_) => println!("Workspaces name cleared, bye"),
