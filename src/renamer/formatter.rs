@@ -31,6 +31,12 @@ impl Renamer {
                 let workspace_output = counted
                     .iter_mut()
                     .map(|(client, counter)| self.handle_new_client(client, *counter, config))
+                    .take(
+                        config
+                            .format
+                            .max_clients
+                            .map_or(usize::MAX, |max| max as usize),
+                    )
                     .collect::<Vec<String>>();
 
                 let delimiter = formatter("{delim}", &vars);

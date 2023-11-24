@@ -145,6 +145,7 @@ clients:
 
 ```
 [format]
+# max_clients = 10 (default: usize::MAX)
 dedup = true
 dedup_inactive_fullscreen = true
 delim = " " # NARROW NO-BREAK SPACE

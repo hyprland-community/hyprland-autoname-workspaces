@@ -68,6 +68,8 @@ impl Default for ConfigFormatRaw {
 #[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct ConfigFormatRaw {
     #[serde(default)]
+    pub max_clients: Option<i32>,
+    #[serde(default)]
     pub dedup: bool,
     #[serde(default)]
     pub dedup_inactive_fullscreen: bool,
@@ -263,6 +265,7 @@ version = "1.1.11"
 # dedup_inactive_fullscreen = false # dedup more
 # window delimiter
 # delim = " "
+# max_clients = 30
 
 # available formatter:
 # {counter_sup} - superscripted count of clients on the workspace, and simple {counter}, {delim}
