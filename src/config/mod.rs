@@ -256,7 +256,7 @@ fn migrate_config_file(
 pub fn create_default_config(cfg_path: &PathBuf) -> Result<&'static str, Box<dyn Error + 'static>> {
     // TODO: maybe we should dump the config from the default values of the struct?
     let default_config = r#"
-version = "1.1.11"
+version = "1.1.12"
 
 # [format]
 # Deduplicate icons if enable.
@@ -265,7 +265,7 @@ version = "1.1.11"
 # dedup_inactive_fullscreen = false # dedup more
 # window delimiter
 # delim = " "
-# max_clients = 30
+# max_clients = 30 # you should not need this
 
 # available formatter:
 # {counter_sup} - superscripted count of clients on the workspace, and simple {counter}, {delim}

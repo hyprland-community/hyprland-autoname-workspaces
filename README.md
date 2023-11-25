@@ -1,6 +1,7 @@
 # 🪟 hyprland-autoname-workspaces
 
 ![](https://img.shields.io/crates/d/hyprland-autoname-workspaces)
+![](https://img.shields.io/crates/v/hyprland-autoname-workspaces)
 ![](https://img.shields.io/github/issues-raw/hyprland-community/hyprland-autoname-workspaces)
 ![](https://img.shields.io/github/stars/hyprland-community/hyprland-autoname-workspaces)
 ![](https://img.shields.io/aur/version/hyprland-autoname-workspaces-git)
