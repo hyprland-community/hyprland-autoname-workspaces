@@ -26,6 +26,10 @@ https://github.com/hyprland-community/hyprland-autoname-workspaces/wiki/FAQ
 Available as AUR package under the program name [`hyprland-autoname-workspaces-git`](https://aur.archlinux.org/packages/hyprland-autoname-workspaces-git).
 You can then use the service `systemctl --user enable --now hyprland-autoname-workspaces.service`.
 
+### Fedora 📦
+
+Package available here https://copr.fedorainfracloud.org/coprs/solopasha/hyprland/.
+
 ### Nix 📦
 
 Available in nixpkgs as [`hyprland-autoname-workspaces`](https://search.nixos.org/packages?channel=unstable&show=hyprland-autoname-workspaces).
