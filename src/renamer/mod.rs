@@ -9,7 +9,7 @@ use crate::params::Args;
 use formatter::*;
 use hyprland::data::{Client, Clients, Workspace};
 use hyprland::dispatch::*;
-use hyprland::event_listener::EventListenerMutable as EventListener;
+use hyprland::event_listener::{EventListener, WorkspaceDestroyedEventData};
 use hyprland::prelude::*;
 use hyprland::shared::{Address, WorkspaceType};
 use icon::{IconConfig, IconStatus};
@@ -175,7 +175,7 @@ impl Renamer {
         );
 
         let this = self.clone();
-        event_listener.add_workspace_destroy_handler(move |wt, _| {
+        event_listener.add_workspace_destroy_handler(move |wt| {
             _ = this.rename_workspace();
             _ = this.remove_workspace(wt);
         });
@@ -215,11 +215,11 @@ impl Renamer {
         }
     }
 
-    fn remove_workspace(&self, wt: WorkspaceType) -> Result<bool, Box<dyn Error + '_>> {
-        Ok(match wt {
-            WorkspaceType::Regular(x) => self.known_workspaces.lock()?.remove(&x.parse::<i32>()?),
-            WorkspaceType::Special(_) => false,
-        })
+    fn remove_workspace(
+        &self,
+        wt: WorkspaceDestroyedEventData,
+    ) -> Result<bool, Box<dyn Error + '_>> {
+        Ok(self.known_workspaces.lock()?.remove(&wt.workspace_id))
     }
 }
 
@@ -279,6 +279,7 @@ fn get_filtered_clients(config: &ConfigFile) -> Vec<Client> {
     let config_exclude = &config.exclude;
 
     binding
+        .into_iter()
         .filter(|client| client.pid > 0)
         .filter(|client| {
             !config_exclude.iter().any(|(class, title)| {
