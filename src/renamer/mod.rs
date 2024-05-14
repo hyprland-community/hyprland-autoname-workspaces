@@ -11,7 +11,7 @@ use hyprland::data::{Client, Clients, Workspace};
 use hyprland::dispatch::*;
 use hyprland::event_listener::{EventListener, WorkspaceDestroyedEventData};
 use hyprland::prelude::*;
-use hyprland::shared::{Address, WorkspaceType};
+use hyprland::shared::Address;
 use icon::{IconConfig, IconStatus};
 use inotify::{Inotify, WatchMask};
 use std::collections::{HashMap, HashSet};
