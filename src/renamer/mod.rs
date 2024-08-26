@@ -7,7 +7,7 @@ mod macros;
 use crate::config::{Config, ConfigFile, ConfigFormatRaw};
 use crate::params::Args;
 use formatter::*;
-use hyprland::data::{Client, Clients, Workspace};
+use hyprland::data::{Client, Clients, FullscreenMode, Workspace};
 use hyprland::dispatch::*;
 use hyprland::event_listener::{EventListener, WorkspaceDestroyedEventData};
 use hyprland::prelude::*;
@@ -36,7 +36,7 @@ pub struct AppClient {
     #[allow(dead_code)]
     initial_title: String,
     is_active: bool,
-    is_fullscreen: bool,
+    is_fullscreen: FullscreenMode,
     is_dedup_inactive_fullscreen: bool,
     matched_rule: IconStatus,
 }
@@ -312,7 +312,7 @@ mod tests {
             class: "kitty".to_string(),
             title: "~".to_string(),
             is_active: false,
-            is_fullscreen: false,
+            is_fullscreen: FullscreenMode::Fullscreen,
             initial_title: "zsh".to_string(),
             matched_rule: Inactive(Class("(kitty|alacritty)".to_string(), "term".to_string())),
             is_dedup_inactive_fullscreen: false,
@@ -324,7 +324,7 @@ mod tests {
             title: "xplr".to_string(),
             initial_title: "zsh".to_string(),
             is_active: false,
-            is_fullscreen: false,
+            is_fullscreen: FullscreenMode::None,
             matched_rule: Inactive(Class("(kitty|alacritty)".to_string(), "term".to_string())),
             is_dedup_inactive_fullscreen: false,
         };
@@ -335,7 +335,7 @@ mod tests {
             title: "".to_string(),
             initial_title: "zsh".to_string(),
             is_active: true,
-            is_fullscreen: false,
+            is_fullscreen: FullscreenMode::None,
             matched_rule: Active(Class("(kitty|alacritty)".to_string(), "term".to_string())),
             is_dedup_inactive_fullscreen: false,
         };
@@ -346,7 +346,7 @@ mod tests {
             title: "".to_string(),
             initial_title: "zsh".to_string(),
             is_active: false,
-            is_fullscreen: true,
+            is_fullscreen: FullscreenMode::Fullscreen,
             matched_rule: Inactive(Class("(kitty|alacritty)".to_string(), "term".to_string())),
             is_dedup_inactive_fullscreen: false,
         };
@@ -357,7 +357,7 @@ mod tests {
             title: "".to_string(),
             initial_title: "zsh".to_string(),
             is_active: false,
-            is_fullscreen: true,
+            is_fullscreen: FullscreenMode::Fullscreen,
             matched_rule: Inactive(Class("(kitty|alacritty)".to_string(), "term".to_string())),
             is_dedup_inactive_fullscreen: false,
         };
@@ -368,7 +368,7 @@ mod tests {
             title: "".to_string(),
             initial_title: "zsh".to_string(),
             is_active: false,
-            is_fullscreen: false,
+            is_fullscreen: FullscreenMode::None,
             matched_rule: Inactive(Class("alacritty".to_string(), "term".to_string())),
             is_dedup_inactive_fullscreen: false,
         };
@@ -416,7 +416,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -433,7 +433,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -450,7 +450,7 @@ mod tests {
                         title: "alacritty".to_string(),
                         initial_title: "alacritty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "alacritty".to_string(),
                             "alacritty".to_string(),
@@ -467,7 +467,7 @@ mod tests {
                         title: "alacritty".to_string(),
                         initial_title: "alacritty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "alacritty".to_string(),
                             "alacritty".to_string(),
@@ -484,7 +484,7 @@ mod tests {
                         title: "alacritty".to_string(),
                         initial_title: "alacritty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "alacritty".to_string(),
                             "alacritty".to_string(),
@@ -552,7 +552,7 @@ mod tests {
                         title: "alacritty".to_string(),
                         initial_title: "zsh".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "alacritty".to_string(),
                             "alacritty".to_string(),
@@ -569,7 +569,7 @@ mod tests {
                         title: "alacritty".to_string(),
                         initial_title: "zsh".to_string(),
                         is_active: true,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "alacritty".to_string(),
                             "alacritty".to_string(),
@@ -586,7 +586,7 @@ mod tests {
                         title: "~".to_string(),
                         initial_title: "zsh".to_string(),
                         is_active: true,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -644,7 +644,7 @@ mod tests {
                         initial_class: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -661,7 +661,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -678,7 +678,7 @@ mod tests {
                         title: "alacritty".to_string(),
                         initial_title: "alacritty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "alacritty".to_string(),
                             "alacritty".to_string(),
@@ -695,7 +695,7 @@ mod tests {
                         title: "alacritty".to_string(),
                         initial_title: "alacritty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "alacritty".to_string(),
                             "alacritty".to_string(),
@@ -712,7 +712,7 @@ mod tests {
                         title: "alacritty".to_string(),
                         initial_title: "alacritty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "alacritty".to_string(),
                             "alacritty".to_string(),
@@ -774,7 +774,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -791,7 +791,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -808,7 +808,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -825,7 +825,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -842,7 +842,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -897,7 +897,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -914,7 +914,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -931,7 +931,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: true,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -948,7 +948,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -965,7 +965,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -1021,7 +1021,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -1038,7 +1038,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -1055,7 +1055,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: true,
+                        is_fullscreen: FullscreenMode::Fullscreen,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -1072,7 +1072,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -1089,7 +1089,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -1145,7 +1145,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -1162,7 +1162,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -1179,7 +1179,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: true,
-                        is_fullscreen: true,
+                        is_fullscreen: FullscreenMode::Fullscreen,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -1196,7 +1196,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -1213,7 +1213,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -1267,7 +1267,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: Inactive(Class("kitty".to_string(), "term".to_string())),
                         is_dedup_inactive_fullscreen: false,
                     },
@@ -1277,7 +1277,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: Inactive(Class("kitty".to_string(), "term".to_string())),
                         is_dedup_inactive_fullscreen: false,
                     },
@@ -1287,7 +1287,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: Inactive(Class("kitty".to_string(), "term".to_string())),
                         is_dedup_inactive_fullscreen: false,
                     },
@@ -1297,7 +1297,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: Inactive(Class("kitty".to_string(), "term".to_string())),
                         is_dedup_inactive_fullscreen: false,
                     },
@@ -1307,7 +1307,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: Inactive(Class("kitty".to_string(), "term".to_string())),
                         is_dedup_inactive_fullscreen: false,
                     },
@@ -1357,7 +1357,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -1374,7 +1374,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -1391,7 +1391,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: true,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -1408,7 +1408,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -1425,7 +1425,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -1482,7 +1482,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -1499,7 +1499,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -1516,7 +1516,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: true,
+                        is_fullscreen: FullscreenMode::Fullscreen,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -1533,7 +1533,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -1550,7 +1550,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -1610,7 +1610,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -1627,7 +1627,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -1644,7 +1644,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: true,
-                        is_fullscreen: true,
+                        is_fullscreen: FullscreenMode::Fullsreen,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -1661,7 +1661,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -1678,7 +1678,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: false,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -1745,7 +1745,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: true,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),
@@ -1762,7 +1762,7 @@ mod tests {
                         title: "alacritty".to_string(),
                         initial_title: "alacritty".to_string(),
                         is_active: true,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "alacritty".to_string(),
                             "alacritty".to_string(),
@@ -1779,7 +1779,7 @@ mod tests {
                         title: "qute".to_string(),
                         initial_title: "qute".to_string(),
                         is_active: true,
-                        is_fullscreen: false,
+                        is_fullscreen: FullscreenMode::None,
                         matched_rule: renamer.parse_icon(
                             "qute".to_string(),
                             "qute".to_string(),
@@ -1831,7 +1831,7 @@ mod tests {
                     title: "spotify".to_string(),
                     initial_title: "spotify".to_string(),
                     is_active: false,
-                    is_fullscreen: false,
+                    is_fullscreen: FullscreenMode::None,
                     matched_rule: renamer.parse_icon(
                         "".to_string(),
                         "".to_string(),
@@ -1882,7 +1882,7 @@ mod tests {
                     title: "osu!".to_string(),
                     initial_title: "osu!".to_string(),
                     is_active: false,
-                    is_fullscreen: false,
+                    is_fullscreen: FullscreenMode::None,
                     matched_rule: renamer.parse_icon(
                         "osu!".to_string(),
                         "osu!".to_string(),
@@ -1933,7 +1933,7 @@ mod tests {
                     title: "~".to_string(),
                     initial_title: "zsh".to_string(),
                     is_active: true,
-                    is_fullscreen: false,
+                    is_fullscreen: FullscreenMode::None,
                     matched_rule: renamer.parse_icon(
                         "kitty".to_string(),
                         "kitty".to_string(),
@@ -1975,7 +1975,7 @@ mod tests {
                     initial_title: "zsh".to_string(),
                     title: "~".to_string(),
                     is_active: true,
-                    is_fullscreen: false,
+                    is_fullscreen: FullscreenMode::None,
                     matched_rule: renamer.parse_icon(
                         "kitty".to_string(),
                         "kitty".to_string(),
@@ -2038,7 +2038,7 @@ mod tests {
                     title: "~".to_string(),
                     initial_title: "zsh".to_string(),
                     is_active: false,
-                    is_fullscreen: false,
+                    is_fullscreen: FullscreenMode::None,
                     is_dedup_inactive_fullscreen: false,
                     matched_rule: renamer.parse_icon(
                         "kitty".to_string(),
@@ -2083,7 +2083,7 @@ mod tests {
                     initial_title: "zsh".to_string(),
                     title: "~".to_string(),
                     is_active: false,
-                    is_fullscreen: false,
+                    is_fullscreen: FullscreenMode::None,
                     matched_rule: renamer.parse_icon(
                         "kitty".to_string(),
                         "kitty".to_string(),
@@ -2130,7 +2130,7 @@ mod tests {
                     initial_title: "zsh".to_string(),
                     title: "~".to_string(),
                     is_active: false,
-                    is_fullscreen: false,
+                    is_fullscreen: FullscreenMode::None,
                     matched_rule: renamer.parse_icon(
                         "kitty".to_string(),
                         "kitty".to_string(),
@@ -2205,7 +2205,7 @@ mod tests {
                     initial_title: "zsh".to_string(),
                     title: "emerge: (13 of 20) dev-lang/rust-1.69.0-r1 Compile:".to_string(),
                     is_active: false,
-                    is_fullscreen: false,
+                    is_fullscreen: FullscreenMode::None,
                     matched_rule: renamer.parse_icon(
                         "foot".to_string(),
                         "foot".to_string(),
@@ -2238,7 +2238,7 @@ mod tests {
                     initial_title: "zsh".to_string(),
                     title: "pacman: (14 of 20) dev-lang/rust-1.69.0-r1 Compile:".to_string(),
                     is_active: true,
-                    is_fullscreen: false,
+                    is_fullscreen: FullscreenMode::None,
                     matched_rule: renamer.parse_icon(
                         "foot".to_string(),
                         "foot".to_string(),
