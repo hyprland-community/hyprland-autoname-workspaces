@@ -324,7 +324,7 @@ mod tests {
             title: "xplr".to_string(),
             initial_title: "zsh".to_string(),
             is_active: false,
-            is_fullscreen: FullscreenMode::None,
+            is_fullscreen: FullscreenMode::Fullscreen,
             matched_rule: Inactive(Class("(kitty|alacritty)".to_string(), "term".to_string())),
             is_dedup_inactive_fullscreen: false,
         };
@@ -1644,7 +1644,7 @@ mod tests {
                         title: "kitty".to_string(),
                         initial_title: "kitty".to_string(),
                         is_active: true,
-                        is_fullscreen: FullscreenMode::Fullsreen,
+                        is_fullscreen: FullscreenMode::Fullscreen,
                         matched_rule: renamer.parse_icon(
                             "kitty".to_string(),
                             "kitty".to_string(),

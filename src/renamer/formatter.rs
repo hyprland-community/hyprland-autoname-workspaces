@@ -1,6 +1,7 @@
 use crate::renamer::ConfigFile;
 use crate::renamer::IconStatus::*;
 use crate::{AppClient, Renamer};
+use hyprland::data::FullscreenMode;
 use std::collections::HashMap;
 use strfmt::strfmt;
 
@@ -103,8 +104,8 @@ impl Renamer {
             println!("client: {client:#?}\nformatter vars => {vars:#?}");
         }
 
-        let is_grouped =
-            client.is_fullscreen && (client.is_active || !is_dedup_inactive_fullscreen);
+        let is_grouped = client.is_fullscreen != FullscreenMode::None
+            && (client.is_active || !is_dedup_inactive_fullscreen);
 
         match (is_grouped, is_dedup) {
             (true, true) => formatter(fmt_client_dup_fullscreen, &vars),
@@ -141,7 +142,11 @@ pub fn generate_counted_clients(
 ) -> Vec<(AppClient, i32)> {
     if need_dedup {
         let mut sorted_clients = clients;
-        sorted_clients.sort_by(|a, b| b.is_fullscreen.cmp(&a.is_fullscreen));
+        sorted_clients.sort_by(|a, b| {
+            let bf = b.is_fullscreen != FullscreenMode::None;
+            let af = a.is_fullscreen != FullscreenMode::None;
+            bf.cmp(&af)
+        });
         sorted_clients.sort_by(|a, b| b.is_active.cmp(&a.is_active));
 
         sorted_clients
@@ -194,7 +199,7 @@ mod tests {
             title: String::from("Title"),
             initial_title: String::from("Title"),
             is_active: false,
-            is_fullscreen: false,
+            is_fullscreen: FullscreenMode::None,
             matched_rule: Inactive(Default(String::from("DefaultIcon"))),
             is_dedup_inactive_fullscreen: false,
         };
@@ -206,7 +211,10 @@ mod tests {
         assert_eq!(workspace.clients[0].class, "Class");
         assert_eq!(workspace.clients[0].title, "Title");
         assert_eq!(workspace.clients[0].is_active, false);
-        assert_eq!(workspace.clients[0].is_fullscreen, false);
+        assert_eq!(
+            workspace.clients[0].is_fullscreen,
+            FullscreenMode::Fullscreen
+        );
         match &workspace.clients[0].matched_rule {
             Inactive(Default(icon)) => assert_eq!(icon, "DefaultIcon"),
             _ => panic!("Unexpected IconConfig value"),
