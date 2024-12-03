@@ -5,6 +5,7 @@ use hyprland::data::FullscreenMode;
 use std::collections::HashMap;
 use strfmt::strfmt;
 
+#[derive(Clone)]
 pub struct AppWorkspace {
     pub id: i32,
     pub clients: Vec<AppClient>,
