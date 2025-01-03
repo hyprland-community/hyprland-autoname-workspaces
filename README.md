@@ -9,6 +9,10 @@
 [![Discord](https://img.shields.io/discord/1055990214411169892?label=discord)](https://discord.gg/zzWqvcKRMy)
 [![codecov](https://codecov.io/gh/hyprland-community/hyprland-autoname-workspaces/branch/main/graph/badge.svg?token=NYY5DRMLM4)](https://codecov.io/gh/hyprland-community/hyprland-autoname-workspaces)
 
+⚠️ We are seeking for active maintainers !
+
+This project need your help. See here https://github.com/hyprland-community/hyprland-autoname-workspaces/issues/117
+
 🕹️This is a toy for Hyprland.
 
 This app automatically rename workspaces with icons of started applications - tested with _[waybar](https://github.com/Alexays/Waybar)_ and _[eww](https://github.com/elkowar/eww)_.
