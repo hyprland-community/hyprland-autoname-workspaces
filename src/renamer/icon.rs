@@ -28,11 +28,6 @@ impl IconConfig {
         icon
     }
 
-    pub fn rule(&self) -> Rule {
-        let (rule, _, _) = self.get();
-        rule
-    }
-
     pub fn captures(&self) -> Captures {
         let (_, _, captures) = self.get();
         captures
@@ -64,12 +59,6 @@ impl IconStatus {
     pub fn icon(&self) -> Icon {
         match self {
             Active(config) | Inactive(config) => config.icon(),
-        }
-    }
-
-    pub fn rule(&self) -> Rule {
-        match self {
-            Active(config) | Inactive(config) => config.rule(),
         }
     }
 
@@ -213,9 +202,7 @@ impl Renamer {
         let icon_default_active = self
             .find_icon("DEFAULT", "DEFAULT", "", "", true, config)
             .unwrap_or({
-                self.find_icon("DEFAULT", "DEFAULT", "", "", false, config)
-                    .map(|i| Active(Class(i.rule(), i.icon())))
-                    .unwrap_or(Active(Default("no icon".to_string())))
+                icon_default.clone()
             });
 
         if is_active {

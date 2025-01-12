@@ -1901,7 +1901,80 @@ mod tests {
     }
 
     #[test]
+    fn test_no_default_class_active_fallback_to_formatted_default_class_inactive() {
+        // Test inactive default configuration
+        let mut config = crate::config::read_config_file(None, false, false).unwrap();
+
+        // Find and replace the DEFAULT entry
+        if let Some(idx) = config.class.iter().position(|(regex, _)| regex.as_str() == "DEFAULT") {
+            config.class[idx] = (Regex::new("DEFAULT").unwrap(), "default inactive".to_string());
+        }
+
+        let renamer = Renamer::new(
+            Config {
+                cfg_path: None,
+                config: config.clone(),
+            },
+            Args {
+                verbose: false,
+                debug: false,
+                config: None,
+                dump: false,
+                migrate_config: false,
+            },
+        );
+
+        let expected = [(1, "*default inactive* default inactive".to_string())].into_iter().collect();
+
+        let actual = renamer.generate_workspaces_string(
+            vec![AppWorkspace {
+                id: 1,
+                clients: vec![AppClient {
+                    initial_class: "fake-app-unknown".to_string(),
+                    class: "fake-app-unknown".to_string(),
+                    title: "~".to_string(),
+                    initial_title: "zsh".to_string(),
+                    is_active: true,
+                    is_fullscreen: FullscreenMode::None,
+                    matched_rule: renamer.parse_icon(
+                        "fake-app-unknown".to_string(),
+                        "fake-app-unknown".to_string(),
+                        "zsh".to_string(),
+                        "~".to_string(),
+                        true,
+                        &config,
+                    ),
+                    is_dedup_inactive_fullscreen: false,
+                },
+                AppClient {
+                    initial_class: "fake-app-unknown".to_string(),
+                    class: "fake-app-unknown".to_string(),
+                    title: "~".to_string(),
+                    initial_title: "zsh".to_string(),
+                    is_active: false,
+                    is_fullscreen: FullscreenMode::None,
+                    matched_rule: renamer.parse_icon(
+                        "fake-app-unknown".to_string(),
+                        "fake-app-unknown".to_string(),
+                        "zsh".to_string(),
+                        "~".to_string(),
+                        true,
+                        &config,
+                    ),
+                    is_dedup_inactive_fullscreen: false,
+                },
+                ],
+            }],
+            &config,
+        );
+
+        assert_eq!(actual, expected);
+
+    }
+
+    #[test]
     fn test_no_default_class_active_fallback_to_class_default() {
+        // Test active default configuration
         let mut config = crate::config::read_config_file(None, false, false).unwrap();
 
         config
@@ -1950,6 +2023,7 @@ mod tests {
 
         assert_eq!(actual, expected);
 
+        // Test no active default configuration
         let config = crate::config::read_config_file(None, false, false).unwrap();
 
         let renamer = Renamer::new(
@@ -1990,7 +2064,9 @@ mod tests {
             &config,
         );
 
-        let expected = [(1, "\u{f059} kitty".to_string())].into_iter().collect();
+        // When no active default is configured, the inactive default is used
+        // and run through the same formatter as a normal inactive client.
+        let expected = [(1, "*\u{f059} kitty*".to_string())].into_iter().collect();
 
         assert_eq!(actual, expected);
     }
