@@ -9,7 +9,7 @@ use crate::params::Args;
 use formatter::*;
 use hyprland::data::{Client, Clients, FullscreenMode, Workspace};
 use hyprland::dispatch::*;
-use hyprland::event_listener::{EventListener, WorkspaceDestroyedEventData};
+use hyprland::event_listener::{EventListener, WorkspaceEventData};
 use hyprland::prelude::*;
 use hyprland::shared::Address;
 use icon::{IconConfig, IconStatus};
@@ -163,19 +163,19 @@ impl Renamer {
         rename_workspace_if!(
             self,
             event_listener,
-            add_window_open_handler,
-            add_window_close_handler,
+            add_window_opened_handler,
+            add_window_closed_handler,
             add_window_moved_handler,
-            add_active_window_change_handler,
+            add_active_window_changed_handler,
             add_workspace_added_handler,
             add_workspace_moved_handler,
-            add_workspace_change_handler,
-            add_fullscreen_state_change_handler,
-            add_window_title_change_handler
+            add_workspace_changed_handler,
+            add_fullscreen_state_changed_handler,
+            add_window_title_changed_handler
         );
 
         let this = self.clone();
-        event_listener.add_workspace_destroy_handler(move |wt| {
+        event_listener.add_workspace_deleted_handler(move |wt| {
             _ = this.rename_workspace();
             _ = this.remove_workspace(wt);
         });
@@ -217,9 +217,9 @@ impl Renamer {
 
     fn remove_workspace(
         &self,
-        wt: WorkspaceDestroyedEventData,
+        wt: WorkspaceEventData,
     ) -> Result<bool, Box<dyn Error + '_>> {
-        Ok(self.known_workspaces.lock()?.remove(&wt.workspace_id))
+        Ok(self.known_workspaces.lock()?.remove(&wt.id))
     }
 }
 
