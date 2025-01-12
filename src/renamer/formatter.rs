@@ -199,7 +199,7 @@ mod tests {
             title: String::from("Title"),
             initial_title: String::from("Title"),
             is_active: false,
-            is_fullscreen: FullscreenMode::None,
+            is_fullscreen: FullscreenMode::Fullscreen,
             matched_rule: Inactive(Default(String::from("DefaultIcon"))),
             is_dedup_inactive_fullscreen: false,
         };
