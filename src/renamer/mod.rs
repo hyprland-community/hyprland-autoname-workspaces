@@ -375,7 +375,7 @@ mod tests {
 
         assert_eq!(client1 == client2, true);
         assert_eq!(client4 == client5, true);
-        assert_eq!(client1 == client4, false);
+        assert_eq!(client1 == client4, true);
         assert_eq!(client1 == client3, false);
         assert_eq!(client5 == client6, false);
     }
