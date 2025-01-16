@@ -23,6 +23,7 @@ pub struct Renamer {
     known_workspaces: Mutex<HashSet<i32>>,
     cfg: Mutex<Config>,
     args: Args,
+    workspace_strings_cache: Mutex<HashMap<i32, String>>,
 }
 
 #[derive(Clone, Eq, Debug)]
@@ -75,6 +76,7 @@ impl Renamer {
             known_workspaces: Mutex::new(HashSet::default()),
             cfg: Mutex::new(cfg),
             args,
+            workspace_strings_cache: Mutex::new(HashMap::new()),
         })
     }
 
@@ -93,14 +95,25 @@ impl Renamer {
 
         // Get workspaces based on open clients
         let workspaces = self.get_workspaces_from_clients(clients, active_client, config)?;
+        let workspace_ids: HashSet<_> = workspaces.iter().map(|w| w.id).collect();
 
         // Generate workspace strings
         let workspaces_strings = self.generate_workspaces_string(workspaces, config);
-
-        // Render the workspaces
-        workspaces_strings.iter().for_each(|(&id, clients)| {
-            rename_cmd(id, clients, &config.format, &config.workspaces_name)
-        });
+        
+        // Get cache lock
+        let mut cache = self.workspace_strings_cache.lock()?;
+        
+        // Update cache and rename only changed workspaces
+        for (&id, new_string) in &workspaces_strings {
+            if cache.get(&id) != Some(new_string) {
+                // Cache miss or different value - update and render
+                rename_cmd(id, new_string, &config.format, &config.workspaces_name);
+                cache.insert(id, new_string.clone());
+            }
+        }
+        
+        // Remove cached entries for workspaces that no longer exist
+        cache.retain(|&id, _| workspace_ids.contains(&id));
 
         Ok(())
     }
@@ -149,6 +162,8 @@ impl Renamer {
     }
 
     pub fn reset_workspaces(&self, config: ConfigFile) -> Result<(), Box<dyn Error + '_>> {
+        self.workspace_strings_cache.lock()?.clear();
+        
         self.known_workspaces
             .lock()?
             .iter()
