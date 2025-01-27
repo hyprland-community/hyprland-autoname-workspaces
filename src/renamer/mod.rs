@@ -117,7 +117,8 @@ impl Renamer {
         workspaces_strings: &HashMap<i32, String>,
     ) -> Result<HashMap<i32, String>, Box<dyn Error + '_>> {
         let cache = self.workspace_strings_cache.lock()?;
-        Ok(workspaces_strings.iter()
+        Ok(workspaces_strings
+            .iter()
             .filter_map(|(&id, new_string)| {
                 if cache.get(&id) != Some(new_string) {
                     Some((id, new_string.clone()))
@@ -128,7 +129,11 @@ impl Renamer {
             .collect())
     }
 
-    fn update_cache(&self, workspaces_strings: &HashMap<i32, String>, workspace_ids: &HashSet<i32>) -> Result<(), Box<dyn Error + '_>> {
+    fn update_cache(
+        &self,
+        workspaces_strings: &HashMap<i32, String>,
+        workspace_ids: &HashSet<i32>,
+    ) -> Result<(), Box<dyn Error + '_>> {
         let mut cache = self.workspace_strings_cache.lock()?;
         for (&id, new_string) in workspaces_strings {
             cache.insert(id, new_string.clone());
@@ -185,7 +190,7 @@ impl Renamer {
 
     pub fn reset_workspaces(&self, config: ConfigFile) -> Result<(), Box<dyn Error + '_>> {
         self.workspace_strings_cache.lock()?.clear();
-        
+
         self.known_workspaces
             .lock()?
             .iter()
@@ -252,10 +257,7 @@ impl Renamer {
         }
     }
 
-    fn remove_workspace(
-        &self,
-        wt: WorkspaceEventData,
-    ) -> Result<bool, Box<dyn Error + '_>> {
+    fn remove_workspace(&self, wt: WorkspaceEventData) -> Result<bool, Box<dyn Error + '_>> {
         Ok(self.known_workspaces.lock()?.remove(&wt.id))
     }
 }
@@ -1943,8 +1945,15 @@ mod tests {
         let mut config = crate::config::read_config_file(None, false, false).unwrap();
 
         // Find and replace the DEFAULT entry
-        if let Some(idx) = config.class.iter().position(|(regex, _)| regex.as_str() == "DEFAULT") {
-            config.class[idx] = (Regex::new("DEFAULT").unwrap(), "default inactive".to_string());
+        if let Some(idx) = config
+            .class
+            .iter()
+            .position(|(regex, _)| regex.as_str() == "DEFAULT")
+        {
+            config.class[idx] = (
+                Regex::new("DEFAULT").unwrap(),
+                "default inactive".to_string(),
+            );
         }
 
         let renamer = Renamer::new(
@@ -1961,52 +1970,54 @@ mod tests {
             },
         );
 
-        let expected = [(1, "*default inactive* default inactive".to_string())].into_iter().collect();
+        let expected = [(1, "*default inactive* default inactive".to_string())]
+            .into_iter()
+            .collect();
 
         let actual = renamer.generate_workspaces_string(
             vec![AppWorkspace {
                 id: 1,
-                clients: vec![AppClient {
-                    initial_class: "fake-app-unknown".to_string(),
-                    class: "fake-app-unknown".to_string(),
-                    title: "~".to_string(),
-                    initial_title: "zsh".to_string(),
-                    is_active: true,
-                    is_fullscreen: FullscreenMode::None,
-                    matched_rule: renamer.parse_icon(
-                        "fake-app-unknown".to_string(),
-                        "fake-app-unknown".to_string(),
-                        "zsh".to_string(),
-                        "~".to_string(),
-                        true,
-                        &config,
-                    ),
-                    is_dedup_inactive_fullscreen: false,
-                },
-                AppClient {
-                    initial_class: "fake-app-unknown".to_string(),
-                    class: "fake-app-unknown".to_string(),
-                    title: "~".to_string(),
-                    initial_title: "zsh".to_string(),
-                    is_active: false,
-                    is_fullscreen: FullscreenMode::None,
-                    matched_rule: renamer.parse_icon(
-                        "fake-app-unknown".to_string(),
-                        "fake-app-unknown".to_string(),
-                        "zsh".to_string(),
-                        "~".to_string(),
-                        true,
-                        &config,
-                    ),
-                    is_dedup_inactive_fullscreen: false,
-                },
+                clients: vec![
+                    AppClient {
+                        initial_class: "fake-app-unknown".to_string(),
+                        class: "fake-app-unknown".to_string(),
+                        title: "~".to_string(),
+                        initial_title: "zsh".to_string(),
+                        is_active: true,
+                        is_fullscreen: FullscreenMode::None,
+                        matched_rule: renamer.parse_icon(
+                            "fake-app-unknown".to_string(),
+                            "fake-app-unknown".to_string(),
+                            "zsh".to_string(),
+                            "~".to_string(),
+                            true,
+                            &config,
+                        ),
+                        is_dedup_inactive_fullscreen: false,
+                    },
+                    AppClient {
+                        initial_class: "fake-app-unknown".to_string(),
+                        class: "fake-app-unknown".to_string(),
+                        title: "~".to_string(),
+                        initial_title: "zsh".to_string(),
+                        is_active: false,
+                        is_fullscreen: FullscreenMode::None,
+                        matched_rule: renamer.parse_icon(
+                            "fake-app-unknown".to_string(),
+                            "fake-app-unknown".to_string(),
+                            "zsh".to_string(),
+                            "~".to_string(),
+                            true,
+                            &config,
+                        ),
+                        is_dedup_inactive_fullscreen: false,
+                    },
                 ],
             }],
             &config,
         );
 
         assert_eq!(actual, expected);
-
     }
 
     #[test]
@@ -2263,11 +2274,12 @@ mod tests {
         assert_eq!(actual, expected);
     }
 
-
     #[test]
     fn test_workspace_cache() {
         let mut config = crate::config::read_config_file(None, false, false).unwrap();
-        config.class.push((Regex::new("kitty").unwrap(), "term".to_string()));
+        config
+            .class
+            .push((Regex::new("kitty").unwrap(), "term".to_string()));
 
         let renamer = Renamer::new(
             Config {
@@ -2335,7 +2347,9 @@ mod tests {
         assert_eq!(strings, altered_strings);
 
         let workspace_ids: HashSet<_> = app_workspaces.iter().map(|w| w.id).collect();
-        renamer.update_cache(&altered_strings, &workspace_ids).unwrap();
+        renamer
+            .update_cache(&altered_strings, &workspace_ids)
+            .unwrap();
         // Cache should now contain entries for all workspaces
         {
             let cache = renamer.workspace_strings_cache.lock().unwrap();
@@ -2343,7 +2357,7 @@ mod tests {
             assert_eq!(cache.get(&1), strings.get(&1));
             assert_eq!(cache.get(&2), strings.get(&2));
         }
-        
+
         // Generate same workspaces again - nothing should be altered
         let altered_strings2 = renamer.get_altered_workspaces(&strings).unwrap();
         assert!(altered_strings2.is_empty());
@@ -2352,7 +2366,7 @@ mod tests {
             id: 3,
             clients: vec![AppClient {
                 initial_class: "kitty".to_string(),
-                class: "kitty".to_string(), 
+                class: "kitty".to_string(),
                 title: "term3".to_string(),
                 initial_title: "term3".to_string(),
                 is_active: false,
@@ -2376,40 +2390,41 @@ mod tests {
         assert_eq!(altered_strings3.len(), 1);
         assert_eq!(altered_strings3.get(&3), strings3.get(&3));
 
-        
         let workspace_ids: HashSet<_> = app_workspaces.iter().map(|w| w.id).collect();
-        renamer.update_cache(&altered_strings3, &workspace_ids).unwrap();
+        renamer
+            .update_cache(&altered_strings3, &workspace_ids)
+            .unwrap();
 
         // Generate different workspace set - should update cache
-        let app_workspaces2 = vec![
-            AppWorkspace {
-                id: 4,
-                clients: vec![AppClient {
-                    initial_class: "kitty".to_string(),
-                    class: "kitty".to_string(),
-                    title: "term3".to_string(), // Different title
-                    initial_title: "term3".to_string(),
-                    is_active: false,
-                    is_fullscreen: FullscreenMode::None,
-                    matched_rule: renamer.parse_icon(
-                        "kitty".to_string(),
-                        "kitty".to_string(),
-                        "term3".to_string(),
-                        "term3".to_string(),
-                        false,
-                        &config,
-                    ),
-                    is_dedup_inactive_fullscreen: false,
-                }],
-            },
-        ];
+        let app_workspaces2 = vec![AppWorkspace {
+            id: 4,
+            clients: vec![AppClient {
+                initial_class: "kitty".to_string(),
+                class: "kitty".to_string(),
+                title: "term3".to_string(), // Different title
+                initial_title: "term3".to_string(),
+                is_active: false,
+                is_fullscreen: FullscreenMode::None,
+                matched_rule: renamer.parse_icon(
+                    "kitty".to_string(),
+                    "kitty".to_string(),
+                    "term3".to_string(),
+                    "term3".to_string(),
+                    false,
+                    &config,
+                ),
+                is_dedup_inactive_fullscreen: false,
+            }],
+        }];
 
         let strings3 = renamer.generate_workspaces_string(app_workspaces2.clone(), &config);
         let altered_strings3 = renamer.get_altered_workspaces(&strings3).unwrap();
         assert_eq!(strings3, altered_strings3);
 
         let workspace_ids: HashSet<_> = app_workspaces2.iter().map(|w| w.id).collect();
-        renamer.update_cache(&altered_strings3, &workspace_ids).unwrap();
+        renamer
+            .update_cache(&altered_strings3, &workspace_ids)
+            .unwrap();
 
         // Cache should be updated - workspace 2 removed, workspace 1 updated
         {

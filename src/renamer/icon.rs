@@ -201,9 +201,7 @@ impl Renamer {
 
         let icon_default_active = self
             .find_icon("DEFAULT", "DEFAULT", "", "", true, config)
-            .unwrap_or({
-                icon_default.clone()
-            });
+            .unwrap_or(icon_default.clone());
 
         if is_active {
             icon_active.unwrap_or(match icon {
