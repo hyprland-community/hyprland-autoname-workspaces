@@ -253,10 +253,9 @@ fn migrate_config_file(
     Ok(())
 }
 
-pub fn create_default_config(cfg_path: &PathBuf) -> Result<&'static str, Box<dyn Error + 'static>> {
+pub fn create_default_config(cfg_path: &PathBuf) -> Result<String, Box<dyn Error + 'static>> {
     // TODO: maybe we should dump the config from the default values of the struct?
-    let default_config = r#"
-version = "1.1.14"
+    let default_config = format!(r#"version = "{VERSION}"
 
 # [format]
 # Deduplicate icons if enable.
@@ -268,36 +267,36 @@ version = "1.1.14"
 # max_clients = 30 # you should not need this
 
 # available formatter:
-# {counter_sup} - superscripted count of clients on the workspace, and simple {counter}, {delim}
-# {icon}, {client}
+# {{counter_sup}} - superscripted count of clients on the workspace, and simple {{counter}}, {{delim}}
+# {{icon}}, {{client}}
 # workspace formatter
-# workspace = "{id}:{delim}{clients}" # {id}, {delim} and {clients} are supported
-# workspace_empty = "{id}" # {id}, {delim} and {clients} are supported
+# workspace = "{{id}}:{{delim}}{{clients}}" # {{id}}, {{delim}} and {{clients}} are supported
+# workspace_empty = "{{id}}" # {{id}}, {{delim}} and {{clients}} are supported
 # client formatter
-# client = "{icon}"
-# client_active = "*{icon}*"
+# client = "{{icon}}"
+# client_active = "*{{icon}}*"
 
 # deduplicate client formatter
-# client_fullscreen = "[{icon}]"
-# client_dup = "{client}{counter_sup}"
-# client_dup_fullscreen = "[{icon}]{delim}{icon}{counter_unfocused}"
-# client_dup_active = "*{icon}*{delim}{icon}{counter_unfocused}"
+# client_fullscreen = "[{{icon}}]"
+# client_dup = "{{client}}{{counter_sup}}"
+# client_dup_fullscreen = "[{{icon}}]{{delim}}{{icon}}{{counter_unfocused}}"
+# client_dup_active = "*{{icon}}*{{delim}}{{icon}}{{counter_unfocused}}"
 
 [class]
 # Add your icons mapping
 # use double quote the key and the value
 # take class name from 'hyprctl clients'
-"DEFAULT" = " {class}: {title}"
+"DEFAULT" = " {{class}}: {{title}}"
 "(?i)Kitty" = "term"
 "[Ff]irefox" = "browser"
 "(?i)waydroid.*" = "droid"
 
 [class_active]
-DEFAULT = "*{icon}*"
-"(?i)ExampleOneTerm" = "<span foreground='red'>{icon}</span>"
+DEFAULT = "*{{icon}}*"
+"(?i)ExampleOneTerm" = "<span foreground='red'>{{icon}}</span>"
 
 # [initial_class]
-# "DEFAULT" = " {class}: {title}"
+# "DEFAULT" = " {{class}}: {{title}}"
 # "(?i)Kitty" = "term"
 
 # [initial_class_active]
@@ -306,10 +305,10 @@ DEFAULT = "*{icon}*"
 [title_in_class."(?i)kitty"]
 "(?i)neomutt" = "neomutt"
 # regex captures support is supported
-# "emerge: (.+?/.+?)-.*" = "{match1}"
+# "emerge: (.+?/.+?)-.*" = "{{match1}}"
 
 [title_in_class_active."(?i)firefox"]
-"(?i)twitch" = "<span color='purple'>{icon}</span>"
+"(?i)twitch" = "<span color='purple'>{{icon}}</span>"
 
 # [title_in_initial_class."(?i)kitty"]
 # "(?i)neomutt" = "neomutt"
@@ -350,16 +349,14 @@ aProgram = "^$" # will match null title for aProgram
 9 = "nine"
 10 = "ten"
 
-"#
-    .trim();
+"#);
 
     let mut config_file = File::create(cfg_path)?;
-    write!(&mut config_file, "{default_config}")?;
+    write!(&mut config_file, "{}", default_config.trim())?;
     println!("Default config created in {cfg_path:?}");
 
-    Ok(default_config)
+    Ok(default_config.trim().to_string())
 }
-
 /// Creates a Regex from a given pattern and logs an error if the pattern is invalid.
 ///
 /// # Arguments
