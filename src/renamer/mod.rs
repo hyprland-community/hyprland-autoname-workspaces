@@ -151,12 +151,12 @@ impl Renamer {
         active_client: String,
         config: &ConfigFile,
     ) -> Result<Vec<AppWorkspace>, Box<dyn Error + '_>> {
-        let mut workspaces = self
+        let mut workspaces: HashMap<i32, Vec<(AppClient, (i16, i16))>> = self
             .known_workspaces
             .lock()?
             .iter()
             .map(|&i| (i, Vec::new()))
-            .collect::<HashMap<i32, Vec<AppClient>>>();
+            .collect();
 
         let is_dedup_inactive_fullscreen = config.format.dedup_inactive_fullscreen;
 
@@ -167,24 +167,33 @@ impl Renamer {
             workspaces
                 .entry(workspace_id)
                 .or_insert_with(Vec::new)
-                .push(AppClient::new(
-                    client.clone(),
-                    is_active,
-                    is_dedup_inactive_fullscreen,
-                    self.parse_icon(
-                        client.initial_class,
-                        client.class,
-                        client.initial_title,
-                        client.title,
+                .push((
+                    AppClient::new(
+                        client.clone(),
                         is_active,
-                        config,
+                        is_dedup_inactive_fullscreen,
+                        self.parse_icon(
+                            client.initial_class,
+                            client.class,
+                            client.initial_title,
+                            client.title,
+                            is_active,
+                            config,
+                        ),
                     ),
+                    client.at,
                 ));
         }
 
         Ok(workspaces
-            .iter()
-            .map(|(&id, clients)| AppWorkspace::new(id, clients.to_vec()))
+            .into_iter()
+            .map(|(id, mut clients)| {
+                clients.sort_by(|a, b| a.1 .0.cmp(&b.1 .0).then_with(|| a.1 .1.cmp(&b.1 .1)));
+
+                let clients = clients.into_iter().map(|(client, _)| client).collect();
+
+                AppWorkspace::new(id, clients)
+            })
             .collect())
     }
 
@@ -1384,7 +1393,7 @@ mod tests {
             },
         );
 
-        let expected = [(1, "*term* term4".to_string())].into_iter().collect();
+        let expected = [(1, "term4 *term*".to_string())].into_iter().collect();
 
         let actual = renamer.generate_workspaces_string(
             vec![AppWorkspace {
@@ -1509,7 +1518,7 @@ mod tests {
             },
         );
 
-        let expected = [(1, "[term] term4".to_string())].into_iter().collect();
+        let expected = [(1, "term4 [term]".to_string())].into_iter().collect();
 
         let actual = renamer.generate_workspaces_string(
             vec![AppWorkspace {
@@ -1637,7 +1646,7 @@ mod tests {
             },
         );
 
-        let expected = [(1, "[*term*] term4".to_string())].into_iter().collect();
+        let expected = [(1, "term4 [*term*]".to_string())].into_iter().collect();
 
         let actual = renamer.generate_workspaces_string(
             vec![AppWorkspace {

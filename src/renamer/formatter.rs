@@ -30,6 +30,32 @@ impl Renamer {
                 let mut counted =
                     generate_counted_clients(workspace.clients.clone(), config.format.dedup);
 
+                if config.format.dedup {
+                    let mut ordered = Vec::with_capacity(counted.len());
+                    let mut used = vec![false; counted.len()];
+
+                    for client in &workspace.clients {
+                        if let Some((idx, _)) = counted
+                            .iter()
+                            .enumerate()
+                            .find(|(idx, (c, _))| !used[*idx] && c == client)
+                        {
+                            ordered.push(counted[idx].clone());
+                            used[idx] = true;
+                        }
+                    }
+
+                    ordered.extend(counted.into_iter().enumerate().filter_map(|(idx, entry)| {
+                        if used[idx] {
+                            None
+                        } else {
+                            Some(entry)
+                        }
+                    }));
+
+                    counted = ordered;
+                }
+
                 let workspace_output = counted
                     .iter_mut()
                     .map(|(client, counter)| self.handle_new_client(client, *counter, config))
