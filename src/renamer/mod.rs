@@ -8,7 +8,7 @@ use crate::config::{Config, ConfigFile, ConfigFormatRaw};
 use crate::params::Args;
 use formatter::*;
 use hyprland::data::{Client, Clients, FullscreenMode, Workspace};
-use hyprland::dispatch::*;
+use hyprland::dispatch::{Dispatch, DispatchType};
 use hyprland::event_listener::{EventListener, WorkspaceEventData};
 use hyprland::prelude::*;
 use hyprland::shared::Address;
@@ -304,7 +304,7 @@ fn rename_cmd(
         formatter(workspace_empty_fmt, &vars)
     };
 
-    let _ = hyprland::dispatch!(RenameWorkspace, id, Some(workspace.trim()));
+    let _ = Dispatch::call(DispatchType::RenameWorkspace(id, Some(workspace.trim())));
 }
 
 fn get_workspace_name(id: i32, workspaces_name: &[(String, String)]) -> String {
