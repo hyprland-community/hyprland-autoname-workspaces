@@ -279,6 +279,13 @@ fn rename_empty_workspace(config: &ConfigFile) {
     });
 }
 
+fn escape_lua_string(name: &str) -> String {
+    name.replace('\\', "\\\\")
+        .replace('"', "\\\"")
+        .replace('\n', "\\n")
+        .replace('\r', "\\r")
+}
+
 fn rename_cmd(
     id: i32,
     clients: &str,
@@ -304,7 +311,11 @@ fn rename_cmd(
         formatter(workspace_empty_fmt, &vars)
     };
 
-    let _ = Dispatch::call(DispatchType::RenameWorkspace(id, Some(workspace.trim())));
+    let name = escape_lua_string(workspace.trim());
+    let _ = Dispatch::call(DispatchType::Custom(
+        "hl.dsp.workspace.rename",
+        &format!("({{ workspace = {id}, name = \"{name}\" }})"),
+    ));
 }
 
 fn get_workspace_name(id: i32, workspaces_name: &[(String, String)]) -> String {
@@ -2580,5 +2591,16 @@ mod tests {
         let actual = get_workspace_name(3, &config.workspaces_name);
 
         assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_escape_lua_string() {
+        assert_eq!(escape_lua_string("1:kitty"), "1:kitty");
+        assert_eq!(escape_lua_string(r#"1:"foo""#), r#"1:\"foo\""#);
+        assert_eq!(escape_lua_string(r"1:\slash"), r"1:\\slash");
+        assert_eq!(escape_lua_string("1:\nline"), r"1:\nline");
+        assert_eq!(escape_lua_string("1:\rline"), r"1:\rline");
+        assert_eq!(escape_lua_string("1:💻 ✨"), "1:💻 ✨");
+        assert_eq!(escape_lua_string(""), "");
     }
 }
