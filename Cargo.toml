@@ -16,7 +16,7 @@ regex = "1"
 clap = { version = "4.3.19", features = ["derive"] }
 hyprland = { version = "=0.4.0-beta.3" }
 signal-hook = "0.3.17"
-toml = { version = "0.7.6", features = ["indexmap", "preserve_order"] }
+toml = { version = "0.9.0", features = ["indexmap", "preserve_order"] }
 xdg = "2.5.2"
 inotify = "0.10.2"
 serde = "1.0.181"
